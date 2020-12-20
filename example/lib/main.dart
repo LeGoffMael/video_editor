@@ -97,17 +97,33 @@ class _VideoEditorState extends State<VideoEditor> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _controller.initialized
-          ? Column(children: [
-              _topNavBar(),
-              Expanded(
-                child: ClipRRect(
-                  child: CropGridView(
-                    controller: _controller,
-                    showGrid: false,
+          ? Stack(children: [
+              Column(children: [
+                _topNavBar(),
+                Expanded(
+                  child: ClipRRect(
+                    child: CropGridView(
+                      controller: _controller,
+                      showGrid: false,
+                    ),
+                  ),
+                ),
+                _bottomNavBar(),
+              ]),
+              Center(
+                child: OpacityTransition(
+                  visible: !_controller.isPlaying,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.play_arrow),
                   ),
                 ),
               ),
-              _bottomNavBar(),
             ])
           : Center(child: CircularProgressIndicator()),
     );

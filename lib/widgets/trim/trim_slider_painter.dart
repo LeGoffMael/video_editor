@@ -19,6 +19,14 @@ class TrimSliderPainter extends CustomPainter {
     final Paint progressPaint = Paint()..color = style.progressLineColor;
     final Paint background = Paint()..color = Colors.black.withOpacity(0.6);
 
+    canvas.drawRect(
+      Rect.fromPoints(
+        Offset(position - halfWidth, 0.0),
+        Offset(position + halfWidth, size.height),
+      ),
+      progressPaint,
+    );
+
     //BACKGROUND LEFT
     canvas.drawRect(
       Rect.fromPoints(
@@ -85,14 +93,6 @@ class TrimSliderPainter extends CustomPainter {
       Offset(rect.right - halfWidth, halfHeight),
       radius,
       dotPaint,
-    );
-
-    canvas.drawRect(
-      Rect.fromPoints(
-        Offset(position - halfWidth, 0.0),
-        Offset(position + halfWidth, size.height),
-      ),
-      progressPaint,
     );
   }
 
