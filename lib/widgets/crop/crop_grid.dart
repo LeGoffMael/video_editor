@@ -24,9 +24,16 @@ class CropGridView extends StatefulWidget {
 class _CropGridViewState extends State<CropGridView> {
   CropBoundaries boundary;
   Offset _translate = Offset.zero;
-  Size _layout = Size.zero;
+  double _aspect = 1.0;
   double _scale = 1.0;
+  Size _layout = Size.zero;
   Rect _rect;
+
+  @override
+  void initState() {
+    super.initState();
+    _aspect = widget.controller.videoController.value.aspectRatio;
+  }
 
   @override
   void didUpdateWidget(CropGridView oldWidget) {
@@ -36,7 +43,7 @@ class _CropGridViewState extends State<CropGridView> {
         _rect = _calculateCropRect();
         final double _scaleX = _layout.width / _rect.width;
         final double _scaleY = _layout.height / _rect.height;
-        _scale = _scaleX < _scaleY ? _scaleX : _scaleY;
+        _scale = _aspect < 1.0 ? _scaleY : _scaleX;
         _translate = Offset(
               (_layout.width - _rect.width) / 2,
               (_layout.height - _rect.height) / 2,
@@ -156,8 +163,9 @@ class _CropGridViewState extends State<CropGridView> {
       scale: _scale,
       child: Transform.translate(
         offset: _translate,
-        child: VideoViewer(controller: widget.controller, children: [
-          LayoutBuilder(builder: (_, constraints) {
+        child: VideoViewer(
+          controller: widget.controller,
+          child: LayoutBuilder(builder: (_, constraints) {
             _layout = Size(constraints.maxWidth, constraints.maxHeight);
             if (_rect == null) _rect = _calculateCropRect();
 
@@ -170,7 +178,7 @@ class _CropGridViewState extends State<CropGridView> {
                   )
                 : _paint();
           }),
-        ]),
+        ),
       ),
     );
   }

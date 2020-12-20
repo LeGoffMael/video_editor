@@ -6,11 +6,11 @@ class VideoViewer extends StatefulWidget {
   VideoViewer({
     Key key,
     @required this.controller,
-    this.children,
+    this.child,
   }) : super(key: key);
 
   final VideoEditorController controller;
-  final List<Widget> children;
+  final Widget child;
 
   @override
   _VideoViewerState createState() => _VideoViewerState();
@@ -34,11 +34,17 @@ class _VideoViewerState extends State<VideoViewer> {
         else
           _controller.play();
       },
-      child: AspectRatio(
-        aspectRatio: _controller.value.aspectRatio,
+      child: Center(
         child: Stack(children: [
-          VideoPlayer(_controller),
-          if (widget.children != null) ...widget.children,
+          AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          ),
+          if (widget.child != null)
+            AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: widget.child,
+            ),
         ]),
       ),
     );
