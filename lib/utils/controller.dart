@@ -46,15 +46,14 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    super.dispose();
     WidgetsBinding.instance.removeObserver(this);
+    if (isPlaying) _videoController?.pause();
     _videoController.removeListener(_videoListener);
-    _videoController?.pause();
     _videoController.dispose();
     _videoController = null;
-    _ffmpeg?.cancel();
     _ffprobe = null;
     _ffmpeg = null;
+    super.dispose();
   }
 
   void _videoListener() {
