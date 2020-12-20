@@ -43,7 +43,10 @@ class _CropGridViewState extends State<CropGridView> {
         _rect = _calculateCropRect();
         final double _scaleX = _layout.width / _rect.width;
         final double _scaleY = _layout.height / _rect.height;
-        _scale = _aspect < 1.0 ? _scaleY : _scaleX;
+        if (_aspect < 1.0)
+          _scale = _scaleX > _scaleY ? _scaleY : _scaleX;
+        else
+          _scale = _scaleX < _scaleY ? _scaleY : _scaleX;
         _translate = Offset(
               (_layout.width - _rect.width) / 2,
               (_layout.height - _rect.height) / 2,
