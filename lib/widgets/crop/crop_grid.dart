@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:video_editor/utils/controller.dart';
-import 'package:video_editor/utils/styles.dart';
 import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
 import 'package:video_editor/widgets/video/video_viewer.dart';
 
@@ -10,14 +9,11 @@ class CropGridView extends StatefulWidget {
   CropGridView({
     Key key,
     @required this.controller,
-    CropGridStyle style,
     this.onChangeCrop,
     this.showGrid = true,
-  })  : this.style = style ?? CropGridStyle(),
-        super(key: key);
+  }) : super(key: key);
 
   final bool showGrid;
-  final CropGridStyle style;
   final VideoEditorController controller;
   final void Function(Offset mixCrop, Offset maxCrop) onChangeCrop;
 
@@ -182,8 +178,11 @@ class _CropGridViewState extends State<CropGridView> {
   Widget _paint() {
     return CustomPaint(
       size: Size.infinite,
-      painter: CropGridPainter(_rect,
-          showGrid: widget.showGrid, style: widget.style),
+      painter: CropGridPainter(
+        _rect,
+        showGrid: widget.showGrid,
+        style: widget.controller.cropStyle,
+      ),
     );
   }
 }

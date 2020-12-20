@@ -88,7 +88,7 @@ class _VideoEditorState extends State<VideoEditor> {
     await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
   }
 
-  void _openScreen() {
+  void _openCropScreen() {
     PushRoute.page(context, CropScreen(controller: _controller));
   }
 
@@ -139,7 +139,7 @@ class _VideoEditorState extends State<VideoEditor> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: _openScreen,
+                  onTap: _openCropScreen,
                   child: Icon(Icons.crop, color: Colors.white),
                 ),
               ),

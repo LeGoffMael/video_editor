@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:video_editor/utils/styles.dart';
 import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/trim/trim_slider_painter.dart';
 import 'package:video_editor/widgets/trim/thumbnail_slider.dart';
@@ -11,15 +10,12 @@ class TrimSlider extends StatefulWidget {
   TrimSlider({
     Key key,
     @required this.controller,
-    TrimSliderStyle style,
     this.height = 60,
     this.quality = 25,
-  })  : this.style = style ?? TrimSliderStyle(),
-        super(key: key);
+  }) : super(key: key);
 
   final int quality;
   final double height;
-  final TrimSliderStyle style;
   final VideoEditorController controller;
 
   @override
@@ -169,7 +165,7 @@ class _TrimSliderState extends State<TrimSlider> {
               painter: TrimSliderPainter(
                 _rect,
                 _progressTrim,
-                style: widget.style,
+                style: widget.controller.trimStyle,
               ),
             ),
           ]),

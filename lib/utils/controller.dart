@@ -1,16 +1,24 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:video_editor/utils/styles.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
+  final TrimSliderStyle trimStyle;
+  final CropGridStyle cropStyle;
   final File file;
 
-  VideoEditorController.file(this.file) : assert(file != null) {
-    _videoController = VideoPlayerController.file(file);
-  }
+  VideoEditorController.file(
+    this.file, {
+    CropGridStyle cropStyle,
+    TrimSliderStyle trimStyle,
+  })  : assert(file != null),
+        _videoController = VideoPlayerController.file(file),
+        this.cropStyle = cropStyle ?? CropGridStyle(),
+        this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
   FlutterFFprobe _ffprobe = FlutterFFprobe();
