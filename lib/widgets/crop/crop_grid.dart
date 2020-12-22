@@ -3,7 +3,17 @@ import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
 import 'package:video_editor/widgets/video/video_viewer.dart';
 
-enum CropBoundaries { topLeft, topRight, bottomLeft, bottomRight, inside }
+enum CropBoundaries {
+  topLeft,
+  topRight,
+  bottomLeft,
+  bottomRight,
+  inside,
+  topCenter,
+  centerRight,
+  centerLeft,
+  bottomCenter
+}
 
 class CropGridView extends StatefulWidget {
   CropGridView({
@@ -63,17 +73,48 @@ class _CropGridViewState extends State<CropGridView> {
 
     //IS TOUCHING THE GRID
     if (pos >= min - margin && pos <= max + margin) {
-      max -= margin;
-      min += margin;
+      final double halfWidth = _rect.width / 2;
+      final double halfHeight = _rect.height / 2;
+      final maxMargin = [max - margin, max + margin];
+      final minMargin = [min - margin, min + margin];
+      final widthMargin = [halfWidth - margin.dx, halfWidth + margin.dx];
+      final heightMargin = [halfHeight - margin.dy, halfHeight + margin.dy];
+
       //TOUCH BOUNDARIES
-      if (pos <= min) {
+      if (pos >= minMargin[0] && pos <= minMargin[1]) {
         boundary = CropBoundaries.topLeft;
-      } else if (pos.dx >= max.dx && pos.dy <= min.dy) {
-        boundary = CropBoundaries.topRight;
-      } else if (pos.dx <= min.dx && pos.dy >= max.dy) {
-        boundary = CropBoundaries.bottomLeft;
-      } else if (pos >= max) {
+      } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
         boundary = CropBoundaries.bottomRight;
+      } else if (pos.dx >= maxMargin[0].dx &&
+          pos.dx <= maxMargin[1].dx &&
+          pos.dy >= minMargin[0].dy &&
+          pos.dy <= minMargin[1].dy) {
+        boundary = CropBoundaries.topRight;
+      } else if (pos.dx >= minMargin[0].dx &&
+          pos.dx <= minMargin[1].dx &&
+          pos.dy <= maxMargin[0].dy &&
+          pos.dy >= maxMargin[1].dy) {
+        boundary = CropBoundaries.bottomLeft;
+      } else if (pos.dy <= _rect.top &&
+          pos.dy >= -_rect.top &&
+          pos.dx >= widthMargin[0] &&
+          pos.dx <= widthMargin[1]) {
+        boundary = CropBoundaries.topCenter;
+      } else if (pos.dx >= -_rect.bottom &&
+          pos.dx <= _rect.bottom &&
+          pos.dy >= widthMargin[0] &&
+          pos.dy <= widthMargin[1]) {
+        boundary = CropBoundaries.bottomCenter;
+      } else if (pos.dx >= -_rect.left &&
+          pos.dx <= _rect.left &&
+          pos.dy >= heightMargin[0] &&
+          pos.dy <= heightMargin[1]) {
+        boundary = CropBoundaries.centerLeft;
+      } else if (pos.dx >= -_rect.right &&
+          pos.dx <= _rect.right &&
+          pos.dy >= heightMargin[0] &&
+          pos.dy <= heightMargin[1]) {
+        boundary = CropBoundaries.centerRight;
       } else {
         boundary = CropBoundaries.inside;
       }
@@ -115,6 +156,24 @@ class _CropGridViewState extends State<CropGridView> {
             width: _rect.width + delta.dx,
             height: _rect.height + delta.dy,
           );
+          break;
+        case CropBoundaries.topCenter:
+          _changeRect(
+            top: _rect.top + delta.dy,
+            height: _rect.height - delta.dy,
+          );
+          break;
+        case CropBoundaries.bottomCenter:
+          _changeRect(height: _rect.height - delta.dy);
+          break;
+        case CropBoundaries.centerLeft:
+          _changeRect(
+            left: _rect.left + delta.dx,
+            width: _rect.width - delta.dx,
+          );
+          break;
+        case CropBoundaries.centerRight:
+          _changeRect(width: _rect.width - delta.dx);
           break;
         case CropBoundaries.inside:
           final pos = _rect.topLeft + delta;
