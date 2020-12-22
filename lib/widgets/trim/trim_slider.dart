@@ -50,20 +50,17 @@ class _TrimSliderState extends State<TrimSlider> {
   }
 
   void onHorizontalDragStart(DragStartDetails details) {
-    final double pos = details.localPosition.dx;
     final double margin = 25.0;
-    double max = _rect.right;
-    double min = _rect.left;
+    final double pos = details.localPosition.dx;
+    final double max = _rect.right;
+    final double min = _rect.left;
 
     //IS TOUCHING THE GRID
     if (pos >= min - margin && pos <= max + margin) {
-      max -= margin;
-      min += margin;
-
       //TOUCH BOUNDARIES
-      if (pos <= min) {
+      if (pos >= min - margin && pos <= min + margin) {
         boundary = TrimBoundaries.left;
-      } else if (pos >= max) {
+      } else if (pos >= max - margin && pos <= max + margin) {
         boundary = TrimBoundaries.right;
       } else if (pos >= _progressTrim - margin &&
           pos <= _progressTrim + margin) {

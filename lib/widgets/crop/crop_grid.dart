@@ -68,8 +68,8 @@ class _CropGridViewState extends State<CropGridView> {
   void onPanStart(details) {
     final Offset pos = details.localPosition;
     final Offset margin = Offset(25.0, 25.0);
-    Offset max = _rect.bottomRight;
-    Offset min = _rect.topLeft;
+    final Offset max = _rect.bottomRight;
+    final Offset min = _rect.topLeft;
 
     //IS TOUCHING THE GRID
     if (pos >= min - margin && pos <= max + margin) {
