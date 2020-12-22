@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
@@ -21,7 +20,7 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  final List<Uint8List> _imageBytes = [];
+  List<Uint8List> _imageBytes = [];
   Offset _translate = Offset.zero;
   Size _layout = Size.zero;
   int _thumbnails = 8;
@@ -34,12 +33,8 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   void initState() {
     super.initState();
     _generateThumbnail();
-    Misc.onLayoutRendered(() {
-      setState(() {
-        _thumbnails = (_width ~/ widget.height) + 1;
-        _aspect = widget.controller.videoController.value.aspectRatio;
-      });
-    });
+    _layout = Size(widget.height, widget.height);
+    _aspect = widget.controller.videoController.value.aspectRatio;
   }
 
   @override
@@ -47,7 +42,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     super.didUpdateWidget(oldWidget);
     if (!widget.controller.isPlaying && _aspect < 1.0)
       setState(() {
-        _rect = _calculateCropRect();
+        _rect = _calculateTrimRect();
         final double _scaleX = _layout.width / _rect.width;
         final double _scaleY = _layout.height / _rect.height;
 
@@ -65,6 +60,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final String videoPath = widget.controller.file.path;
     final int eachPart =
         widget.controller.videoDuration.inMilliseconds ~/ _thumbnails;
+    _imageBytes = [];
 
     for (int i = 1; i <= _thumbnails; i++) {
       final Uint8List _bytes = await VideoThumbnail.thumbnailData(
@@ -78,7 +74,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     }
   }
 
-  Rect _calculateCropRect() {
+  Rect _calculateTrimRect() {
     final Offset min = widget.controller.minCrop;
     final Offset max = widget.controller.maxCrop;
     return Rect.fromPoints(
@@ -96,9 +92,13 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, box) {
-      _width = box.maxWidth;
-      _layout = Size(widget.height, widget.height);
-      if (_rect == null) _rect = _calculateCropRect();
+      final double width = box.maxWidth;
+      if (_width != width) {
+        _width = width;
+        _thumbnails = (_width ~/ widget.height) + 1;
+        _rect = _calculateTrimRect();
+        _generateThumbnail();
+      }
       return ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: NeverScrollableScrollPhysics(),
@@ -118,7 +118,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                       width: widget.height,
                       image: MemoryImage(_imageBytes[index]),
                       alignment: Alignment.topLeft,
-                      fit: _aspect > 1.0 ? BoxFit.cover : BoxFit.none,
+                      fit: _aspect < 1.0 ? null : BoxFit.cover,
                     ),
                     CustomPaint(
                       size: Size.infinite,

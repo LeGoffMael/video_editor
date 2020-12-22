@@ -127,7 +127,7 @@ class _TrimSliderState extends State<TrimSlider> {
     }
   }
 
-  void _createRect() {
+  void _createTrimRect() {
     final double min = widget.controller.minTrim;
     final double max = widget.controller.maxTrim;
     final double width = _layout.width;
@@ -142,8 +142,11 @@ class _TrimSliderState extends State<TrimSlider> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, constraints) {
-      _layout = Size(constraints.maxWidth, constraints.maxHeight);
-      if (_rect == null) _createRect();
+      final Size layout = Size(constraints.maxWidth, constraints.maxHeight);
+      if (_layout != layout) {
+        _layout = layout;
+        _createTrimRect();
+      }
 
       return GestureDetector(
         onHorizontalDragUpdate: onHorizontalDragUpdate,
