@@ -23,8 +23,8 @@ class ThumbnailSlider extends StatefulWidget {
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
   final List<Uint8List> _imageBytes = [];
   Offset _translate = Offset.zero;
-  int _thumbnails = 8;
   Size _layout = Size.zero;
+  int _thumbnails = 8;
   double _aspect = 1.0;
   double _scale = 1.0;
   double _width = 1;
@@ -33,7 +33,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   void initState() {
     super.initState();
-    generateThumbnail();
+    _generateThumbnail();
     Misc.onLayoutRendered(() {
       setState(() {
         _thumbnails = (_width ~/ widget.height) + 1;
@@ -45,26 +45,23 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   void didUpdateWidget(ThumbnailSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.controller.isPlaying)
+    if (!widget.controller.isPlaying && _aspect < 1.0)
       setState(() {
         _rect = _calculateCropRect();
         final double _scaleX = _layout.width / _rect.width;
         final double _scaleY = _layout.height / _rect.height;
 
-        if (_aspect < 1.0) {
-          _scale = _scaleX > _scaleY ? _scaleY : _scaleX;
-          _translate = Offset(
-                (_layout.width - _rect.width) / 2,
-                (_layout.height - _rect.height) / 2,
-              ) -
-              _rect.topLeft;
-        } else {
-          _translate = Offset(0.0, (_layout.height - _rect.height) / 2);
-        }
+        _scale = _scaleX > _scaleY ? _scaleY : _scaleX;
+
+        _translate = Offset(
+              (_layout.width - _rect.width) / 2,
+              (_layout.height - _rect.height) / 2,
+            ) -
+            _rect.topLeft;
       });
   }
 
-  void generateThumbnail() async {
+  void _generateThumbnail() async {
     final String videoPath = widget.controller.file.path;
     final int eachPart =
         widget.controller.videoDuration.inMilliseconds ~/ _thumbnails;
@@ -121,6 +118,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                       width: widget.height,
                       image: MemoryImage(_imageBytes[index]),
                       alignment: Alignment.topLeft,
+                      fit: _aspect > 1.0 ? BoxFit.cover : BoxFit.none,
                     ),
                     CustomPaint(
                       size: Size.infinite,
