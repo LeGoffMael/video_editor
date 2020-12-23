@@ -37,7 +37,7 @@ class CropGridPainter extends CustomPainter {
     final int gridSize = style.gridSize;
     final Paint paint = Paint()
       ..strokeWidth = style.gridLineWidth
-      ..color = style.gridColor;
+      ..color = style.gridLineColor;
 
     for (int i = 1; i < gridSize; i++) {
       double rowDy = rect.topLeft.dy + (rect.height / gridSize) * i;

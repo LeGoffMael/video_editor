@@ -16,7 +16,7 @@ class TrimSliderPainter extends CustomPainter {
     final double halfHeight = rect.height / 2;
     final Paint dotPaint = Paint()..color = style.dotColor;
     final Paint linePaint = Paint()..color = style.lineColor;
-    final Paint progressPaint = Paint()..color = style.progressLineColor;
+    final Paint progressPaint = Paint()..color = style.positionLineColor;
     final Paint background = Paint()..color = Colors.black.withOpacity(0.6);
 
     canvas.drawRect(
