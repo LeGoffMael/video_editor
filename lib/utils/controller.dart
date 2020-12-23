@@ -7,10 +7,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
+  ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
+
+  ///Style for [CropGridViewer]
   final CropGridStyle cropStyle;
+
+  ///Video from [File].
   final File file;
 
+  ///Constructs a [VideoEditorController] that edits a video from a file.
   VideoEditorController.file(
     this.file, {
     CropGridStyle cropStyle,
@@ -35,6 +41,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   //----------------//
   //VIDEO CONTROLLER//
   //----------------//
+  ///Attempts to open the given [File] and load metadata about the video.
   Future<void> initialize() async {
     WidgetsBinding.instance.addObserver(this);
     await _videoController.initialize();
@@ -62,11 +69,19 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  ///Get the `VideoPlayerController`
   VideoPlayerController get videoController => _videoController;
+
+  ///Get the `VideoPlayerController.value.initialized`
   bool get initialized => _videoController.value.initialized;
+
+  ///Get the `VideoPlayerController.value.isPlaying`
   bool get isPlaying => _videoController.value.isPlaying;
 
+  ///Get the `VideoPlayerController.value.position`
   Duration get videoPosition => _videoController.value.position;
+
+  ///Get the `VideoPlayerController.value.duration`
   Duration get videoDuration => _videoController.value.duration;
 
   //----------//
@@ -97,13 +112,18 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     return "crop=$cropWidth:$cropHeight:$startdx:$startdy";
   }
 
+  ///Update minCrop and maxCrop.
+  ///Arguments range are `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`.
   void updateCrop(Offset min, Offset max) {
     _minCrop = min;
     _maxCrop = max;
     notifyListeners();
   }
 
+  ///Get the **TopLeftOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get minCrop => _minCrop;
+
+  ///Get the **BottomRightOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get maxCrop => _maxCrop;
 
   //----------//
@@ -111,6 +131,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   //----------//
   String _getTrim() => "-ss $_trimStart -t ${_trimEnd - _trimStart}";
 
+  ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
   void updateTrim(double min, double max) {
     _minTrim = min;
     _maxTrim = max;
@@ -123,14 +144,20 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     _trimStart = videoDuration * _minTrim;
   }
 
+  ///Get the **MinTrim** (Range is `0.0` to `1.0`).
   double get minTrim => _minTrim;
+
+  ///Get the **MaxTrim** (Range is `0.0` to `1.0`).
   double get maxTrim => _maxTrim;
+
+  ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
 
   //------------//
   //VIDEO EXPORT//
   //------------//
+  ///Export the video at `TemporaryDirectory` and return a `File`.
   Future<File> exportVideo() async {
     final String tempPath = (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
