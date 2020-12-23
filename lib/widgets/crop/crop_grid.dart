@@ -3,7 +3,7 @@ import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
 import 'package:video_editor/widgets/video/video_viewer.dart';
 
-enum CropBoundaries {
+enum _CropBoundaries {
   topLeft,
   topRight,
   bottomLeft,
@@ -15,30 +15,37 @@ enum CropBoundaries {
   bottomCenter
 }
 
-class CropGridView extends StatefulWidget {
-  CropGridView({
+class CropGridViewer extends StatefulWidget {
+  //It is the viewer that allows you to trim the video
+  CropGridViewer({
     Key key,
     @required this.controller,
     this.onChangeCrop,
     this.showGrid = true,
   }) : super(key: key);
 
+  /// If it is true, it shows the grid and allows cropping the video, if it is false
+  /// does not show the grid and cannot be cropped
   final bool showGrid;
+
+  ///It will change the controller data and allow the CropGridViewer to work
   final VideoEditorController controller;
+
+  ///When the pan gesture ended and if the cropRect was updated, then it will execute the callback
   final void Function(Offset mixCrop, Offset maxCrop) onChangeCrop;
 
   @override
-  _CropGridViewState createState() => _CropGridViewState();
+  _CropGridViewerState createState() => _CropGridViewerState();
 }
 
-class _CropGridViewState extends State<CropGridView> {
+class _CropGridViewerState extends State<CropGridViewer> {
   double _boundariesLenght = 0;
   double _boundariesWidth = 0;
   Offset _translate = Offset.zero;
   double _aspect = 1.0;
   double _scale = 1.0;
   Size _layout = Size.zero;
-  CropBoundaries boundary;
+  _CropBoundaries boundary;
   Orientation _orientation;
   Rect _rect;
 
@@ -51,7 +58,7 @@ class _CropGridViewState extends State<CropGridView> {
   }
 
   @override
-  void didUpdateWidget(CropGridView oldWidget) {
+  void didUpdateWidget(CropGridViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!widget.showGrid && !widget.controller.isPlaying)
       setState(() => _scaleRect());
@@ -86,25 +93,25 @@ class _CropGridViewState extends State<CropGridView> {
 
       //TOUCH BOUNDARIES
       if (pos >= minMargin[0] && pos <= minMargin[1])
-        boundary = CropBoundaries.topLeft;
+        boundary = _CropBoundaries.topLeft;
       else if (pos >= maxMargin[0] && pos <= maxMargin[1])
-        boundary = CropBoundaries.bottomRight;
+        boundary = _CropBoundaries.bottomRight;
       else if (pos >= Offset(maxMargin[0].dx, minMargin[0].dy) &&
           pos <= Offset(maxMargin[1].dx, minMargin[1].dy))
-        boundary = CropBoundaries.topRight;
+        boundary = _CropBoundaries.topRight;
       else if (pos >= Offset(minMargin[0].dx, maxMargin[0].dy) &&
           pos <= Offset(minMargin[1].dx, maxMargin[1].dy))
-        boundary = CropBoundaries.bottomLeft;
+        boundary = _CropBoundaries.bottomLeft;
       else if (pos >= topCenter[0] && pos <= topCenter[1])
-        boundary = CropBoundaries.topCenter;
+        boundary = _CropBoundaries.topCenter;
       else if (pos >= bottomCenter[0] && pos <= bottomCenter[1])
-        boundary = CropBoundaries.bottomCenter;
+        boundary = _CropBoundaries.bottomCenter;
       else if (pos >= centerLeft[0] && pos <= centerLeft[1])
-        boundary = CropBoundaries.centerLeft;
+        boundary = _CropBoundaries.centerLeft;
       else if (pos >= centerRight[0] && pos <= centerRight[1])
-        boundary = CropBoundaries.centerRight;
+        boundary = _CropBoundaries.centerRight;
       else if (pos >= minMargin[1] && pos <= maxMargin[0])
-        boundary = CropBoundaries.inside;
+        boundary = _CropBoundaries.inside;
       else
         boundary = null;
     } else
@@ -117,11 +124,11 @@ class _CropGridViewState extends State<CropGridView> {
     if (boundary != null) {
       final Offset delta = details.delta;
       switch (boundary) {
-        case CropBoundaries.inside:
+        case _CropBoundaries.inside:
           final Offset pos = _rect.topLeft + delta;
           _changeRect(left: pos.dx, top: pos.dy);
           break;
-        case CropBoundaries.topLeft:
+        case _CropBoundaries.topLeft:
           final Offset pos = _rect.topLeft + delta;
           _changeRect(
             top: pos.dy,
@@ -130,42 +137,42 @@ class _CropGridViewState extends State<CropGridView> {
             height: _rect.height - delta.dy,
           );
           break;
-        case CropBoundaries.bottomRight:
+        case _CropBoundaries.bottomRight:
           _changeRect(
             width: _rect.width + delta.dx,
             height: _rect.height + delta.dy,
           );
           break;
-        case CropBoundaries.topRight:
+        case _CropBoundaries.topRight:
           _changeRect(
             top: _rect.topRight.dy + delta.dy,
             width: _rect.width + delta.dx,
             height: _rect.height - delta.dy,
           );
           break;
-        case CropBoundaries.bottomLeft:
+        case _CropBoundaries.bottomLeft:
           _changeRect(
             left: _rect.bottomLeft.dx + delta.dx,
             width: _rect.width - delta.dx,
             height: _rect.height + delta.dy,
           );
           break;
-        case CropBoundaries.topCenter:
+        case _CropBoundaries.topCenter:
           _changeRect(
             top: _rect.top + delta.dy,
             height: _rect.height - delta.dy,
           );
           break;
-        case CropBoundaries.bottomCenter:
+        case _CropBoundaries.bottomCenter:
           _changeRect(height: _rect.height + delta.dy);
           break;
-        case CropBoundaries.centerLeft:
+        case _CropBoundaries.centerLeft:
           _changeRect(
             left: _rect.left + delta.dx,
             width: _rect.width - delta.dx,
           );
           break;
-        case CropBoundaries.centerRight:
+        case _CropBoundaries.centerRight:
           _changeRect(width: _rect.width + delta.dx);
           break;
       }
@@ -173,7 +180,7 @@ class _CropGridViewState extends State<CropGridView> {
   }
 
   void _onPanEnd(_) {
-    if (widget.onChangeCrop != null) {
+    if (widget.onChangeCrop != null && boundary != null) {
       final double mindx = _rect.left / _layout.width;
       final double mindy = _rect.top / _layout.height;
       final double maxdy = _rect.bottom / _layout.height;
