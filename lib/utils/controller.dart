@@ -13,15 +13,22 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Style for [CropGridViewer]
   final CropGridStyle cropStyle;
 
+  ///View all formats on https://ffmpeg.org/ffmpeg-formats.html
+  final String exportFormat;
+
   ///Video from [File].
   final File file;
 
   ///Constructs a [VideoEditorController] that edits a video from a file.
   VideoEditorController.file(
     this.file, {
-    CropGridStyle cropStyle,
-    TrimSliderStyle trimStyle,
+    CropGridStyle trimStyle,
+    TrimSliderStyle cropStyle,
+    this.exportFormat = "mp4",
   })  : assert(file != null),
+        assert(trimStyle != null),
+        assert(cropStyle != null),
+        assert(exportFormat != null),
         _videoController = VideoPlayerController.file(file),
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
@@ -162,7 +169,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String tempPath = (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
     final String videoName = path.basename(videoPath).split('.')[0];
-    final String outputPath = tempPath + videoName + "_output.mp4";
+    final String outputPath = tempPath + videoName + ".$exportFormat";
 
     final String crop = await _getCrop(videoPath);
     final String trim = _getTrim();
