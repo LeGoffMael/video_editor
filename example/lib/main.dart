@@ -105,7 +105,7 @@ class _VideoEditorState extends State<VideoEditor> {
                 _topNavBar(),
                 Expanded(
                   child: ClipRRect(
-                    child: CropGridView(
+                    child: CropGridViewer(
                       controller: _controller,
                       showGrid: false,
                     ),
@@ -229,7 +229,7 @@ class _CropScreenState extends State<CropScreen> {
           padding: Margin.all(30),
           child: Column(children: [
             Expanded(
-              child: CropGridView(
+              child: CropGridViewer(
                 controller: widget.controller,
                 onChangeCrop: (min, max) => setState(() {
                   _minCrop = min;

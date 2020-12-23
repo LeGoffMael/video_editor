@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 enum _TrimBoundaries { left, right, inside, progress }
 
 class TrimSlider extends StatefulWidget {
+  ///Slider that trim video length.
   TrimSlider({
     Key key,
     @required this.controller,
@@ -14,8 +15,13 @@ class TrimSlider extends StatefulWidget {
     this.quality = 25,
   }) : super(key: key);
 
+  ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
   final int quality;
+
+  ///It is the height of the thumbnails
   final double height;
+
+  //Essential argument for the functioning of the Widget
   final VideoEditorController controller;
 
   @override

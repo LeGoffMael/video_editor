@@ -16,7 +16,7 @@ enum _CropBoundaries {
 }
 
 class CropGridViewer extends StatefulWidget {
-  //It is the viewer that allows you to trim the video
+  //It is the viewer that allows you to crop the video
   CropGridViewer({
     Key key,
     @required this.controller,
@@ -28,7 +28,7 @@ class CropGridViewer extends StatefulWidget {
   /// does not show the grid and cannot be cropped
   final bool showGrid;
 
-  ///It will change the controller data and allow the CropGridViewer to work
+  ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
 
   ///When the pan gesture ended and if the cropRect was updated, then it will execute the callback
