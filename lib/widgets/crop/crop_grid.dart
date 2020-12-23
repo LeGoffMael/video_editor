@@ -103,12 +103,13 @@ class _CropGridViewState extends State<CropGridView> {
         boundary = CropBoundaries.centerLeft;
       else if (pos >= centerRight[0] && pos <= centerRight[1])
         boundary = CropBoundaries.centerRight;
-      else {
+      else if (pos >= minMargin[1] && pos <= maxMargin[0])
         boundary = CropBoundaries.inside;
-      }
-    } else {
+      else
+        boundary = null;
+    } else
       boundary = null;
-    }
+
     setState(() {});
   }
 
