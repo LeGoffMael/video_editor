@@ -20,6 +20,7 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
+  Map<double, List<Uint8List>> _cacheBytes = Map();
   List<Uint8List> _imageBytes = [];
   Offset _translate = Offset.zero;
   Size _layout = Size.zero;
@@ -32,7 +33,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   void initState() {
     super.initState();
-    _generateThumbnail();
     _layout = Size(widget.height, widget.height);
     _aspect = widget.controller.videoController.value.aspectRatio;
   }
@@ -40,7 +40,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   void didUpdateWidget(ThumbnailSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.controller.isPlaying && _aspect < 1.0)
+    if (!widget.controller.isPlaying && _aspect <= 1.0)
       setState(() {
         _rect = _calculateTrimRect();
         final double _scaleX = _layout.width / _rect.width;
@@ -56,20 +56,31 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       });
   }
 
-  void _generateThumbnail() async {
-    final String videoPath = widget.controller.file.path;
-    final int eachPart =
-        widget.controller.videoDuration.inMilliseconds ~/ _thumbnails;
-    _imageBytes = [];
+  void _generateThumbnail(double width) async {
+    int lenght = _cacheBytes[width] == null ? 0 : _cacheBytes[width].length;
 
-    for (int i = 1; i <= _thumbnails; i++) {
-      final Uint8List _bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.WEBP,
-        timeMs: eachPart * i,
-        video: videoPath,
-        quality: widget.quality,
-      );
-      _imageBytes.add(_bytes);
+    if (_thumbnails != lenght) {
+      final String videoPath = widget.controller.file.path;
+      final int eachPart =
+          widget.controller.videoDuration.inMilliseconds ~/ _thumbnails;
+
+      _imageBytes = [];
+      _cacheBytes[width] = [];
+
+      for (int i = 1; i <= _thumbnails; i++) {
+        if (width != _width) break;
+        final Uint8List _bytes = await VideoThumbnail.thumbnailData(
+          imageFormat: ImageFormat.WEBP,
+          timeMs: eachPart * i,
+          video: videoPath,
+          quality: widget.quality,
+        );
+        _imageBytes.add(_bytes);
+        _cacheBytes[width].add(_bytes);
+        if (mounted) setState(() {});
+      }
+    } else {
+      _imageBytes = _cacheBytes[width];
       if (mounted) setState(() {});
     }
   }
@@ -79,11 +90,11 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final Offset max = widget.controller.maxCrop;
     return Rect.fromPoints(
       Offset(
-        min.dx * _layout.width * (_aspect < 1.0 ? _aspect : 1.0),
+        min.dx * _layout.width * (_aspect <= 1.0 ? _aspect : 1.0),
         min.dy * _layout.height,
       ),
       Offset(
-        max.dx * _layout.width * (_aspect < 1.0 ? _aspect : 1.0),
+        max.dx * _layout.width * (_aspect <= 1.0 ? _aspect : 1.0),
         max.dy * _layout.height,
       ),
     );
@@ -95,10 +106,11 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;
-        _thumbnails = (_width ~/ widget.height) + 1;
+        _thumbnails = (_width ~/ _layout.width) + 1;
         _rect = _calculateTrimRect();
-        _generateThumbnail();
+        _generateThumbnail(width);
       }
+
       return ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: NeverScrollableScrollPhysics(),
@@ -117,17 +129,19 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                       height: widget.height,
                       width: widget.height,
                       image: MemoryImage(_imageBytes[index]),
-                      alignment: Alignment.topLeft,
-                      fit: _aspect < 1.0 ? null : BoxFit.cover,
+                      alignment:
+                          _aspect <= 1.0 ? Alignment.topLeft : Alignment.center,
+                      fit: _aspect <= 1.0 ? null : BoxFit.fitWidth,
                     ),
-                    CustomPaint(
-                      size: Size.infinite,
-                      painter: CropGridPainter(
-                        _rect,
-                        showGrid: false,
-                        style: widget.controller.cropStyle,
-                      ),
-                    )
+                    if (_aspect <= 1.0)
+                      CustomPaint(
+                        size: Size.infinite,
+                        painter: CropGridPainter(
+                          _rect,
+                          showGrid: false,
+                          style: widget.controller.cropStyle,
+                        ),
+                      )
                   ]),
                 ),
               ),
