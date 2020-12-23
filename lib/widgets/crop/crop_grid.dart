@@ -32,17 +32,21 @@ class CropGridView extends StatefulWidget {
 }
 
 class _CropGridViewState extends State<CropGridView> {
-  CropBoundaries boundary;
+  double _boundariesLenght = 0;
+  double _boundariesWidth = 0;
   Offset _translate = Offset.zero;
   double _aspect = 1.0;
   double _scale = 1.0;
   Size _layout = Size.zero;
-  Rect _rect;
+  CropBoundaries boundary;
   Orientation _orientation;
+  Rect _rect;
 
   @override
   void initState() {
     super.initState();
+    _boundariesWidth = widget.controller.cropStyle.boundariesWidth;
+    _boundariesLenght = widget.controller.cropStyle.boundariesLenght;
     _aspect = widget.controller.videoController.value.aspectRatio;
   }
 
@@ -54,62 +58,52 @@ class _CropGridViewState extends State<CropGridView> {
   }
 
   void onPanStart(details) {
+    final Offset margin = Offset(_boundariesWidth * 5, _boundariesWidth * 5);
     final Offset pos = details.localPosition;
-    final Offset margin = Offset(25.0, 25.0);
     final Offset max = _rect.bottomRight;
     final Offset min = _rect.topLeft;
+    final List<Offset> minMargin = [min - margin, min + margin];
+    final List<Offset> maxMargin = [max - margin, max + margin];
 
     //IS TOUCHING THE GRID
-    if (pos >= min - margin && pos <= max + margin) {
-      final maxMargin = [max - margin, max + margin];
-      final minMargin = [min - margin, min + margin];
-      final topCenter = [_rect.topCenter - margin, _rect.topCenter + margin];
-      final centerLeft = [_rect.centerLeft - margin, _rect.centerLeft + margin];
-      final bottomCenter = [
+    if (pos >= minMargin[0] && pos <= maxMargin[1]) {
+      final List<Offset> topCenter = [
+        _rect.topCenter - margin,
+        _rect.topCenter + margin,
+      ];
+      final List<Offset> centerLeft = [
+        _rect.centerLeft - margin,
+        _rect.centerLeft + margin,
+      ];
+      final List<Offset> bottomCenter = [
         _rect.bottomCenter - margin,
         _rect.bottomCenter + margin
       ];
-      final centerRight = [
+      final List<Offset> centerRight = [
         _rect.centerRight - margin,
         _rect.centerRight + margin,
       ];
 
       //TOUCH BOUNDARIES
-      if (pos >= minMargin[0] && pos <= minMargin[1]) {
+      if (pos >= minMargin[0] && pos <= minMargin[1])
         boundary = CropBoundaries.topLeft;
-      } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
+      else if (pos >= maxMargin[0] && pos <= maxMargin[1])
         boundary = CropBoundaries.bottomRight;
-      } else if (pos.dx >= maxMargin[0].dx &&
-          pos.dx <= maxMargin[1].dx &&
-          pos.dy >= minMargin[0].dy &&
-          pos.dy <= minMargin[1].dy) {
+      else if (pos >= Offset(maxMargin[0].dx, minMargin[0].dy) &&
+          pos <= Offset(maxMargin[1].dx, minMargin[1].dy))
         boundary = CropBoundaries.topRight;
-      } else if (pos.dx >= minMargin[0].dx &&
-          pos.dx <= minMargin[1].dx &&
-          pos.dy >= maxMargin[0].dy &&
-          pos.dy <= maxMargin[1].dy) {
+      else if (pos >= Offset(minMargin[0].dx, maxMargin[0].dy) &&
+          pos <= Offset(minMargin[1].dx, maxMargin[1].dy))
         boundary = CropBoundaries.bottomLeft;
-      } else if (pos.dx >= topCenter[0].dx &&
-          pos.dx <= topCenter[1].dx &&
-          pos.dy >= topCenter[0].dy &&
-          pos.dy <= topCenter[1].dy) {
+      else if (pos >= topCenter[0] && pos <= topCenter[1])
         boundary = CropBoundaries.topCenter;
-      } else if (pos.dx >= bottomCenter[0].dx &&
-          pos.dx <= bottomCenter[1].dx &&
-          pos.dy >= bottomCenter[0].dy &&
-          pos.dy <= bottomCenter[1].dy) {
+      else if (pos >= bottomCenter[0] && pos <= bottomCenter[1])
         boundary = CropBoundaries.bottomCenter;
-      } else if (pos.dx >= centerLeft[0].dx &&
-          pos.dx <= centerLeft[1].dx &&
-          pos.dy >= centerLeft[0].dy &&
-          pos.dy <= centerLeft[1].dy) {
+      else if (pos >= centerLeft[0] && pos <= centerLeft[1])
         boundary = CropBoundaries.centerLeft;
-      } else if (pos.dx >= centerRight[0].dx &&
-          pos.dx <= centerRight[1].dx &&
-          pos.dy >= centerRight[0].dy &&
-          pos.dy <= centerRight[1].dy) {
+      else if (pos >= centerRight[0] && pos <= centerRight[1])
         boundary = CropBoundaries.centerRight;
-      } else {
+      else {
         boundary = CropBoundaries.inside;
       }
     } else {
@@ -122,6 +116,10 @@ class _CropGridViewState extends State<CropGridView> {
     if (boundary != null) {
       final Offset delta = details.delta;
       switch (boundary) {
+        case CropBoundaries.inside:
+          final Offset pos = _rect.topLeft + delta;
+          _changeRect(left: pos.dx, top: pos.dy);
+          break;
         case CropBoundaries.topLeft:
           final Offset pos = _rect.topLeft + delta;
           _changeRect(
@@ -169,10 +167,6 @@ class _CropGridViewState extends State<CropGridView> {
         case CropBoundaries.centerRight:
           _changeRect(width: _rect.width + delta.dx);
           break;
-        case CropBoundaries.inside:
-          final Offset pos = _rect.topLeft + delta;
-          _changeRect(left: pos.dx, top: pos.dy);
-          break;
       }
     }
   }
@@ -198,7 +192,9 @@ class _CropGridViewState extends State<CropGridView> {
     if (left >= 0.0 &&
         top >= 0.0 &&
         left + width <= _layout.width &&
-        top + height <= _layout.height) {
+        top + height <= _layout.height &&
+        height > _boundariesLenght &&
+        width > _boundariesLenght) {
       _rect = Rect.fromLTWH(left, top, width, height);
       setState(() {});
     }
@@ -234,26 +230,28 @@ class _CropGridViewState extends State<CropGridView> {
       scale: _scale,
       child: Transform.translate(
         offset: _translate,
-        child: OrientationBuilder(builder: (_, orientation) {
-          return VideoViewer(
-            controller: widget.controller,
-            child: LayoutBuilder(builder: (_, constraints) {
-              _layout = Size(constraints.maxWidth, constraints.maxHeight);
-              if (_orientation != orientation) {
-                _orientation = orientation;
-                _scaleRect();
-              }
-              return widget.showGrid
-                  ? GestureDetector(
-                      onPanUpdate: onPanUpdate,
-                      onPanStart: onPanStart,
-                      onPanEnd: _onPanEnd,
-                      child: _paint(),
-                    )
-                  : _paint();
-            }),
-          );
-        }),
+        child: OrientationBuilder(
+          builder: (_, orientation) {
+            return VideoViewer(
+              controller: widget.controller,
+              child: LayoutBuilder(builder: (_, constraints) {
+                _layout = Size(constraints.maxWidth, constraints.maxHeight);
+                if (orientation != _orientation) {
+                  _orientation = orientation;
+                  _rect = _calculateCropRect();
+                }
+                return widget.showGrid
+                    ? GestureDetector(
+                        onPanUpdate: onPanUpdate,
+                        onPanStart: onPanStart,
+                        onPanEnd: _onPanEnd,
+                        child: _paint(),
+                      )
+                    : _paint();
+              }),
+            );
+          },
+        ),
       ),
     );
   }
