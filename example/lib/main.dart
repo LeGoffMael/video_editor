@@ -68,6 +68,7 @@ class VideoEditor extends StatefulWidget {
 class _VideoEditorState extends State<VideoEditor> {
   VideoEditorController _controller;
   final double height = 60;
+  bool _exported = false;
 
   @override
   void initState() {
@@ -86,6 +87,8 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportVideo() async {
     final File file = await _controller.exportVideo();
     await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
+    setState(() => _exported = true);
+    Misc.delayed(2000, () => setState(() => _exported = false));
   }
 
   void _openCropScreen() {
@@ -124,6 +127,7 @@ class _VideoEditorState extends State<VideoEditor> {
                   ),
                 ),
               ),
+              _customSnackBar(),
             ])
           : Center(child: CircularProgressIndicator()),
     );
@@ -169,6 +173,28 @@ class _VideoEditorState extends State<VideoEditor> {
       ),
     );
   }
+
+  Widget _customSnackBar() {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: SwipeTransition(
+        visible: _exported,
+        direction: SwipeDirection.fromBottom,
+        child: Container(
+          height: height,
+          width: double.infinity,
+          color: Colors.black.withOpacity(0.8),
+          child: Center(
+            child: TextDesigned(
+              "Video success export!",
+              color: Colors.white,
+              bold: true,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class CropScreen extends StatefulWidget {
@@ -200,7 +226,7 @@ class _CropScreenState extends State<CropScreen> {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Padding(
-          padding: Margin.all(15),
+          padding: Margin.all(30),
           child: Column(children: [
             Expanded(
               child: CropGridView(
