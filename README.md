@@ -12,8 +12,7 @@
 
 ## Features
 
-- Super flexible UI / UX.
-- Fully customizable.
+- Super flexible UI Design.
 - Support actions:
   - Crop
   - Trim
