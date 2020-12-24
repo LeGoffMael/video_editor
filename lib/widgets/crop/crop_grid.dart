@@ -1,4 +1,4 @@
-import 'package:vector_math/vector_math.dart' as vector;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
@@ -237,7 +237,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _scale = scaleX < scaleY ? scaleY : scaleX;
     }
 
-    _rotation = vector.radians(-degrees.toDouble());
+    _rotation = -degrees * (math.pi / 180.0);
     _translate = Offset(
           (_layout.width - _rect.width) / 2,
           (_layout.height - _rect.height) / 2,
