@@ -111,7 +111,7 @@ class _VideoEditorState extends State<VideoEditor> {
                     ),
                   ),
                 ),
-                _bottomNavBar(),
+                ..._trimSlider(),
               ]),
               Center(
                 child: OpacityTransition(
@@ -134,44 +134,74 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   Widget _topNavBar() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: SafeArea(
-        child: Container(
-          height: height,
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: _openCropScreen,
-                  child: Icon(Icons.crop, color: Colors.white),
-                ),
+    return SafeArea(
+      child: Container(
+        height: height,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _openCropScreen,
+                child: Icon(Icons.crop, color: Colors.white),
               ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _exportVideo,
-                  child: Icon(Icons.save, color: Colors.white),
-                ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: _exportVideo,
+                child: Icon(Icons.save, color: Colors.white),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _bottomNavBar() {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
+  List<Widget> _trimSlider() {
+    final duration = _controller.videoDuration.inSeconds;
+    final pos = _controller.trimPosition * duration;
+    final start = _controller.minTrim * duration;
+    final end = _controller.maxTrim * duration;
+
+    String formatter(Duration duration) =>
+        duration.inMinutes.remainder(60).toString().padLeft(2, '0') +
+        ":" +
+        (duration.inSeconds.remainder(60)).toString().padLeft(2, '0');
+
+    return [
+      Padding(
+        padding: Margin.horizontal(height / 4),
+        child: Row(children: [
+          TextDesigned(
+            formatter(Duration(seconds: pos.toInt())),
+            color: Colors.white,
+          ),
+          Expanded(child: SizedBox()),
+          OpacityTransition(
+            visible: _controller.isTrimming,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              TextDesigned(
+                formatter(Duration(seconds: start.toInt())),
+                color: Colors.white,
+              ),
+              SizedBox(width: 10),
+              TextDesigned(
+                formatter(Duration(seconds: end.toInt())),
+                color: Colors.white,
+              ),
+            ]),
+          )
+        ]),
+      ),
+      Container(
         height: height,
         margin: Margin.all(height / 4),
         child: TrimSlider(
           controller: _controller,
           height: height,
         ),
-      ),
-    );
+      )
+    ];
   }
 
   Widget _customSnackBar() {
