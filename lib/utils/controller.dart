@@ -95,22 +95,22 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   Future<String> _getCrop(String path) async {
     final info = await _ffprobe.getMediaInformation(path);
     final streams = info.getStreams();
-    int videoHeight = 0;
-    int videoWidth = 0;
+    int _videoHeight = 0;
+    int _videoWidth = 0;
 
     if (streams != null && streams.length > 0) {
       for (var stream in streams) {
         final width = stream.getAllProperties()['width'];
         final height = stream.getAllProperties()['height'];
-        if (width != null && width > videoWidth) videoWidth = width;
-        if (height != null && height > videoHeight) videoHeight = height;
+        if (width != null && width > _videoWidth) _videoWidth = width;
+        if (height != null && height > _videoHeight) _videoHeight = height;
       }
     }
 
-    final enddx = videoWidth * _maxCrop.dx;
-    final enddy = videoHeight * _maxCrop.dy;
-    final startdx = videoWidth * _minCrop.dx;
-    final startdy = videoHeight * _minCrop.dy;
+    final enddx = _videoWidth * _maxCrop.dx;
+    final enddy = _videoHeight * _maxCrop.dy;
+    final startdx = _videoWidth * _minCrop.dx;
+    final startdy = _videoHeight * _minCrop.dy;
     final cropWidth = enddx - startdx;
     final cropHeight = enddy - startdy;
 
@@ -193,7 +193,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     } else {
       List<String> transpose = List();
       for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
-      return transpose.length > 0 ? "${transpose.join(',')}" : "";
+      return transpose.length > 0 ? ",${transpose.join(',')}" : "";
     }
   }
 
@@ -206,10 +206,13 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///
   ///If the [videoName] is `null`, then it uses the filename.
   ///
+  ///The [scaleVideo] is `scale=width*scaleVideo:height*scaleVideo` and reduce o increase video size.
+  ///
   ///**View all** export formats on https://ffmpeg.org/ffmpeg-formats.html
   Future<File> exportVideo({
     String videoName,
     String videoFormat = "mp4",
+    double scaleVideo = 1.0,
   }) async {
     final String tempPath = (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
@@ -217,11 +220,13 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String outputPath = tempPath + videoName + ".$videoFormat";
 
     final String rotation = _getRotation();
+    final String scale = "scale=iw*$scaleVideo:ih*$scaleVideo";
     final String crop = await _getCrop(videoPath);
     final String trim = _getTrim();
+    final String gif = videoFormat == "gif" ? ",fps=10 -loop 0" : "";
 
     final String execute =
-        " -i $videoPath $trim -filter:v $crop,$rotation -c:a copy -y $outputPath";
+        " -i $videoPath $trim -filter:v $crop,$scale$rotation$gif -c:a copy -crf 0 -y $outputPath";
     final int code = await _ffmpeg.execute(execute);
 
     if (code == 0) {

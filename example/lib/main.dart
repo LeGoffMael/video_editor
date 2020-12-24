@@ -87,9 +87,14 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   void _exportVideo() async {
-    final File file = await _controller.exportVideo();
+    final File file = await _controller.exportVideo(
+      videoFormat: "gif",
+      scaleVideo: 0.5,
+    );
     if (file != null) {
-      await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
+      //GallerySaver.saveImage() for GIF or GallerySaver.saveVideo() for VIDEOS
+      //Note: GallerySave dont override files.
+      await GallerySaver.saveImage(file.path, albumName: "Video Editor");
       _exportText = "Video success export!";
     } else {
       _exportText = "Error on export video :(";
