@@ -69,6 +69,7 @@ class VideoEditor extends StatefulWidget {
 class _VideoEditorState extends State<VideoEditor> {
   VideoEditorController _controller;
   final double height = 60;
+  String _exportText = "";
   bool _exported = false;
 
   @override
@@ -87,7 +88,12 @@ class _VideoEditorState extends State<VideoEditor> {
 
   void _exportVideo() async {
     final File file = await _controller.exportVideo();
-    await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
+    if (file != null) {
+      await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
+      _exportText = "Video success export!";
+    } else {
+      _exportText = "Error on export video :(";
+    }
     setState(() => _exported = true);
     Misc.delayed(2000, () => setState(() => _exported = false));
   }
@@ -234,7 +240,7 @@ class _VideoEditorState extends State<VideoEditor> {
           color: Colors.black.withOpacity(0.8),
           child: Center(
             child: TextDesigned(
-              "Video success export!",
+              _exportText,
               color: Colors.white,
               bold: true,
             ),

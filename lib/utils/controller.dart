@@ -193,7 +193,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     } else {
       List<String> transpose = List();
       for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
-      return transpose.length > 0 ? "-vf ${transpose.join(',')}" : "";
+      return transpose.length > 0 ? "${transpose.join(',')}" : "";
     }
   }
 
@@ -221,17 +221,18 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String trim = _getTrim();
 
     final String execute =
-        " -i $videoPath $trim -filter:v $crop $rotation -c:a copy -y $outputPath";
+        " -i $videoPath $trim -filter:v $crop,$rotation -c:a copy -y $outputPath";
     final int code = await _ffmpeg.execute(execute);
-    print(execute);
 
-    if (code == 0)
+    if (code == 0) {
       print("SUCCESS EXPORT AT $outputPath");
-    else if (code == 255)
+      return File(outputPath);
+    } else if (code == 255) {
       print("USER CANCEL EXPORT");
-    else
+      return null;
+    } else {
       print("ERROR ON EXPORT VIDEO (CODE $code)");
-
-    return File(outputPath);
+      return null;
+    }
   }
 }
