@@ -14,17 +14,17 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: MyHomePage(),
+      home: VideoPickerPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class VideoPickerPage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _VideoPickerPageState createState() => _VideoPickerPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _VideoPickerPageState extends State<VideoPickerPage> {
   final ImagePicker _picker = ImagePicker();
 
   void _pickVideo() async {
@@ -41,9 +41,10 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            TextDesigned(
               "Click on Pick Video to select video",
-              style: TextStyle(fontSize: 18.0),
+              color: Colors.black,
+              size: 18.0,
             ),
             RaisedButton(
               onPressed: _pickVideo,
@@ -95,6 +96,11 @@ class _VideoEditorState extends State<VideoEditor> {
     PushRoute.page(context, CropScreen(controller: _controller));
   }
 
+  void _rotateVideo(RotateDirection direction) {
+    _controller.rotate90Degrees(direction);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,6 +145,18 @@ class _VideoEditorState extends State<VideoEditor> {
         height: height,
         child: Row(
           children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _rotateVideo(RotateDirection.left),
+                child: Icon(Icons.rotate_left, color: Colors.white),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _rotateVideo(RotateDirection.right),
+                child: Icon(Icons.rotate_right, color: Colors.white),
+              ),
+            ),
             Expanded(
               child: GestureDetector(
                 onTap: _openCropScreen,

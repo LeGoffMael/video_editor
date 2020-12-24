@@ -1,3 +1,4 @@
+import 'package:vector_math/vector_math.dart' as vector;
 import 'package:flutter/material.dart';
 import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
@@ -237,31 +238,34 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Transform.scale(
-      scale: _scale,
-      child: Transform.translate(
-        offset: _translate,
-        child: OrientationBuilder(
-          builder: (_, orientation) {
-            return VideoViewer(
-              controller: widget.controller,
-              child: LayoutBuilder(builder: (_, constraints) {
-                _layout = Size(constraints.maxWidth, constraints.maxHeight);
-                if (orientation != _orientation) {
-                  _orientation = orientation;
-                  _rect = _calculateCropRect();
-                }
-                return widget.showGrid
-                    ? GestureDetector(
-                        onPanUpdate: onPanUpdate,
-                        onPanStart: onPanStart,
-                        onPanEnd: _onPanEnd,
-                        child: _paint(),
-                      )
-                    : _paint();
-              }),
-            );
-          },
+    return Transform.rotate(
+      angle: vector.radians(-widget.controller.rotation.toDouble()),
+      child: Transform.scale(
+        scale: _scale,
+        child: Transform.translate(
+          offset: _translate,
+          child: OrientationBuilder(
+            builder: (_, orientation) {
+              return VideoViewer(
+                controller: widget.controller,
+                child: LayoutBuilder(builder: (_, constraints) {
+                  _layout = Size(constraints.maxWidth, constraints.maxHeight);
+                  if (orientation != _orientation) {
+                    _orientation = orientation;
+                    _rect = _calculateCropRect();
+                  }
+                  return widget.showGrid
+                      ? GestureDetector(
+                          onPanUpdate: onPanUpdate,
+                          onPanStart: onPanStart,
+                          onPanEnd: _onPanEnd,
+                          child: _paint(),
+                        )
+                      : _paint();
+                }),
+              );
+            },
+          ),
         ),
       ),
     );

@@ -6,6 +6,8 @@ import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
+enum RotateDirection { left, right }
+
 class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
@@ -29,6 +31,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
   FlutterFFprobe _ffprobe = FlutterFFprobe();
 
+  int _rotation = 0;
   bool _isTrimming = false;
   bool _isCropping = false;
   double _minTrim = 0.0;
@@ -169,6 +172,34 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   set changeIsTrimming(bool value) => _isTrimming = value;
 
   //------------//
+  //VIDEO ROTATE//
+  //------------//
+  void rotate90Degrees([RotateDirection direction = RotateDirection.right]) {
+    switch (direction) {
+      case RotateDirection.left:
+        _rotation += 90;
+        if (_rotation >= 360) _rotation = _rotation - 360;
+        break;
+      case RotateDirection.right:
+        _rotation -= 90;
+        if (_rotation <= 0) _rotation = 360 + _rotation;
+        break;
+    }
+  }
+
+  String _getRotation() {
+    if (_rotation >= 360 || _rotation <= 0) {
+      return "";
+    } else {
+      List<String> transpose = List();
+      for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
+      return transpose.length > 0 ? "-vf ${transpose.join(',')}" : "";
+    }
+  }
+
+  int get rotation => _rotation;
+
+  //------------//
   //VIDEO EXPORT//
   //------------//
   ///Export the video at `TemporaryDirectory` and return a `File`.
@@ -185,12 +216,14 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     if (videoName == null) videoName = path.basename(videoPath).split('.')[0];
     final String outputPath = tempPath + videoName + ".$videoFormat";
 
+    final String rotation = _getRotation();
     final String crop = await _getCrop(videoPath);
     final String trim = _getTrim();
 
-    final int code = await _ffmpeg.execute(
-      " -i $videoPath $trim -filter:v $crop -c:a copy -y $outputPath",
-    );
+    final String execute =
+        " -i $videoPath $trim -filter:v $crop $rotation -c:a copy -y $outputPath";
+    final int code = await _ffmpeg.execute(execute);
+    print(execute);
 
     if (code == 0)
       print("SUCCESS EXPORT AT $outputPath");
