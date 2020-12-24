@@ -22,8 +22,6 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     CropGridStyle trimStyle,
     TrimSliderStyle cropStyle,
   })  : assert(file != null),
-        assert(trimStyle != null),
-        assert(cropStyle != null),
         _videoController = VideoPlayerController.file(file),
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
@@ -31,6 +29,8 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
   FlutterFFprobe _ffprobe = FlutterFFprobe();
 
+  bool _isTrimming = false;
+  bool _isCropping = false;
   double _minTrim = 0.0;
   double _maxTrim = 1.0;
   Offset _minCrop = Offset.zero;
@@ -122,11 +122,17 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  ///Get isCropping value
+  bool get isCropping => _isCropping;
+
   ///Get the **TopLeftOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get minCrop => _minCrop;
 
   ///Get the **BottomRightOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get maxCrop => _maxCrop;
+
+  ///Don't touch this >:)
+  set changeIsCropping(bool value) => _isCropping = value;
 
   //----------//
   //VIDEO TRIM//
@@ -146,6 +152,9 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     _trimStart = videoDuration * _minTrim;
   }
 
+  ///Get isTrimming value
+  bool get isTrimming => _isTrimming;
+
   ///Get the **MinTrim** (Range is `0.0` to `1.0`).
   double get minTrim => _minTrim;
 
@@ -155,6 +164,9 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
+
+  ///Don't touch this >:)
+  set changeIsTrimming(bool value) => _isTrimming = value;
 
   //------------//
   //VIDEO EXPORT//

@@ -31,7 +31,7 @@ class CropGridViewer extends StatefulWidget {
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
 
-  ///When the pan gesture ended and if the cropRect was updated, then it will execute the callback
+  ///When the pan gesture ended and the cropRect was updated, then it will execute the callback
   final void Function(Offset mixCrop, Offset maxCrop) onChangeCrop;
 
   @override
@@ -114,6 +114,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
         boundary = _CropBoundaries.inside;
       else
         boundary = null;
+
+      if (boundary != null) widget.controller.changeIsCropping = true;
     } else
       boundary = null;
 
@@ -186,6 +188,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       final double maxdy = _rect.bottom / _layout.height;
       final double maxdx = _rect.right / _layout.width;
       widget.onChangeCrop(Offset(mindx, mindy), Offset(maxdx, maxdy));
+      widget.controller.changeIsCropping = false;
     }
   }
 

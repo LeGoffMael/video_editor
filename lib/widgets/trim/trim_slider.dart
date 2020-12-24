@@ -21,7 +21,7 @@ class TrimSlider extends StatefulWidget {
   ///It is the height of the thumbnails
   final double height;
 
-  //Essential argument for the functioning of the Widget
+  ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
 
   @override
@@ -76,6 +76,7 @@ class _TrimSliderState extends State<TrimSlider> {
         boundary = _TrimBoundaries.inside;
       else
         boundary = null;
+      if (boundary != null) widget.controller.changeIsTrimming = true;
     } else {
       boundary = null;
     }
@@ -113,15 +114,18 @@ class _TrimSliderState extends State<TrimSlider> {
   }
 
   void onHorizontalDragEnd(_) async {
-    final double width = _layout.width;
-    widget.controller.updateTrim(_rect.left / width, _rect.right / width);
-    if (boundary == _TrimBoundaries.progress) {
-      await _controller.seekTo(
-        _controller.value.duration * (_progressTrim / width),
-      );
-      if (_wasPlaying) {
-        await _controller?.play();
-        _wasPlaying = false;
+    if (boundary != null) {
+      final double width = _layout.width;
+      widget.controller.changeIsTrimming = false;
+      widget.controller.updateTrim(_rect.left / width, _rect.right / width);
+      if (boundary == _TrimBoundaries.progress) {
+        await _controller.seekTo(
+          _controller.value.duration * (_progressTrim / width),
+        );
+        if (_wasPlaying) {
+          await _controller?.play();
+          _wasPlaying = false;
+        }
       }
     }
   }
