@@ -19,6 +19,9 @@ class MyApp extends StatelessWidget {
   }
 }
 
+//-------------------//
+//PICKUP VIDEO SCREEN//
+//-------------------//
 class VideoPickerPage extends StatefulWidget {
   @override
   _VideoPickerPageState createState() => _VideoPickerPageState();
@@ -57,6 +60,9 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
   }
 }
 
+//-------------------//
+//VIDEO EDITOR SCREEN//
+//-------------------//
 class VideoEditor extends StatefulWidget {
   VideoEditor({Key key, this.file}) : super(key: key);
 
@@ -256,6 +262,9 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 }
 
+//-----------------//
+//CROP VIDEO SCREEN//
+//-----------------//
 class CropScreen extends StatefulWidget {
   CropScreen({
     Key key,

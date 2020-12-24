@@ -17,11 +17,12 @@
 - Support actions:
   - Crop
   - Trim
+  - Scale
   - Rotate
 
 <br><br>
 
-## **Installation:** More info on [Flutter FFMPEG](https://pub.dev/packages/flutter_ffmpeg)
+## **Installation** (More info on [Flutter FFMPEG](https://pub.dev/packages/flutter_ffmpeg))
 
 ### **Android**
 
@@ -103,7 +104,7 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
 
 <br><br>
 
-## **Example**
+## **Example** (The UI Design is fully customizable on the [example](https://pub.dev/packages/video_editor/example))
 
 - Dependencies used:
   - [Helpers](https://pub.dev/packages/helpers)
@@ -112,12 +113,12 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
 
 <br>
 
-| Crop Video | Rotate Video                          |
-| ---------- | ------------------------------------- |
-|            | ![](./assets/readme/export_video.gif) |
+| Crop Video                          | Rotate Video                          |
+| ----------------------------------- | ------------------------------------- |
+| ![](./assets/readme/crop_video.gif) | ![](./assets/readme/rotate_video.gif) |
 
 <br>
 
-| Trim Video | Export Video                          |
-| ---------- | ------------------------------------- |
-|            | ![](./assets/readme/export_video.gif) |
+| Trim Video                          | Export Video                          |
+| ----------------------------------- | ------------------------------------- |
+| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
