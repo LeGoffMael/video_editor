@@ -34,7 +34,6 @@ class _TrimSliderState extends State<TrimSlider> {
   double _progressTrim = 0.0;
   Size _layout = Size.zero;
   Rect _rect;
-  bool _wasPlaying = false;
 
   @override
   void initState() {
@@ -76,7 +75,7 @@ class _TrimSliderState extends State<TrimSlider> {
         boundary = _TrimBoundaries.inside;
       else
         boundary = null;
-      if (boundary != null) widget.controller.changeIsTrimming = true;
+      _updateIsTrimming(true);
     } else {
       boundary = null;
     }
@@ -101,11 +100,8 @@ class _TrimSliderState extends State<TrimSlider> {
         case _TrimBoundaries.progress:
           final double pos = details.localPosition.dx;
           if (pos >= _rect.left && pos <= _rect.right) {
-            if (_controller.value.isPlaying) {
-              _controller?.pause();
-              _wasPlaying = true;
-            }
             _progressTrim = pos;
+            _seekTo();
             setState(() {});
           }
           break;
@@ -113,20 +109,15 @@ class _TrimSliderState extends State<TrimSlider> {
     }
   }
 
-  void onHorizontalDragEnd(_) async {
+  void onHorizontalDragEnd(_) {
     if (boundary != null) {
-      final double width = _layout.width;
-      widget.controller.changeIsTrimming = false;
-      widget.controller.updateTrim(_rect.left / width, _rect.right / width);
-      if (boundary == _TrimBoundaries.progress) {
-        await _controller.seekTo(
-          _controller.value.duration * (_progressTrim / width),
-        );
-        if (_wasPlaying) {
-          await _controller?.play();
-          _wasPlaying = false;
-        }
+      _updateIsTrimming(false);
+      if (_progressTrim >= _rect.right || _progressTrim < _rect.left) {
+        _progressTrim = _rect.left;
+        _seekTo();
       }
+      _updateTrim();
+      setState(() {});
     }
   }
 
@@ -135,6 +126,7 @@ class _TrimSliderState extends State<TrimSlider> {
     width = width ?? _rect.width;
     if (left >= 0 && left + width <= _layout.width) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
+      _updateTrim();
       setState(() {});
     }
   }
@@ -149,6 +141,22 @@ class _TrimSliderState extends State<TrimSlider> {
       max * width,
       widget.height,
     );
+  }
+
+  void _seekTo() {
+    _controller.seekTo(
+      _controller.value.duration * (_progressTrim / _layout.width),
+    );
+  }
+
+  void _updateTrim() {
+    final double width = _layout.width;
+    widget.controller.updateTrim(_rect.left / width, _rect.right / width);
+  }
+
+  void _updateIsTrimming(bool value) {
+    if (boundary != null && boundary != _TrimBoundaries.progress)
+      widget.controller.changeIsTrimming = value;
   }
 
   @override
