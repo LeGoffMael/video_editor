@@ -13,8 +13,11 @@
 ## Features
 
 - Super flexible UI / UX.
-- Crop and Trim support.
 - Fully customizable.
+- Support actions:
+  - Crop
+  - Trim
+  - Rotate
 
 <br><br>
 
@@ -106,6 +109,12 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
   - [Helpers](https://pub.dev/packages/helpers)
   - [Image Picker](https://pub.dev/packages/image_picker)
   - [Gallery Saver](https://pub.dev/packages/gallery_saver)
+
+<br>
+
+| Crop Video | Rotate Video                          |
+| ---------- | ------------------------------------- |
+|            | ![](./assets/readme/export_video.gif) |
 
 <br>
 

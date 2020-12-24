@@ -230,14 +230,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
     if (_aspect < 1.0) {
       if (degrees == 90 || degrees == 270)
-        _scale = _layout.height / _rect.width;
+        _scale = _layout.width / _rect.height;
       else
         _scale = scaleX > scaleY ? scaleY : scaleX;
     } else {
-      if (degrees == 90 || degrees == 270)
-        _scale = _rect.width / _layout.height;
-      else
-        _scale = scaleX < scaleY ? scaleY : scaleX;
+      _scale = scaleX < scaleY ? scaleY : scaleX;
     }
 
     _rotation = vector.radians(-degrees.toDouble());
