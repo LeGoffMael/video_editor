@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  path: ^1.7.0
   helpers: ^1.0.1
   video_player: ^1.0.1
   path_provider: ^1.6.24
