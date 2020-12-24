@@ -43,6 +43,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
   double _boundariesLenght = 0;
   double _boundariesWidth = 0;
   Offset _translate = Offset.zero;
+  double _rotation = 0.0;
   double _aspect = 1.0;
   double _scale = 1.0;
   Size _layout = Size.zero;
@@ -223,12 +224,23 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   void _scaleRect() {
     _rect = _calculateCropRect();
-    final double _scaleX = _layout.width / _rect.width;
-    final double _scaleY = _layout.height / _rect.height;
-    if (_aspect < 1.0)
-      _scale = _scaleX > _scaleY ? _scaleY : _scaleX;
-    else
-      _scale = _scaleX < _scaleY ? _scaleY : _scaleX;
+    final int degrees = widget.controller.rotation;
+    final double scaleX = _layout.width / _rect.width;
+    final double scaleY = _layout.height / _rect.height;
+
+    if (_aspect < 1.0) {
+      if (degrees == 90 || degrees == 270)
+        _scale = _layout.height / _rect.width;
+      else
+        _scale = scaleX > scaleY ? scaleY : scaleX;
+    } else {
+      if (degrees == 90 || degrees == 270)
+        _scale = _rect.width / _layout.height;
+      else
+        _scale = scaleX < scaleY ? scaleY : scaleX;
+    }
+
+    _rotation = vector.radians(-degrees.toDouble());
     _translate = Offset(
           (_layout.width - _rect.width) / 2,
           (_layout.height - _rect.height) / 2,
@@ -239,7 +251,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: vector.radians(-widget.controller.rotation.toDouble()),
+      angle: _rotation,
       child: Transform.scale(
         scale: _scale,
         child: Transform.translate(
