@@ -191,7 +191,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     if (_rotation >= 360 || _rotation <= 0) {
       return "";
     } else {
-      List<String> transpose = List();
+      List<String> transpose = [];
       for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
       return transpose.length > 0 ? ",${transpose.join(',')}" : "";
     }
@@ -226,7 +226,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String gif = videoFormat == "gif" ? ",fps=10 -loop 0" : "";
 
     final String execute =
-        " -i $videoPath $trim -filter:v $crop,$scale$rotation$gif -c:a copy -crf 0 -y $outputPath";
+        " -i $videoPath $trim -filter:v $crop,$scale$rotation$gif -c:a copy -y $outputPath";
     final int code = await _ffmpeg.execute(execute);
 
     if (code == 0) {
