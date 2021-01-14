@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:video_editor/utils/controller.dart';
-import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+
+import 'package:video_editor/widgets/crop/crop_grid_painter.dart';
+import 'package:video_editor/utils/controller.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   ThumbnailSlider({
@@ -28,7 +29,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   int _thumbnails = 8;
 
   Rect _rect;
-  Size _thumbnailSize = Size.zero;
+  Size _size = Size.zero;
   Offset _translate = Offset.zero;
   Stream<List<Uint8List>> _stream;
 
@@ -36,22 +37,27 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   void initState() {
     super.initState();
     _aspect = widget.controller.videoController.value.aspectRatio;
-    _thumbnailSize = Size(widget.height, widget.height);
   }
 
   @override
   void didUpdateWidget(ThumbnailSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.controller.isPlaying && _aspect <= 1.0)
+    if (!widget.controller.isPlaying)
       setState(() {
         _rect = _calculateTrimRect();
-        final double _scaleX = _thumbnailSize.width / _rect.width;
-        final double _scaleY = _thumbnailSize.height / _rect.height;
+        final double _scaleX = _size.width / _rect.width;
+        final double _scaleY = _size.height / _rect.height;
 
-        _scale = _scaleX > _scaleY ? _scaleY : _scaleX;
+        _scale = _aspect <= 1.0
+            ? _scaleX > _scaleY
+                ? _scaleY
+                : _scaleX
+            : _scaleX < _scaleY
+                ? _scaleY
+                : _scaleX;
         _translate = Offset(
-              (_thumbnailSize.width - _rect.width) / 2,
-              (_thumbnailSize.height - _rect.height) / 2,
+              (_size.width - _rect.width) / 2,
+              (_size.height - _rect.height) / 2,
             ) -
             _rect.topLeft;
       });
@@ -82,12 +88,12 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final Offset max = widget.controller.maxCrop;
     return Rect.fromPoints(
       Offset(
-        min.dx * _thumbnailSize.width * (_aspect <= 1.0 ? _aspect : 1.0),
-        min.dy * _thumbnailSize.height,
+        min.dx * _size.width,
+        min.dy * _size.height,
       ),
       Offset(
-        max.dx * _thumbnailSize.width * (_aspect <= 1.0 ? _aspect : 1.0),
-        max.dy * _thumbnailSize.height,
+        max.dx * _size.width,
+        max.dy * _size.height,
       ),
     );
   }
@@ -98,9 +104,13 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;
-        _rect = _calculateTrimRect();
-        _thumbnails = (_width ~/ _thumbnailSize.width) + 1;
+
+        _size = _aspect <= 1.0
+            ? Size(widget.height * _aspect, widget.height)
+            : Size(widget.height, widget.height / _aspect);
+        _thumbnails = (_width ~/ _size.width) + 1;
         _stream = _generateThumbnails();
+        _rect = _calculateTrimRect();
       }
 
       return StreamBuilder(
@@ -110,6 +120,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
           return snapshot.hasData
               ? ListView.builder(
                   scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.zero,
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: data.length,
                   itemBuilder: (_, int index) {
@@ -119,27 +130,24 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                         child: Transform.translate(
                           offset: _translate,
                           child: Container(
-                            height: widget.height,
-                            width: widget.height,
+                            alignment: Alignment.center,
+                            height: _size.height,
+                            width: _size.width,
                             child: Stack(children: [
                               Image(
-                                height: widget.height,
-                                width: widget.height,
                                 image: MemoryImage(data[index]),
-                                alignment: _aspect <= 1.0
-                                    ? Alignment.topLeft
-                                    : Alignment.center,
-                                fit: _aspect <= 1.0 ? null : BoxFit.fitWidth,
+                                width: _size.width,
+                                height: _size.height,
+                                alignment: Alignment.topLeft,
                               ),
-                              if (_aspect <= 1.0)
-                                CustomPaint(
-                                  size: Size.infinite,
-                                  painter: CropGridPainter(
-                                    _rect,
-                                    showGrid: false,
-                                    style: widget.controller.cropStyle,
-                                  ),
-                                )
+                              CustomPaint(
+                                size: _size,
+                                painter: CropGridPainter(
+                                  _rect,
+                                  showGrid: false,
+                                  style: widget.controller.cropStyle,
+                                ),
+                              )
                             ]),
                           ),
                         ),
