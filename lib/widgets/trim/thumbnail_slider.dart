@@ -11,8 +11,12 @@ class ThumbnailSlider extends StatefulWidget {
     this.quality = 25,
   }) : assert(controller != null);
 
+  ///MAX QUALITY IS 100 - MIN QUALITY IS 0
   final int quality;
+
+  ///THUMBNAIL HEIGHT
   final double height;
+
   final VideoEditorController controller;
 
   @override
@@ -20,21 +24,19 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  Map<double, List<Uint8List>> _cacheBytes = Map();
-  List<Uint8List> _imageBytes = [];
-  Offset _translate = Offset.zero;
-  Size _layout = Size.zero;
+  double _aspect = 1.0, _scale = 1.0, _width = 1.0;
   int _thumbnails = 8;
-  double _aspect = 1.0;
-  double _scale = 1.0;
-  double _width = 1;
+
   Rect _rect;
+  Size _thumbnailSize = Size.zero;
+  Offset _translate = Offset.zero;
+  Stream<List<Uint8List>> _stream;
 
   @override
   void initState() {
     super.initState();
-    _layout = Size(widget.height, widget.height);
     _aspect = widget.controller.videoController.value.aspectRatio;
+    _thumbnailSize = Size(widget.height, widget.height);
   }
 
   @override
@@ -43,45 +45,35 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     if (!widget.controller.isPlaying && _aspect <= 1.0)
       setState(() {
         _rect = _calculateTrimRect();
-        final double _scaleX = _layout.width / _rect.width;
-        final double _scaleY = _layout.height / _rect.height;
+        final double _scaleX = _thumbnailSize.width / _rect.width;
+        final double _scaleY = _thumbnailSize.height / _rect.height;
 
         _scale = _scaleX > _scaleY ? _scaleY : _scaleX;
-
         _translate = Offset(
-              (_layout.width - _rect.width) / 2,
-              (_layout.height - _rect.height) / 2,
+              (_thumbnailSize.width - _rect.width) / 2,
+              (_thumbnailSize.height - _rect.height) / 2,
             ) -
             _rect.topLeft;
       });
   }
 
-  void _generateThumbnail(double width) async {
-    int lenght = _cacheBytes[width] == null ? 0 : _cacheBytes[width].length;
+  Stream<List<Uint8List>> _generateThumbnails() async* {
+    final String path = widget.controller.file.path;
+    final int duration = widget.controller.videoDuration.inMilliseconds;
+    final double eachPart = duration / _thumbnails;
 
-    if (_thumbnails != lenght) {
-      final String videoPath = widget.controller.file.path;
-      final int eachPart =
-          widget.controller.videoDuration.inMilliseconds ~/ _thumbnails;
+    List<Uint8List> _byteList = [];
 
-      _imageBytes = [];
-      _cacheBytes[width] = [];
+    for (int i = 1; i <= _thumbnails; i++) {
+      Uint8List _bytes = await VideoThumbnail.thumbnailData(
+        imageFormat: ImageFormat.JPEG,
+        video: path,
+        timeMs: (eachPart * i).toInt(),
+        quality: widget.quality,
+      );
+      _byteList.add(_bytes);
 
-      for (int i = 1; i <= _thumbnails; i++) {
-        if (width != _width) break;
-        final Uint8List _bytes = await VideoThumbnail.thumbnailData(
-          imageFormat: ImageFormat.WEBP,
-          timeMs: eachPart * i,
-          video: videoPath,
-          quality: widget.quality,
-        );
-        _imageBytes.add(_bytes);
-        _cacheBytes[width].add(_bytes);
-        if (mounted) setState(() {});
-      }
-    } else {
-      _imageBytes = _cacheBytes[width];
-      if (mounted) setState(() {});
+      yield _byteList;
     }
   }
 
@@ -90,12 +82,12 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final Offset max = widget.controller.maxCrop;
     return Rect.fromPoints(
       Offset(
-        min.dx * _layout.width * (_aspect <= 1.0 ? _aspect : 1.0),
-        min.dy * _layout.height,
+        min.dx * _thumbnailSize.width * (_aspect <= 1.0 ? _aspect : 1.0),
+        min.dy * _thumbnailSize.height,
       ),
       Offset(
-        max.dx * _layout.width * (_aspect <= 1.0 ? _aspect : 1.0),
-        max.dy * _layout.height,
+        max.dx * _thumbnailSize.width * (_aspect <= 1.0 ? _aspect : 1.0),
+        max.dy * _thumbnailSize.height,
       ),
     );
   }
@@ -106,47 +98,56 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;
-        _thumbnails = (_width ~/ _layout.width) + 1;
         _rect = _calculateTrimRect();
-        _generateThumbnail(width);
+        _thumbnails = (_width ~/ _thumbnailSize.width) + 1;
+        _stream = _generateThumbnails();
       }
 
-      return ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: _imageBytes.length,
-        itemBuilder: (_, int index) {
-          return ClipRRect(
-            child: Transform.scale(
-              scale: _scale,
-              child: Transform.translate(
-                offset: _translate,
-                child: Container(
-                  height: widget.height,
-                  width: widget.height,
-                  child: Stack(children: [
-                    Image(
-                      height: widget.height,
-                      width: widget.height,
-                      image: MemoryImage(_imageBytes[index]),
-                      alignment:
-                          _aspect <= 1.0 ? Alignment.topLeft : Alignment.center,
-                      fit: _aspect <= 1.0 ? null : BoxFit.fitWidth,
-                    ),
-                    if (_aspect <= 1.0)
-                      CustomPaint(
-                        size: Size.infinite,
-                        painter: CropGridPainter(
-                          _rect,
-                          showGrid: false,
-                          style: widget.controller.cropStyle,
+      return StreamBuilder(
+        stream: _stream,
+        builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
+          final data = snapshot.data;
+          return snapshot.hasData
+              ? ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: data.length,
+                  itemBuilder: (_, int index) {
+                    return ClipRRect(
+                      child: Transform.scale(
+                        scale: _scale,
+                        child: Transform.translate(
+                          offset: _translate,
+                          child: Container(
+                            height: widget.height,
+                            width: widget.height,
+                            child: Stack(children: [
+                              Image(
+                                height: widget.height,
+                                width: widget.height,
+                                image: MemoryImage(data[index]),
+                                alignment: _aspect <= 1.0
+                                    ? Alignment.topLeft
+                                    : Alignment.center,
+                                fit: _aspect <= 1.0 ? null : BoxFit.fitWidth,
+                              ),
+                              if (_aspect <= 1.0)
+                                CustomPaint(
+                                  size: Size.infinite,
+                                  painter: CropGridPainter(
+                                    _rect,
+                                    showGrid: false,
+                                    style: widget.controller.cropStyle,
+                                  ),
+                                )
+                            ]),
+                          ),
                         ),
-                      )
-                  ]),
-                ),
-              ),
-            ),
-          );
+                      ),
+                    );
+                  },
+                )
+              : SizedBox();
         },
       );
     });
