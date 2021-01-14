@@ -21,8 +21,8 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Constructs a [VideoEditorController] that edits a video from a file.
   VideoEditorController.file(
     this.file, {
-    CropGridStyle trimStyle,
-    TrimSliderStyle cropStyle,
+    TrimSliderStyle trimStyle,
+    CropGridStyle cropStyle,
   })  : assert(file != null),
         _videoController = VideoPlayerController.file(file),
         this.cropStyle = cropStyle ?? CropGridStyle(),
@@ -220,13 +220,13 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String outputPath = tempPath + videoName + ".$videoFormat";
 
     final String rotation = _getRotation();
-    final String scale = "scale=iw*$scaleVideo:ih*$scaleVideo";
+    final String scale = ",scale=iw*$scaleVideo:ih*$scaleVideo";
     final String crop = await _getCrop(videoPath);
     final String trim = _getTrim();
     final String gif = videoFormat == "gif" ? ",fps=10 -loop 0" : "";
 
     final String execute =
-        " -i $videoPath $trim -filter:v $crop,$scale$rotation$gif -c:a copy -y $outputPath";
+        " -i $videoPath $trim -filter:v $crop$scale$rotation$gif -c:a copy -y $outputPath";
     final int code = await _ffmpeg.execute(execute);
 
     if (code == 0) {
