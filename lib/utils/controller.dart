@@ -8,6 +8,27 @@ import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 enum RotateDirection { left, right }
 
+///A preset is a collection of options that will provide a certain encoding speed to compression ratio.
+///
+///A slower preset will provide better compression (compression is quality per filesize).
+///
+///This means that, for example, if you target a certain file size or constant bit rate,
+///you will achieve better quality with a slower preset.
+///Similarly, for constant quality encoding,
+///you will simply save bitrate by choosing a slower preset.
+
+enum VideoExportPreset {
+  ultrafast,
+  superfast,
+  veryfast,
+  faster,
+  fast,
+  medium,
+  slow,
+  slower,
+  veryslow
+}
+
 class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
@@ -140,7 +161,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   //----------//
   //VIDEO TRIM//
   //----------//
-  String _getTrim() => "-ss $_trimStart -t ${_trimEnd - _trimStart}";
+  String _getTrim() => "-ss $_trimStart -to $_trimEnd";
 
   ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
   void updateTrim(double min, double max) {
@@ -205,15 +226,24 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   //------------//
   ///Export the video at `TemporaryDirectory` and return a `File`.
   ///
+  ///
   ///If the [videoName] is `null`, then it uses the filename.
+  ///
   ///
   ///The [scaleVideo] is `scale=width*scaleVideo:height*scaleVideo` and reduce o increase video size.
   ///
   ///**View all** export formats on https://ffmpeg.org/ffmpeg-formats.html
+  ///
+  ///
+  ///The [preset] is the `compress quality`. A slower preset will provide better compression (compression is quality per filesize)
+  ///
+  ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<File> exportVideo({
     String videoName,
     String videoFormat = "mp4",
     double scaleVideo = 1.0,
+    VideoExportPreset preset = VideoExportPreset.medium,
+    String customInstruction = "",
   }) async {
     final String tempPath = (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
@@ -227,7 +257,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String gif = videoFormat == "gif" ? ",fps=10 -loop 0" : "";
 
     final String execute =
-        " -i $videoPath $trim -filter:v $crop$scale$rotation$gif -c:a copy -y $outputPath";
+        " -i $videoPath $customInstruction -filter:v $crop$scale$rotation$gif ${_getPreset(preset)} $trim -c:a copy -y $outputPath";
     final int code = await _ffmpeg.execute(execute);
 
     if (code == 0) {
@@ -240,5 +270,41 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
       print("ERROR ON EXPORT VIDEO (CODE $code)");
       return null;
     }
+  }
+
+  String _getPreset(VideoExportPreset preset) {
+    String newPreset = "medium";
+
+    switch (preset) {
+      case VideoExportPreset.ultrafast:
+        newPreset = "ultrafast";
+        break;
+      case VideoExportPreset.superfast:
+        newPreset = "superfast";
+        break;
+      case VideoExportPreset.veryfast:
+        newPreset = "veryfast";
+        break;
+      case VideoExportPreset.faster:
+        newPreset = "faster";
+        break;
+      case VideoExportPreset.fast:
+        newPreset = "fast";
+        break;
+      case VideoExportPreset.medium:
+        newPreset = "medium";
+        break;
+      case VideoExportPreset.slow:
+        newPreset = "slow";
+        break;
+      case VideoExportPreset.slower:
+        newPreset = "slower";
+        break;
+      case VideoExportPreset.veryslow:
+        newPreset = "veryslow";
+        break;
+    }
+
+    return "-preset $newPreset";
   }
 }
