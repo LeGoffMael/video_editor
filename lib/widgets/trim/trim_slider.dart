@@ -29,36 +29,24 @@ class TrimSlider extends StatefulWidget {
 }
 
 class _TrimSliderState extends State<TrimSlider> {
-  VideoPlayerController _controller;
-  _TrimBoundaries boundary;
-  double _progressTrim = 0.0;
-  Size _layout = Size.zero;
+  final _boundary = ValueNotifier<_TrimBoundaries>(null);
+
   Rect _rect;
+  Size _layout = Size.zero;
+  VideoPlayerController _controller;
 
   @override
   void initState() {
     _controller = widget.controller.videoController;
-    _controller.addListener(_listener);
     super.initState();
   }
 
-  @override
-  void dispose() {
-    _controller.removeListener(_listener);
-    super.dispose();
-  }
-
-  void _listener() {
-    setState(() {
-      _progressTrim = _layout.width * widget.controller.trimPosition;
-    });
-  }
-
-  void onHorizontalDragStart(DragStartDetails details) {
+  void _onHorizontalDragStart(DragStartDetails details) {
     final double margin = 25.0;
     final double pos = details.localPosition.dx;
     final double max = _rect.right;
     final double min = _rect.left;
+    final double progressTrim = _getProgressTrim();
     final List<double> minMargin = [min - margin, min + margin];
     final List<double> maxMargin = [max - margin, max + margin];
 
@@ -66,26 +54,25 @@ class _TrimSliderState extends State<TrimSlider> {
     if (pos >= minMargin[0] && pos <= maxMargin[1]) {
       //TOUCH BOUNDARIES
       if (pos >= minMargin[0] && pos <= minMargin[1])
-        boundary = _TrimBoundaries.left;
+        _boundary.value = _TrimBoundaries.left;
       else if (pos >= maxMargin[0] && pos <= maxMargin[1])
-        boundary = _TrimBoundaries.right;
-      else if (pos >= _progressTrim - margin && pos <= _progressTrim + margin)
-        boundary = _TrimBoundaries.progress;
+        _boundary.value = _TrimBoundaries.right;
+      else if (pos >= progressTrim - margin && pos <= progressTrim + margin)
+        _boundary.value = _TrimBoundaries.progress;
       else if (pos >= minMargin[1] && pos <= maxMargin[0])
-        boundary = _TrimBoundaries.inside;
+        _boundary.value = _TrimBoundaries.inside;
       else
-        boundary = null;
+        _boundary.value = null;
       _updateIsTrimming(true);
     } else {
-      boundary = null;
+      _boundary.value = null;
     }
-    setState(() {});
   }
 
-  void onHorizontalDragUpdate(DragUpdateDetails details) {
-    if (boundary != null) {
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_boundary.value != null) {
       final Offset delta = details.delta;
-      switch (boundary) {
+      switch (_boundary.value) {
         case _TrimBoundaries.left:
           final pos = _rect.topLeft + delta;
           _changeRect(left: pos.dx, width: _rect.width - delta.dx);
@@ -99,25 +86,19 @@ class _TrimSliderState extends State<TrimSlider> {
           break;
         case _TrimBoundaries.progress:
           final double pos = details.localPosition.dx;
-          if (pos >= _rect.left && pos <= _rect.right) {
-            _progressTrim = pos;
-            _seekTo();
-            setState(() {});
-          }
+          if (pos >= _rect.left && pos <= _rect.right) _seekTo(pos);
           break;
       }
     }
   }
 
-  void onHorizontalDragEnd(_) {
-    if (boundary != null) {
+  void _onHorizontalDragEnd(_) {
+    if (_boundary.value != null) {
+      final double _progressTrim = _getProgressTrim();
+      if (_progressTrim >= _rect.right || _progressTrim < _rect.left)
+        _seekTo(_progressTrim);
       _updateIsTrimming(false);
-      if (_progressTrim >= _rect.right || _progressTrim < _rect.left) {
-        _progressTrim = _rect.left;
-        _seekTo();
-      }
       _updateTrim();
-      setState(() {});
     }
   }
 
@@ -127,7 +108,6 @@ class _TrimSliderState extends State<TrimSlider> {
     if (left >= 0 && left + width <= _layout.width) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
       _updateTrim();
-      setState(() {});
     }
   }
 
@@ -143,9 +123,9 @@ class _TrimSliderState extends State<TrimSlider> {
     );
   }
 
-  void _seekTo() {
-    _controller.seekTo(
-      _controller.value.duration * (_progressTrim / _layout.width),
+  void _seekTo(double position) async {
+    await _controller.seekTo(
+      _controller.value.duration * (position / _layout.width),
     );
   }
 
@@ -155,8 +135,12 @@ class _TrimSliderState extends State<TrimSlider> {
   }
 
   void _updateIsTrimming(bool value) {
-    if (boundary != null && boundary != _TrimBoundaries.progress)
+    if (_boundary.value != null && _boundary.value != _TrimBoundaries.progress)
       widget.controller.changeIsTrimming = value;
+  }
+
+  double _getProgressTrim() {
+    return _layout.width * widget.controller.trimPosition;
   }
 
   @override
@@ -169,9 +153,9 @@ class _TrimSliderState extends State<TrimSlider> {
       }
 
       return GestureDetector(
-        onHorizontalDragUpdate: onHorizontalDragUpdate,
-        onHorizontalDragStart: onHorizontalDragStart,
-        onHorizontalDragEnd: onHorizontalDragEnd,
+        onHorizontalDragUpdate: _onHorizontalDragUpdate,
+        onHorizontalDragStart: _onHorizontalDragStart,
+        onHorizontalDragEnd: _onHorizontalDragEnd,
         child: Container(
           color: Colors.transparent,
           child: Stack(children: [
@@ -180,13 +164,18 @@ class _TrimSliderState extends State<TrimSlider> {
               height: widget.height,
               quality: widget.quality,
             ),
-            CustomPaint(
-              size: Size.infinite,
-              painter: TrimSliderPainter(
-                _rect,
-                _progressTrim,
-                style: widget.controller.trimStyle,
-              ),
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) {
+                return CustomPaint(
+                  size: Size.infinite,
+                  painter: TrimSliderPainter(
+                    _rect,
+                    _getProgressTrim(),
+                    style: widget.controller.trimStyle,
+                  ),
+                );
+              },
             ),
           ]),
         ),

@@ -73,16 +73,16 @@ class VideoEditor extends StatefulWidget {
 }
 
 class _VideoEditorState extends State<VideoEditor> {
-  VideoEditorController _controller;
   final double height = 60;
-  String _exportText = "";
+
   bool _exported = false;
+  String _exportText = "";
+  VideoEditorController _controller;
 
   @override
   void initState() {
     _controller = VideoEditorController.file(widget.file)
       ..initialize().then((_) => setState(() {}));
-    _controller.addListener(() => setState(() {}));
     super.initState();
   }
 
@@ -113,45 +113,44 @@ class _VideoEditorState extends State<VideoEditor> {
     PushRoute.page(context, CropScreen(controller: _controller));
   }
 
-  void _rotateVideo(RotateDirection direction) {
-    _controller.rotate90Degrees(direction);
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _controller.initialized
-          ? Stack(children: [
-              Column(children: [
-                _topNavBar(),
-                Expanded(
-                  child: ClipRRect(
-                    child: CropGridViewer(
-                      controller: _controller,
-                      showGrid: false,
+          ? AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) {
+                return Stack(children: [
+                  Column(children: [
+                    _topNavBar(),
+                    Expanded(
+                      child: ClipRRect(
+                        child: CropGridViewer(
+                          controller: _controller,
+                          showGrid: false,
+                        ),
+                      ),
+                    ),
+                    ..._trimSlider(),
+                  ]),
+                  Center(
+                    child: OpacityTransition(
+                      visible: !_controller.isPlaying,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.play_arrow),
+                      ),
                     ),
                   ),
-                ),
-                ..._trimSlider(),
-              ]),
-              Center(
-                child: OpacityTransition(
-                  visible: !_controller.isPlaying,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.play_arrow),
-                  ),
-                ),
-              ),
-              _customSnackBar(),
-            ])
+                  _customSnackBar(),
+                ]);
+              })
           : Center(child: CircularProgressIndicator()),
     );
   }
@@ -164,13 +163,13 @@ class _VideoEditorState extends State<VideoEditor> {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => _rotateVideo(RotateDirection.left),
+                onTap: () => _controller.rotate90Degrees(RotateDirection.left),
                 child: Icon(Icons.rotate_left, color: Colors.white),
               ),
             ),
             Expanded(
               child: GestureDetector(
-                onTap: () => _rotateVideo(RotateDirection.right),
+                onTap: () => _controller.rotate90Degrees(RotateDirection.right),
                 child: Icon(Icons.rotate_right, color: Colors.white),
               ),
             ),
