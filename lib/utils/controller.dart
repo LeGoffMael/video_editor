@@ -185,6 +185,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
         if (_rotation <= 0) _rotation = 360 + _rotation;
         break;
     }
+    notifyListeners();
   }
 
   String _getRotation() {
