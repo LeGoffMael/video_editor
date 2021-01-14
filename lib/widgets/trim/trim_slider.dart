@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helpers/helpers.dart';
 import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/trim/trim_slider_painter.dart';
 import 'package:video_editor/widgets/trim/thumbnail_slider.dart';
@@ -121,11 +122,10 @@ class _TrimSliderState extends State<TrimSlider> {
     final double min = widget.controller.minTrim;
     final double max = widget.controller.maxTrim;
     final double width = _layout.width;
-    _rect = Rect.fromLTWH(
-      min * width,
-      0.0,
-      max * width,
-      widget.height,
+
+    _rect = Rect.fromPoints(
+      Offset(min * width, 0.0),
+      Offset(max * width, widget.height),
     );
   }
 
@@ -154,8 +154,8 @@ class _TrimSliderState extends State<TrimSlider> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, constraints) {
-      final Size layout = Size(constraints.maxWidth, constraints.maxHeight);
+    return SizeBuilder(builder: (width, height) {
+      final Size layout = Size(width, height);
       if (_layout != layout) {
         _layout = layout;
         _createTrimRect();
@@ -165,29 +165,27 @@ class _TrimSliderState extends State<TrimSlider> {
         onHorizontalDragUpdate: _onHorizontalDragUpdate,
         onHorizontalDragStart: _onHorizontalDragStart,
         onHorizontalDragEnd: _onHorizontalDragEnd,
-        child: Container(
-          color: Colors.transparent,
-          child: Stack(children: [
-            ThumbnailSlider(
-              controller: widget.controller,
-              height: widget.height,
-              quality: widget.quality,
-            ),
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (_, __) {
-                return CustomPaint(
-                  size: Size.infinite,
-                  painter: TrimSliderPainter(
-                    _rect,
-                    _getTrimPosition(),
-                    style: widget.controller.trimStyle,
-                  ),
-                );
-              },
-            ),
-          ]),
-        ),
+        behavior: HitTestBehavior.opaque,
+        child: Stack(children: [
+          ThumbnailSlider(
+            controller: widget.controller,
+            height: widget.height,
+            quality: widget.quality,
+          ),
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (_, __) {
+              return CustomPaint(
+                size: Size.infinite,
+                painter: TrimSliderPainter(
+                  _rect,
+                  _getTrimPosition(),
+                  style: widget.controller.trimStyle,
+                ),
+              );
+            },
+          ),
+        ]),
       );
     });
   }
