@@ -1,3 +1,8 @@
+## [1.0.2]
+
+- Improved cropping gestures
+- TrimSlider bugs fixed
+
 ## [1.0.1]
 
 - Export Video:
@@ -7,7 +12,7 @@
 
 - Trim Slider:
   - Load faster thumbnails
-  - MaxTrimDuration (default 30 seconds like WhatsApp)
+  - MaxTrimDuration
   - Bugs Fixed
 
 ## [1.0.0+1]
