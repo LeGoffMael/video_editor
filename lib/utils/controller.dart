@@ -242,8 +242,8 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     String videoName,
     String videoFormat = "mp4",
     double scaleVideo = 1.0,
-    VideoExportPreset preset = VideoExportPreset.medium,
     String customInstruction = "",
+    VideoExportPreset preset = VideoExportPreset.medium,
   }) async {
     final String tempPath = (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
