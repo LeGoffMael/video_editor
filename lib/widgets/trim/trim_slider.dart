@@ -43,8 +43,8 @@ class _TrimSliderState extends State<TrimSlider> {
 
   @override
   void initState() {
-    final Duration duration = _controller.value.duration;
     _controller = widget.controller.videoController;
+    final Duration duration = _controller.value.duration;
     _maxDuration = widget.maxDuration == null || _maxDuration > duration
         ? duration
         : widget.maxDuration;
