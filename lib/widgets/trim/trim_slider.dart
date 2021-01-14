@@ -14,7 +14,7 @@ class TrimSlider extends StatefulWidget {
     @required this.controller,
     this.height = 60,
     this.quality = 25,
-    this.maxDuration = const Duration(seconds: 30),
+    this.maxDuration,
   }) : super(key: key);
 
   ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
@@ -23,6 +23,7 @@ class TrimSlider extends StatefulWidget {
   ///It is the height of the thumbnails
   final double height;
 
+  ///The max duration that can be trim video.
   final Duration maxDuration;
 
   ///Essential argument for the functioning of the Widget
@@ -37,12 +38,16 @@ class _TrimSliderState extends State<TrimSlider> {
 
   Rect _rect;
   Size _layout = Size.zero;
+  Duration _maxDuration = Duration.zero;
   VideoPlayerController _controller;
 
   @override
   void initState() {
+    final Duration duration = _controller.value.duration;
     _controller = widget.controller.videoController;
-
+    _maxDuration = widget.maxDuration == null || _maxDuration > duration
+        ? duration
+        : widget.maxDuration;
     super.initState();
   }
 
@@ -83,14 +88,14 @@ class _TrimSliderState extends State<TrimSlider> {
       switch (_boundary.value) {
         case _TrimBoundaries.left:
           final pos = _rect.topLeft + delta;
-          _changeRect(left: pos.dx, width: _rect.width - delta.dx);
+          _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
           break;
         case _TrimBoundaries.right:
-          _changeRect(width: _rect.width + delta.dx);
+          _changeTrimRect(width: _rect.width + delta.dx);
           break;
         case _TrimBoundaries.inside:
           final pos = _rect.topLeft + delta;
-          _changeRect(left: pos.dx);
+          _changeTrimRect(left: pos.dx);
           break;
         case _TrimBoundaries.progress:
           final double pos = details.localPosition.dx;
@@ -113,15 +118,13 @@ class _TrimSliderState extends State<TrimSlider> {
   //----//
   //RECT//
   //----//
-  void _changeRect({double left, double width}) {
+  void _changeTrimRect({double left, double width}) {
     left = left ?? _rect.left;
     width = width ?? _rect.width;
 
     final Duration diff = _getDurationDiff(left, width);
 
-    if (left >= 0 &&
-        left + width <= _layout.width &&
-        diff <= widget.maxDuration) {
+    if (left >= 0 && left + width <= _layout.width && diff <= _maxDuration) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
       _updateControllerTrim();
     }
@@ -137,11 +140,11 @@ class _TrimSliderState extends State<TrimSlider> {
 
     if (_rect == null) {
       final Duration diff = _getDurationDiff(0.0, _layout.width);
-      if (diff >= widget.maxDuration)
+      if (diff >= _maxDuration)
         _rect = Rect.fromLTWH(
           0.0,
           0.0,
-          (widget.maxDuration.inMilliseconds /
+          (_maxDuration.inMilliseconds /
                   _controller.value.duration.inMilliseconds) *
               _layout.width,
           widget.height,
