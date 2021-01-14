@@ -41,12 +41,15 @@ class _TrimSliderState extends State<TrimSlider> {
     super.initState();
   }
 
+  //--------//
+  //GESTURES//
+  //--------//
   void _onHorizontalDragStart(DragStartDetails details) {
     final double margin = 25.0;
     final double pos = details.localPosition.dx;
     final double max = _rect.right;
     final double min = _rect.left;
-    final double progressTrim = _getProgressTrim();
+    final double progressTrim = _getTrimPosition();
     final List<double> minMargin = [min - margin, min + margin];
     final List<double> maxMargin = [max - margin, max + margin];
 
@@ -63,7 +66,7 @@ class _TrimSliderState extends State<TrimSlider> {
         _boundary.value = _TrimBoundaries.inside;
       else
         _boundary.value = null;
-      _updateIsTrimming(true);
+      _updateControllerIsTrimming(true);
     } else {
       _boundary.value = null;
     }
@@ -86,7 +89,7 @@ class _TrimSliderState extends State<TrimSlider> {
           break;
         case _TrimBoundaries.progress:
           final double pos = details.localPosition.dx;
-          if (pos >= _rect.left && pos <= _rect.right) _seekTo(pos);
+          if (pos >= _rect.left && pos <= _rect.right) _controllerSeekTo(pos);
           break;
       }
     }
@@ -94,20 +97,23 @@ class _TrimSliderState extends State<TrimSlider> {
 
   void _onHorizontalDragEnd(_) {
     if (_boundary.value != null) {
-      final double _progressTrim = _getProgressTrim();
+      final double _progressTrim = _getTrimPosition();
       if (_progressTrim >= _rect.right || _progressTrim < _rect.left)
-        _seekTo(_progressTrim);
-      _updateIsTrimming(false);
-      _updateTrim();
+        _controllerSeekTo(_progressTrim);
+      _updateControllerIsTrimming(false);
+      _updateControllerTrim();
     }
   }
 
+  //----//
+  //RECT//
+  //----//
   void _changeRect({double left, double width}) {
     left = left ?? _rect.left;
     width = width ?? _rect.width;
     if (left >= 0 && left + width <= _layout.width) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
-      _updateTrim();
+      _updateControllerTrim();
     }
   }
 
@@ -123,23 +129,26 @@ class _TrimSliderState extends State<TrimSlider> {
     );
   }
 
-  void _seekTo(double position) async {
+  //----//
+  //MISC//
+  //----//
+  void _controllerSeekTo(double position) async {
     await _controller.seekTo(
       _controller.value.duration * (position / _layout.width),
     );
   }
 
-  void _updateTrim() {
+  void _updateControllerTrim() {
     final double width = _layout.width;
     widget.controller.updateTrim(_rect.left / width, _rect.right / width);
   }
 
-  void _updateIsTrimming(bool value) {
+  void _updateControllerIsTrimming(bool value) {
     if (_boundary.value != null && _boundary.value != _TrimBoundaries.progress)
       widget.controller.changeIsTrimming = value;
   }
 
-  double _getProgressTrim() {
+  double _getTrimPosition() {
     return _layout.width * widget.controller.trimPosition;
   }
 
@@ -171,7 +180,7 @@ class _TrimSliderState extends State<TrimSlider> {
                   size: Size.infinite,
                   painter: TrimSliderPainter(
                     _rect,
-                    _getProgressTrim(),
+                    _getTrimPosition(),
                     style: widget.controller.trimStyle,
                   ),
                 );
