@@ -53,9 +53,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   @override
   void initState() {
-    super.initState();
     _boundariesWidth = widget.controller.cropStyle.boundariesWidth;
     _boundariesLenght = widget.controller.cropStyle.boundariesLenght;
+    super.initState();
     _aspect = widget.controller.videoController.value.aspectRatio;
   }
 
@@ -66,7 +66,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       setState(() => _scaleRect());
   }
 
-  void onPanStart(details) {
+  void _onPanStart(DragStartDetails details) {
     final Offset margin = Offset(_boundariesWidth * 5, _boundariesWidth * 5);
     final Offset pos = details.localPosition;
     final Offset max = _rect.bottomRight;
@@ -93,7 +93,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
         _rect.centerRight + margin,
       ];
 
-      //TOUCH BOUNDARIES
+      //CORNERS
       if (pos >= minMargin[0] && pos <= minMargin[1])
         boundary = _CropBoundaries.topLeft;
       else if (pos >= maxMargin[0] && pos <= maxMargin[1])
@@ -104,6 +104,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       else if (pos >= Offset(minMargin[0].dx, maxMargin[0].dy) &&
           pos <= Offset(minMargin[1].dx, maxMargin[1].dy))
         boundary = _CropBoundaries.bottomLeft;
+      //CENTERS
       else if (pos >= topCenter[0] && pos <= topCenter[1])
         boundary = _CropBoundaries.topCenter;
       else if (pos >= bottomCenter[0] && pos <= bottomCenter[1])
@@ -112,6 +113,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
         boundary = _CropBoundaries.centerLeft;
       else if (pos >= centerRight[0] && pos <= centerRight[1])
         boundary = _CropBoundaries.centerRight;
+      //MISC
       else if (pos >= minMargin[1] && pos <= maxMargin[0])
         boundary = _CropBoundaries.inside;
       else
@@ -124,7 +126,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     setState(() {});
   }
 
-  void onPanUpdate(details) {
+  void _onPanUpdate(DragUpdateDetails details) {
     if (boundary != null) {
       final Offset delta = details.delta;
       switch (boundary) {
@@ -202,13 +204,25 @@ class _CropGridViewerState extends State<CropGridViewer> {
     left = left ?? _rect.left;
     width = width ?? _rect.width;
     height = height ?? _rect.height;
-    if (left >= 0.0 &&
-        top >= 0.0 &&
-        left + width <= _layout.width &&
-        top + height <= _layout.height &&
-        height > _boundariesLenght &&
-        width > _boundariesLenght) {
-      _rect = Rect.fromLTWH(left, top, width, height);
+
+    final double leftWith = left + width;
+    final double topHeight = top + height;
+
+    if (height > _boundariesLenght && width > _boundariesLenght) {
+      _rect = Rect.fromLTWH(
+        left >= 0.0
+            ? leftWith <= _layout.width
+                ? left
+                : _rect.left
+            : 0.0,
+        top >= 0.0
+            ? topHeight <= _layout.height
+                ? top
+                : _rect.top
+            : 0.0,
+        leftWith <= _layout.width ? width : _rect.width,
+        topHeight <= _layout.height ? height : _rect.height,
+      );
       setState(() {});
     }
   }
@@ -265,8 +279,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
                   }
                   return widget.showGrid
                       ? GestureDetector(
-                          onPanUpdate: onPanUpdate,
-                          onPanStart: onPanStart,
+                          onPanUpdate: _onPanUpdate,
+                          onPanStart: _onPanStart,
                           onPanEnd: _onPanEnd,
                           child: _paint(),
                         )
