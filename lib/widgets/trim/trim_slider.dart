@@ -14,6 +14,7 @@ class TrimSlider extends StatefulWidget {
     @required this.controller,
     this.height = 60,
     this.quality = 25,
+    this.maxDuration = const Duration(seconds: 30),
   }) : super(key: key);
 
   ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
@@ -21,6 +22,8 @@ class TrimSlider extends StatefulWidget {
 
   ///It is the height of the thumbnails
   final double height;
+
+  final Duration maxDuration;
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
@@ -39,6 +42,7 @@ class _TrimSliderState extends State<TrimSlider> {
   @override
   void initState() {
     _controller = widget.controller.videoController;
+
     super.initState();
   }
 
@@ -112,21 +116,40 @@ class _TrimSliderState extends State<TrimSlider> {
   void _changeRect({double left, double width}) {
     left = left ?? _rect.left;
     width = width ?? _rect.width;
-    if (left >= 0 && left + width <= _layout.width) {
+
+    final Duration diff = _getDurationDiff(left, width);
+
+    if (left >= 0 &&
+        left + width <= _layout.width &&
+        diff <= widget.maxDuration) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
       _updateControllerTrim();
     }
   }
 
   void _createTrimRect() {
-    final double min = widget.controller.minTrim;
-    final double max = widget.controller.maxTrim;
-    final double width = _layout.width;
+    void _normalRect() {
+      _rect = Rect.fromPoints(
+        Offset(widget.controller.minTrim * _layout.width, 0.0),
+        Offset(widget.controller.maxTrim * _layout.width, widget.height),
+      );
+    }
 
-    _rect = Rect.fromPoints(
-      Offset(min * width, 0.0),
-      Offset(max * width, widget.height),
-    );
+    if (_rect == null) {
+      final Duration diff = _getDurationDiff(0.0, _layout.width);
+      if (diff >= widget.maxDuration)
+        _rect = Rect.fromLTWH(
+          0.0,
+          0.0,
+          (widget.maxDuration.inMilliseconds /
+                  _controller.value.duration.inMilliseconds) *
+              _layout.width,
+          widget.height,
+        );
+      else
+        _normalRect();
+    } else
+      _normalRect();
   }
 
   //----//
@@ -150,6 +173,13 @@ class _TrimSliderState extends State<TrimSlider> {
 
   double _getTrimPosition() {
     return _layout.width * widget.controller.trimPosition;
+  }
+
+  Duration _getDurationDiff(double left, double width) {
+    final double min = left / _layout.width;
+    final double max = (left + width) / _layout.width;
+    final Duration duration = _controller.value.duration;
+    return (duration * max) - (duration * min);
   }
 
   @override
