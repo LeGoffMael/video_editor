@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter_ffmpeg/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_editor/utils/styles.dart';
@@ -18,6 +19,7 @@ enum RotateDirection { left, right }
 ///you will simply save bitrate by choosing a slower preset.
 
 enum VideoExportPreset {
+  none,
   ultrafast,
   superfast,
   veryfast,
@@ -45,7 +47,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     TrimSliderStyle trimStyle,
     CropGridStyle cropStyle,
   })  : assert(file != null),
-        _videoController = VideoPlayerController.file(file),
+        _video = VideoPlayerController.file(file),
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
@@ -53,8 +55,8 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
-  bool _isTrimming = false;
-  bool _isCropping = false;
+  bool isTrimming = false;
+  bool isCropping = false;
   double _minTrim = 0.0;
   double _maxTrim = 1.0;
   Offset _minCrop = Offset.zero;
@@ -62,7 +64,7 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
 
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
-  VideoPlayerController _videoController;
+  VideoPlayerController _video;
 
   //----------------//
   //VIDEO CONTROLLER//
@@ -70,20 +72,22 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Attempts to open the given [File] and load metadata about the video.
   Future<void> initialize() async {
     WidgetsBinding.instance.addObserver(this);
-    await _videoController.initialize();
-    _videoController.addListener(_videoListener);
-    _videoController.setLooping(true);
+    await _video.initialize();
+    _video.addListener(_videoListener);
+    _video.setLooping(true);
     _updateTrimRange();
     notifyListeners();
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     WidgetsBinding.instance.removeObserver(this);
-    if (isPlaying) _videoController?.pause();
-    _videoController.removeListener(_videoListener);
-    _videoController.dispose();
-    _videoController = null;
+    if (isPlaying) _video?.pause();
+    _video.removeListener(_videoListener);
+    _video.dispose();
+    _video = null;
+    final executions = await _ffmpeg.listExecutions();
+    if (executions.length > 0) await _ffmpeg.cancel();
     _ffprobe = null;
     _ffmpeg = null;
     super.dispose();
@@ -91,24 +95,24 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
 
   void _videoListener() {
     if (videoPosition < _trimStart || videoPosition >= _trimEnd)
-      _videoController.seekTo(_trimStart);
+      _video.seekTo(_trimStart);
     notifyListeners();
   }
 
   ///Get the `VideoPlayerController`
-  VideoPlayerController get videoController => _videoController;
+  VideoPlayerController get video => _video;
 
   ///Get the `VideoPlayerController.value.initialized`
-  bool get initialized => _videoController.value.initialized;
+  bool get initialized => _video.value.initialized;
 
   ///Get the `VideoPlayerController.value.isPlaying`
-  bool get isPlaying => _videoController.value.isPlaying;
+  bool get isPlaying => _video.value.isPlaying;
 
   ///Get the `VideoPlayerController.value.position`
-  Duration get videoPosition => _videoController.value.position;
+  Duration get videoPosition => _video.value.position;
 
   ///Get the `VideoPlayerController.value.duration`
-  Duration get videoDuration => _videoController.value.duration;
+  Duration get videoDuration => _video.value.duration;
 
   //----------//
   //VIDEO CROP//
@@ -146,17 +150,11 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  ///Get isCropping value
-  bool get isCropping => _isCropping;
-
   ///Get the **TopLeftOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get minCrop => _minCrop;
 
   ///Get the **BottomRightOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get maxCrop => _maxCrop;
-
-  ///Don't touch this >:)
-  set changeIsCropping(bool value) => _isCropping = value;
 
   //----------//
   //VIDEO TRIM//
@@ -176,9 +174,6 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     _trimStart = videoDuration * _minTrim;
   }
 
-  ///Get isTrimming value
-  bool get isTrimming => _isTrimming;
-
   ///Get the **MinTrim** (Range is `0.0` to `1.0`).
   double get minTrim => _minTrim;
 
@@ -190,7 +185,6 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
 
   ///Don't touch this >:)
-  set changeIsTrimming(bool value) => _isTrimming = value;
 
   //------------//
   //VIDEO ROTATE//
@@ -227,38 +221,43 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///Export the video at `TemporaryDirectory` and return a `File`.
   ///
   ///
-  ///If the [videoName] is `null`, then it uses the filename.
+  ///If the [name] is `null`, then it uses the filename.
   ///
   ///
-  ///The [scaleVideo] is `scale=width*scaleVideo:height*scaleVideo` and reduce o increase video size.
+  ///The [scaleVideo] is `scale=width*scale:height*scale` and reduce o increase video size.
   ///
   ///**View all** export formats on https://ffmpeg.org/ffmpeg-formats.html
   ///
   ///
-  ///The [preset] is the `compress quality`. A slower preset will provide better compression (compression is quality per filesize)
+  ///The [preset] is the `compress quality` **(Only available on some devices an full-lts package)**. A slower preset will provide better compression (compression is quality per filesize)
   ///
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<File> exportVideo({
-    String videoName,
-    String videoFormat = "mp4",
-    double scaleVideo = 1.0,
-    String customInstruction = "",
-    VideoExportPreset preset = VideoExportPreset.medium,
+    String name,
+    String format = "mp4",
+    double scale = 1.0,
+    String customInstruction,
+    VideoExportPreset preset = VideoExportPreset.none,
+    void Function(Statistics) progressCallback,
   }) async {
+    final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
-    if (videoName == null) videoName = path.basename(videoPath).split('.')[0];
-    final String outputPath = tempPath + videoName + ".$videoFormat";
+    if (name == null) name = path.basename(videoPath).split('.')[0];
+    final String outputPath = tempPath + name + ".$format";
 
+    final String scaleInstruction = ",scale=iw*$scale:ih*$scale";
     final String rotation = _getRotation();
-    final String scale = ",scale=iw*$scaleVideo:ih*$scaleVideo";
     final String crop = await _getCrop(videoPath);
     final String trim = _getTrim();
-    final String gif = videoFormat == "gif" ? ",fps=10 -loop 0" : "";
+    final String gif = format == "gif" ? ",fps=10 -loop 0" : "";
 
     final String execute =
-        " -i $videoPath $customInstruction -filter:v $crop$scale$rotation$gif ${_getPreset(preset)} $trim -c:a copy -y $outputPath";
+        " -i $videoPath ${customInstruction ?? ""} -filter:v $crop$scaleInstruction$rotation$gif ${_getPreset(preset)} $trim -c:a copy -y $outputPath";
+
+    _config.enableStatisticsCallback(progressCallback);
     final int code = await _ffmpeg.execute(execute);
+    await _config.disableStatistics();
 
     if (code == 0) {
       print("SUCCESS EXPORT AT $outputPath");
@@ -303,8 +302,10 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
       case VideoExportPreset.veryslow:
         newPreset = "veryslow";
         break;
+      case VideoExportPreset.none:
+        break;
     }
 
-    return "-preset $newPreset";
+    return preset == VideoExportPreset.none ? "" : "-preset $newPreset";
   }
 }

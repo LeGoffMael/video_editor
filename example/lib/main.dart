@@ -49,7 +49,7 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
               color: Colors.black,
               size: 18.0,
             ),
-            RaisedButton(
+            ElevatedButton(
               onPressed: _pickVideo,
               child: Text("Pick Video From Gallery"),
             ),
@@ -73,6 +73,8 @@ class VideoEditor extends StatefulWidget {
 }
 
 class _VideoEditorState extends State<VideoEditor> {
+  final _exportingProgress = ValueNotifier<double>(0.0);
+  final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
   bool _exported = false;
@@ -87,17 +89,23 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
+  void dispose() async {
     super.dispose();
+    await _controller.dispose();
   }
 
   void _exportVideo() async {
+    _isExporting.value = true;
+    _exportingProgress.value = 0.0;
     final File file = await _controller.exportVideo(
-      videoFormat: "mp4",
-      customInstruction: "-crf 17", //visually lossless
-      preset: VideoExportPreset.veryslow,
+      name: "Edited",
+      progressCallback: (statics) {
+        if (_controller.video != null)
+          _exportingProgress.value =
+              statics.time / _controller.video.value.duration.inMilliseconds;
+      },
     );
+    _isExporting.value = false;
     if (file != null) {
       //GallerySaver.saveImage() for GIF or GallerySaver.saveVideo() for VIDEOS
       //Note: GallerySave dont override files.
@@ -150,6 +158,22 @@ class _VideoEditorState extends State<VideoEditor> {
                     ),
                   ),
                   _customSnackBar(),
+                  ValueListenableBuilder(
+                    valueListenable: _isExporting,
+                    builder: (_, bool value, __) => OpacityTransition(
+                      visible: value,
+                      child: AlertDialog(
+                        title: ValueListenableBuilder(
+                          valueListenable: _exportingProgress,
+                          builder: (_, double value, __) => TextDesigned(
+                            "Exporting video ${(value * 100).ceil()}%",
+                            color: Colors.black,
+                            bold: true,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 ]);
               })
           : Center(child: CircularProgressIndicator()),

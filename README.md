@@ -29,7 +29,7 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
 
 ```gradle
     ext {
-      flutterFFmpegPackage = "full-lts"
+      flutterFFmpegPackage = "min-lts"
     }
 ```
 
@@ -37,7 +37,7 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
 
 ### (Flutter >= 1.20.x)
 
-- Edit `ios/Podfile`, add the following block **before** `target 'Runner do` and specify the package name in `full-lts` section:
+- Edit `ios/Podfile`, add the following block **before** `target 'Runner do` and specify the package name in `min-lts` section:
 
   ```python
     # "fork" of method flutter_install_ios_plugin_pods (in fluttertools podhelpers.rb) to get lts version of ffmpeg
@@ -66,7 +66,7 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
             File.symlink(plugin_path, symlink)
 
             if plugin_name == 'flutter_ffmpeg'
-                pod plugin_name + '/full-lts', :path => File.join('.symlinks', 'plugins', plugin_name, 'ios')
+                pod plugin_name + '/min-lts', :path => File.join('.symlinks', 'plugins', plugin_name, 'ios')
             else
                 pod plugin_name, :path => File.join('.symlinks', 'plugins', plugin_name, 'ios')
             end
@@ -82,7 +82,7 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
 ### (Flutter < 1.20.x)
 
 - Edit `ios/Podfile` file and modify the default `# Plugin Pods` block as follows. Do not forget to specify the package
-  name in `full-lts` section.
+  name in `min-lts` section.
 
   ```python
     # Prepare symlinks folder. We use symlinks to avoid having Podfile.lock
@@ -94,7 +94,7 @@ Add on `android/build.gradle` file and define package name in `ext.flutterFFmpeg
         symlink = File.join('.symlinks', 'plugins', name)
         File.symlink(path, symlink)
         if name == 'flutter_ffmpeg'
-            pod name+'/full-lts', :path => File.join(symlink, 'ios')
+            pod name+'/min-lts', :path => File.join(symlink, 'ios')
         else
             pod name, :path => File.join(symlink, 'ios')
         end

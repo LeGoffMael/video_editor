@@ -36,7 +36,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   void initState() {
     super.initState();
-    _aspect = widget.controller.videoController.value.aspectRatio;
+    _aspect = widget.controller.video.value.aspectRatio;
   }
 
   @override

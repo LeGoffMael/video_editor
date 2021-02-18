@@ -43,7 +43,7 @@ class _TrimSliderState extends State<TrimSlider> {
 
   @override
   void initState() {
-    _controller = widget.controller.videoController;
+    _controller = widget.controller.video;
     final Duration duration = _controller.value.duration;
     _maxDuration = widget.maxDuration == null || _maxDuration > duration
         ? duration
@@ -171,7 +171,7 @@ class _TrimSliderState extends State<TrimSlider> {
 
   void _updateControllerIsTrimming(bool value) {
     if (_boundary.value != null && _boundary.value != _TrimBoundaries.progress)
-      widget.controller.changeIsTrimming = value;
+      widget.controller.isTrimming = value;
   }
 
   double _getTrimPosition() {

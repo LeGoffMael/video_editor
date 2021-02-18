@@ -21,7 +21,7 @@ class _VideoViewerState extends State<VideoViewer> {
 
   @override
   void initState() {
-    _controller = widget.controller.videoController;
+    _controller = widget.controller.video;
     super.initState();
   }
 

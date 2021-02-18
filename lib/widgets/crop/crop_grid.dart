@@ -56,7 +56,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _boundariesWidth = widget.controller.cropStyle.boundariesWidth;
     _boundariesLenght = widget.controller.cropStyle.boundariesLenght;
     super.initState();
-    _aspect = widget.controller.videoController.value.aspectRatio;
+    _aspect = widget.controller.video.value.aspectRatio;
   }
 
   @override
@@ -119,7 +119,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       else
         boundary = null;
 
-      if (boundary != null) widget.controller.changeIsCropping = true;
+      if (boundary != null) widget.controller.isCropping = true;
     } else
       boundary = null;
 
@@ -192,7 +192,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       final double maxdy = _rect.bottom / _layout.height;
       final double maxdx = _rect.right / _layout.width;
       widget.onChangeCrop(Offset(mindx, mindy), Offset(maxdx, maxdy));
-      widget.controller.changeIsCropping = false;
+      widget.controller.isCropping = false;
     }
   }
 
