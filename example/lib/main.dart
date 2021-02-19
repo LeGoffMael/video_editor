@@ -95,25 +95,25 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   void _exportVideo() async {
-    _isExporting.value = true;
-    _exportingProgress.value = 0.0;
+    Misc.delayed(1000, () => _isExporting.value = true);
     final File file = await _controller.exportVideo(
-      name: "Edited",
       progressCallback: (statics) {
         if (_controller.video != null)
           _exportingProgress.value =
               statics.time / _controller.video.value.duration.inMilliseconds;
       },
     );
-    _isExporting.value = false;
+
+    //GallerySaver.saveImage() for GIF or GallerySaver.saveVideo() for VIDEOS
+    //Note: GallerySave don't override files.
     if (file != null) {
-      //GallerySaver.saveImage() for GIF or GallerySaver.saveVideo() for VIDEOS
-      //Note: GallerySave dont override files.
       await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
       _exportText = "Video success export!";
     } else {
       _exportText = "Error on export video :(";
     }
+
+    _isExporting.value = false;
     setState(() => _exported = true);
     Misc.delayed(2000, () => setState(() => _exported = false));
   }
@@ -146,22 +146,25 @@ class _VideoEditorState extends State<VideoEditor> {
                   Center(
                     child: OpacityTransition(
                       visible: !_controller.isPlaying,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                      child: GestureDetector(
+                        onTap: _controller.video.play,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.play_arrow),
                         ),
-                        child: Icon(Icons.play_arrow),
                       ),
                     ),
                   ),
                   _customSnackBar(),
                   ValueListenableBuilder(
                     valueListenable: _isExporting,
-                    builder: (_, bool value, __) => OpacityTransition(
-                      visible: value,
+                    builder: (_, bool export, __) => OpacityTransition(
+                      visible: export,
                       child: AlertDialog(
                         title: ValueListenableBuilder(
                           valueListenable: _exportingProgress,

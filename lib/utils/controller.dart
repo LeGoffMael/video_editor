@@ -132,14 +132,15 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
       }
     }
 
-    final enddx = _videoWidth * _maxCrop.dx;
-    final enddy = _videoHeight * _maxCrop.dy;
-    final startdx = _videoWidth * _minCrop.dx;
-    final startdy = _videoHeight * _minCrop.dy;
-    final cropWidth = enddx - startdx;
-    final cropHeight = enddy - startdy;
-
-    return "crop=$cropWidth:$cropHeight:$startdx:$startdy";
+    final end = Offset(
+      _videoWidth * _maxCrop.dx.roundToDouble(),
+      _videoHeight * _maxCrop.dy.roundToDouble(),
+    );
+    final start = Offset(
+      _videoWidth * _minCrop.dx.roundToDouble(),
+      _videoHeight * _minCrop.dy.roundToDouble(),
+    );
+    return "crop=${end.dx - start.dx}:${end.dy - start.dy}:${start.dx}:${start.dy}";
   }
 
   ///Update minCrop and maxCrop.
@@ -159,7 +160,6 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   //----------//
   //VIDEO TRIM//
   //----------//
-  String _getTrim() => "-ss $_trimStart -to $_trimEnd";
 
   ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
   void updateTrim(double min, double max) {
@@ -204,13 +204,9 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   String _getRotation() {
-    if (_rotation >= 360 || _rotation <= 0) {
-      return "";
-    } else {
-      List<String> transpose = [];
-      for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
-      return transpose.length > 0 ? ",${transpose.join(',')}" : "";
-    }
+    List<String> transpose = [];
+    for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
+    return transpose.length > 0 ? "${transpose.join(',')}" : "";
   }
 
   int get rotation => _rotation;
@@ -226,19 +222,18 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   ///
   ///The [scaleVideo] is `scale=width*scale:height*scale` and reduce o increase video size.
   ///
-  ///**View all** export formats on https://ffmpeg.org/ffmpeg-formats.html
+  ///The [progressCallback] is called while the video is exporting. This argument is usually used to update the export progress percentage.
   ///
-  ///
-  ///The [preset] is the `compress quality` **(Only available on some devices an full-lts package)**. A slower preset will provide better compression (compression is quality per filesize)
-  ///
+  ///The [preset] is the `compress quality` **(Only available on full-lts package)**.
+  ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<File> exportVideo({
     String name,
     String format = "mp4",
     double scale = 1.0,
     String customInstruction,
-    VideoExportPreset preset = VideoExportPreset.none,
     void Function(Statistics) progressCallback,
+    VideoExportPreset preset = VideoExportPreset.none,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = (await getTemporaryDirectory()).path;
@@ -246,19 +241,39 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     if (name == null) name = path.basename(videoPath).split('.')[0];
     final String outputPath = tempPath + name + ".$format";
 
-    final String scaleInstruction = ",scale=iw*$scale:ih*$scale";
-    final String rotation = _getRotation();
-    final String crop = await _getCrop(videoPath);
-    final String trim = _getTrim();
-    final String gif = format == "gif" ? ",fps=10 -loop 0" : "";
+    //-----------------//
+    //CALCULATE FILTERS//
+    //-----------------//
+    final String gif = format != "gif" ? "" : "fps=10 -loop 0";
+    final String trim = _minTrim == 0.0 && _maxTrim == 1.0
+        ? ""
+        : "-ss $_trimStart -to $_trimEnd";
+    final String crop = _minCrop == Offset.zero && _maxCrop == Offset(1.0, 1.0)
+        ? ""
+        : await _getCrop(videoPath);
+    final String rotation =
+        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
+    final String scaleInstruction =
+        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
+    //----------------//
+    //VALIDATE FILTERS//
+    //----------------//
+    final List<String> filters = [crop, scaleInstruction, rotation, gif];
+    filters.removeWhere((item) => item.isEmpty);
+    final String filter =
+        filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
     final String execute =
-        " -i $videoPath ${customInstruction ?? ""} -filter:v $crop$scaleInstruction$rotation$gif ${_getPreset(preset)} $trim -c:a copy -y $outputPath";
+        " -i $videoPath ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -b 27k -y $outputPath";
 
-    _config.enableStatisticsCallback(progressCallback);
+    if (progressCallback != null)
+      _config.enableStatisticsCallback(progressCallback);
     final int code = await _ffmpeg.execute(execute);
-    await _config.disableStatistics();
+    if (progressCallback != null) await _config.disableStatistics();
 
+    //------//
+    //RESULT//
+    //------//
     if (code == 0) {
       print("SUCCESS EXPORT AT $outputPath");
       return File(outputPath);
