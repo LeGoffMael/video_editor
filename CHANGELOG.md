@@ -1,3 +1,8 @@
+## [1.0.3]
+
+- Progress bar on export
+- Improved export function
+
 ## [1.0.2]
 
 - Improved cropping gestures

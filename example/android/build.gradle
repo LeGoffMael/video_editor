@@ -30,5 +30,5 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-ext.flutterFFmpegPackage  = "min-lts"
+ext.flutterFFmpegPackage  = "min-gpl-lts"
 

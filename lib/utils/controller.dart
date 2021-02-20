@@ -1,10 +1,10 @@
 import 'dart:io';
-import 'package:flutter_ffmpeg/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_editor/utils/styles.dart';
 import 'package:video_player/video_player.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_ffmpeg/statistics.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 enum RotateDirection { left, right }
@@ -132,14 +132,8 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
       }
     }
 
-    final end = Offset(
-      _videoWidth * _maxCrop.dx.roundToDouble(),
-      _videoHeight * _maxCrop.dy.roundToDouble(),
-    );
-    final start = Offset(
-      _videoWidth * _minCrop.dx.roundToDouble(),
-      _videoHeight * _minCrop.dy.roundToDouble(),
-    );
+    final end = Offset(_videoWidth * _maxCrop.dx, _videoHeight * _maxCrop.dy);
+    final start = Offset(_videoWidth * _minCrop.dx, _videoHeight * _minCrop.dy);
     return "crop=${end.dx - start.dx}:${end.dy - start.dy}:${start.dx}:${start.dy}";
   }
 
@@ -264,12 +258,12 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     final String filter =
         filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
     final String execute =
-        " -i $videoPath ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -b 27k -y $outputPath";
+        " -i $videoPath ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
     if (progressCallback != null)
       _config.enableStatisticsCallback(progressCallback);
     final int code = await _ffmpeg.execute(execute);
-    if (progressCallback != null) await _config.disableStatistics();
+    _config.enableStatisticsCallback(null);
 
     //------//
     //RESULT//

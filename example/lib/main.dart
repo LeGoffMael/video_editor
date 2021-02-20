@@ -96,13 +96,17 @@ class _VideoEditorState extends State<VideoEditor> {
 
   void _exportVideo() async {
     Misc.delayed(1000, () => _isExporting.value = true);
+    //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
     final File file = await _controller.exportVideo(
+      customInstruction: "-crf 17",
+      preset: VideoExportPreset.medium,
       progressCallback: (statics) {
         if (_controller.video != null)
           _exportingProgress.value =
               statics.time / _controller.video.value.duration.inMilliseconds;
       },
     );
+    _isExporting.value = false;
 
     //GallerySaver.saveImage() for GIF or GallerySaver.saveVideo() for VIDEOS
     //Note: GallerySave don't override files.
@@ -113,7 +117,6 @@ class _VideoEditorState extends State<VideoEditor> {
       _exportText = "Error on export video :(";
     }
 
-    _isExporting.value = false;
     setState(() => _exported = true);
     Misc.delayed(2000, () => setState(() => _exported = false));
   }
