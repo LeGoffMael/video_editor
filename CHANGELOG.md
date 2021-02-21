@@ -1,3 +1,7 @@
+## [1.0.3+1]
+
+- [UNIDENTIFIED] ERROR FIXED.
+
 ## [1.0.3]
 
 - Progress bar on export

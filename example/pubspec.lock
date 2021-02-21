@@ -307,7 +307,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.3"
+    version: "1.0.3+1"
   video_player:
     dependency: transitive
     description:

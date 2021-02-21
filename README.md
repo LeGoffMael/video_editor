@@ -28,7 +28,7 @@
 Add on `android/build.gradle` file and define package name in `ext.flutterFFmpegPackage` variable.
 
 ```gradle
-    ext.flutterFFmpegPackage = "min-gpl-lts"
+ext.flutterFFmpegPackage = "min-gpl-lts"
 ```
 
 ### **iOS**
