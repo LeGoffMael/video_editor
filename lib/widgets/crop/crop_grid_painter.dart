@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/utils/styles.dart';
 
 class CropGridPainter extends CustomPainter {
-  CropGridPainter(this.rect, {this.showGrid = false, this.style});
+  CropGridPainter(
+    this.rect, {
+    this.showCenterRects = true,
+    this.showGrid = false,
+    this.style,
+  });
 
   final Rect rect;
   final bool showGrid;
   final CropGridStyle style;
+  final bool showCenterRects;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -131,41 +137,43 @@ class CropGridPainter extends CustomPainter {
     //------//
     //CENTER//
     //------//
-    //TOPCENTER
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.topCenter + Offset(-lenght / 2, 0.0),
-        rect.topCenter + Offset(lenght / 2, width),
-      ),
-      paint,
-    );
+    if (showCenterRects) {
+      //TOPCENTER
+      canvas.drawRect(
+        Rect.fromPoints(
+          rect.topCenter + Offset(-lenght / 2, 0.0),
+          rect.topCenter + Offset(lenght / 2, width),
+        ),
+        paint,
+      );
 
-    //BOTTOMCENTER
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.bottomCenter + Offset(-lenght / 2, 0.0),
-        rect.bottomCenter + Offset(lenght / 2, -width),
-      ),
-      paint,
-    );
+      //BOTTOMCENTER
+      canvas.drawRect(
+        Rect.fromPoints(
+          rect.bottomCenter + Offset(-lenght / 2, 0.0),
+          rect.bottomCenter + Offset(lenght / 2, -width),
+        ),
+        paint,
+      );
 
-    //CENTERLEFT
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.centerLeft + Offset(0.0, -lenght / 2),
-        rect.centerLeft + Offset(width, lenght / 2),
-      ),
-      paint,
-    );
+      //CENTERLEFT
+      canvas.drawRect(
+        Rect.fromPoints(
+          rect.centerLeft + Offset(0.0, -lenght / 2),
+          rect.centerLeft + Offset(width, lenght / 2),
+        ),
+        paint,
+      );
 
-    //CENTERRIGHT
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.centerRight + Offset(-width, -lenght / 2),
-        rect.centerRight + Offset(0.0, lenght / 2),
-      ),
-      paint,
-    );
+      //CENTERRIGHT
+      canvas.drawRect(
+        Rect.fromPoints(
+          rect.centerRight + Offset(-width, -lenght / 2),
+          rect.centerRight + Offset(0.0, lenght / 2),
+        ),
+        paint,
+      );
+    }
   }
 
   @override

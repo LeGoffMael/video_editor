@@ -49,24 +49,20 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   Size _layout = Size.zero;
   Offset _translate = Offset.zero;
+  Offset _maxCrop = Offset(1.0, 1.0), _minCrop = Offset.zero;
 
   double _rotation = 0.0;
   double _aspect = 1.0;
   double _scale = 1.0;
+  VideoEditorController _controller;
 
   @override
   void initState() {
     super.initState();
-    _boundariesWidth = widget.controller.cropStyle.boundariesWidth;
-    _boundariesLenght = widget.controller.cropStyle.boundariesLenght;
-    _aspect = widget.controller.video.value.aspectRatio;
-  }
-
-  @override
-  void didUpdateWidget(CropGridViewer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.showGrid && !widget.controller.isPlaying)
-      setState(() => _scaleRect());
+    _controller = widget.controller;
+    _boundariesLenght = _controller.cropStyle.boundariesLenght;
+    _boundariesWidth = _controller.cropStyle.boundariesWidth;
+    _aspect = _controller.video.value.aspectRatio;
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -108,24 +104,27 @@ class _CropGridViewerState extends State<CropGridViewer> {
       } else if (pos >= Offset(minMargin[0].dx, maxMargin[0].dy) &&
           pos <= Offset(minMargin[1].dx, maxMargin[1].dy)) {
         boundary = _CropBoundaries.bottomLeft;
-      }
-      //CENTERS
-      else if (pos >= topCenter[0] && pos <= topCenter[1]) {
-        boundary = _CropBoundaries.topCenter;
-      } else if (pos >= bottomCenter[0] && pos <= bottomCenter[1]) {
-        boundary = _CropBoundaries.bottomCenter;
-      } else if (pos >= centerLeft[0] && pos <= centerLeft[1]) {
-        boundary = _CropBoundaries.centerLeft;
-      } else if (pos >= centerRight[0] && pos <= centerRight[1]) {
-        boundary = _CropBoundaries.centerRight;
-      }
-      //OTHERS
-      else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
-        boundary = _CropBoundaries.inside;
+        //CENTERS
+      } else if (_controller.preferredCropAspectRatio == null) {
+        if (pos >= topCenter[0] && pos <= topCenter[1]) {
+          boundary = _CropBoundaries.topCenter;
+        } else if (pos >= bottomCenter[0] && pos <= bottomCenter[1]) {
+          boundary = _CropBoundaries.bottomCenter;
+        } else if (pos >= centerLeft[0] && pos <= centerLeft[1]) {
+          boundary = _CropBoundaries.centerLeft;
+        } else if (pos >= centerRight[0] && pos <= centerRight[1]) {
+          boundary = _CropBoundaries.centerRight;
+        }
+        //OTHERS
+        else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
+          boundary = _CropBoundaries.inside;
+        } else {
+          boundary = _CropBoundaries.none;
+        }
       } else {
         boundary = _CropBoundaries.none;
       }
-      widget.controller.isCropping = true;
+      _controller.isCropping = true;
     } else {
       boundary = _CropBoundaries.none;
     }
@@ -193,13 +192,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _onPanEnd(_) {
-    if (widget.onChangeCrop != null && boundary != _CropBoundaries.none) {
-      final double mindx = _rect.value.left / _layout.width;
-      final double mindy = _rect.value.top / _layout.height;
-      final double maxdy = _rect.value.bottom / _layout.height;
-      final double maxdx = _rect.value.right / _layout.width;
-      widget.onChangeCrop(Offset(mindx, mindy), Offset(maxdx, maxdy));
-      widget.controller.isCropping = false;
+    if (boundary != _CropBoundaries.none) {
+      widget.onChangeCrop?.call(_minCrop, _maxCrop);
+      _controller.isCropping = false;
     }
   }
 
@@ -212,39 +207,64 @@ class _CropGridViewerState extends State<CropGridViewer> {
     width = width ?? _rect.value.width;
     height = height ?? _rect.value.height;
 
-    final double leftWith = left + width;
-    final double topHeight = top + height;
+    final double right = left + width;
+    final double bottom = top + height;
+    final double mindx = left / _layout.width;
+    final double mindy = top / _layout.height;
+    final double maxdy = bottom / _layout.height;
+    final double maxdx = right / _layout.width;
 
-    if (height > _boundariesLenght && width > _boundariesLenght) {
+    final minCrop = Offset(mindx, mindy);
+    final maxCrop = Offset(maxdx, maxdy);
+    final minCropLimit = _controller.minCropLimit;
+    final maxCropLimit = _controller.maxCropLimit;
+
+    if (height > _boundariesLenght &&
+        width > _boundariesLenght &&
+        minCrop >= minCropLimit &&
+        maxCrop <= maxCropLimit) {
+      _minCrop = minCrop;
+      _maxCrop = maxCrop;
       _rect.value = Rect.fromLTWH(
         left >= 0.0
-            ? leftWith <= _layout.width
+            ? right <= _layout.width
                 ? left
                 : _rect.value.left
             : 0.0,
         top >= 0.0
-            ? topHeight <= _layout.height
+            ? bottom <= _layout.height
                 ? top
                 : _rect.value.top
             : 0.0,
-        leftWith <= _layout.width ? width : _rect.value.width,
-        topHeight <= _layout.height ? height : _rect.value.height,
+        right <= _layout.width ? width : _rect.value.width,
+        bottom <= _layout.height ? height : _rect.value.height,
       );
     }
   }
 
   Rect _calculateCropRect() {
-    final Offset min = widget.controller.minCrop;
-    final Offset max = widget.controller.maxCrop;
-    return Rect.fromPoints(
-      Offset(min.dx * _layout.width, min.dy * _layout.height),
-      Offset(max.dx * _layout.width, max.dy * _layout.height),
-    );
+    final double aspectRatio = _controller.preferredCropAspectRatio;
+    _minCrop = _controller.minCrop;
+    _maxCrop = _controller.maxCrop;
+    if (aspectRatio == null)
+      return Rect.fromPoints(
+        Offset(_minCrop.dx * _layout.width, _minCrop.dy * _layout.height),
+        Offset(_maxCrop.dx * _layout.width, _maxCrop.dy * _layout.height),
+      );
+    else {
+      final width = (_maxCrop.dx - _minCrop.dx) * _layout.width;
+      return Rect.fromLTWH(
+        _minCrop.dx,
+        _minCrop.dy,
+        width,
+        width * aspectRatio,
+      );
+    }
   }
 
   void _scaleRect() {
     _rect.value = _calculateCropRect();
-    final int degrees = widget.controller.rotation;
+    final int degrees = _controller.rotation;
     final double scaleX = _layout.width / _rect.value.width;
     final double scaleY = _layout.height / _rect.value.height;
 
@@ -274,12 +294,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
         child: Transform.translate(
           offset: _translate,
           child: VideoViewer(
-            controller: widget.controller,
+            controller: _controller,
             child: LayoutBuilder(builder: (_, constraints) {
               Size size = Size(constraints.maxWidth, constraints.maxHeight);
               if (_layout != size) {
                 _layout = size;
-                _rect.value = _calculateCropRect();
+                _scaleRect();
               }
 
               return widget.showGrid
@@ -305,8 +325,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
           size: Size.infinite,
           painter: CropGridPainter(
             _rect.value,
+            style: _controller.cropStyle,
             showGrid: widget.showGrid,
-            style: widget.controller.cropStyle,
+            showCenterRects: _controller.preferredCropAspectRatio == null,
           ),
         );
       },

@@ -312,9 +312,9 @@ class _CropScreenState extends State<CropScreen> {
 
   @override
   void initState() {
+    super.initState();
     _minCrop = widget.controller.minCrop;
     _maxCrop = widget.controller.maxCrop;
-    super.initState();
   }
 
   @override

@@ -75,6 +75,8 @@ class VideoEditorController extends ChangeNotifier {
   ///The **BottomRight Offset Limit** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset maxCropLimit = Offset(1.0, 1.0);
 
+  double preferredCropAspectRatio;
+
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
   VideoPlayerController _video;
