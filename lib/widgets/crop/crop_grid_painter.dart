@@ -10,6 +10,7 @@ class CropGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    print("xd2");
     if (rect != null) {
       _drawBackground(canvas, size);
       if (showGrid) {
@@ -168,7 +169,7 @@ class CropGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CropGridPainter oldDelegate) => false;
+  bool shouldRepaint(CropGridPainter oldDelegate) => true;
 
   @override
   bool shouldRebuildSemantics(CropGridPainter oldDelegate) => false;
