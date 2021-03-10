@@ -17,7 +17,6 @@ enum RotateDirection { left, right }
 ///you will achieve better quality with a slower preset.
 ///Similarly, for constant quality encoding,
 ///you will simply save bitrate by choosing a slower preset.
-
 enum VideoExportPreset {
   none,
   ultrafast,
@@ -31,7 +30,7 @@ enum VideoExportPreset {
   veryslow
 }
 
-class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
+class VideoEditorController extends ChangeNotifier {
   ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
 
@@ -57,22 +56,57 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
   int _rotation = 0;
   bool isTrimming = false;
   bool isCropping = false;
-  double _minTrim = 0.0;
-  double _maxTrim = 1.0;
-  Offset _minCrop = Offset.zero;
-  Offset _maxCrop = Offset(1.0, 1.0);
+
+  ///Get the **MinTrim** (Range is `0.0` to `1.0`).
+  double minTrim = 0.0;
+
+  ///Get the **MaxTrim** (Range is `0.0` to `1.0`).
+  double maxTrim = 1.0;
+
+  ///The **TopLeft Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
+  Offset minCrop = Offset.zero;
+
+  ///The **BottomRight Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
+  Offset maxCrop = Offset(1.0, 1.0);
+
+  ///The **TopLeft Offset Limit** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
+  Offset minCropLimit = Offset.zero;
+
+  ///The **BottomRight Offset Limit** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
+  Offset maxCropLimit = Offset(1.0, 1.0);
 
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
   VideoPlayerController _video;
+
+  int _videoWidth = 0;
+  int _videoHeight = 0;
+
+  ///Get the `VideoPlayerController`
+  VideoPlayerController get video => _video;
+
+  ///Get the `VideoPlayerController.value.initialized`
+  bool get initialized => _video.value.initialized;
+
+  ///Get the `VideoPlayerController.value.isPlaying`
+  bool get isPlaying => _video.value.isPlaying;
+
+  ///Get the `VideoPlayerController.value.position`
+  Duration get videoPosition => _video.value.position;
+
+  ///Get the `VideoPlayerController.value.duration`
+  Duration get videoDuration => _video.value.duration;
+
+  Size get videoDimension =>
+      Size(_videoWidth.toDouble(), _videoHeight.toDouble());
 
   //----------------//
   //VIDEO CONTROLLER//
   //----------------//
   ///Attempts to open the given [File] and load metadata about the video.
   Future<void> initialize() async {
-    WidgetsBinding.instance.addObserver(this);
     await _video.initialize();
+    await _getVideoDimensions();
     _video.addListener(_videoListener);
     _video.setLooping(true);
     _updateTrimRange();
@@ -81,7 +115,6 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   Future<void> dispose() async {
-    WidgetsBinding.instance.removeObserver(this);
     if (isPlaying) _video?.pause();
     _video.removeListener(_videoListener);
     _video.dispose();
@@ -99,29 +132,9 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  ///Get the `VideoPlayerController`
-  VideoPlayerController get video => _video;
-
-  ///Get the `VideoPlayerController.value.initialized`
-  bool get initialized => _video.value.initialized;
-
-  ///Get the `VideoPlayerController.value.isPlaying`
-  bool get isPlaying => _video.value.isPlaying;
-
-  ///Get the `VideoPlayerController.value.position`
-  Duration get videoPosition => _video.value.position;
-
-  ///Get the `VideoPlayerController.value.duration`
-  Duration get videoDuration => _video.value.duration;
-
-  //----------//
-  //VIDEO CROP//
-  //----------//
-  Future<String> _getCrop(String path) async {
-    final info = await _ffprobe.getMediaInformation(path);
+  Future<void> _getVideoDimensions() async {
+    final info = await _ffprobe.getMediaInformation(file.path);
     final streams = info.getStreams();
-    int _videoHeight = 0;
-    int _videoWidth = 0;
 
     if (streams != null && streams.length > 0) {
       for (var stream in streams) {
@@ -131,48 +144,40 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
         if (height != null && height > _videoHeight) _videoHeight = height;
       }
     }
+  }
 
-    final end = Offset(_videoWidth * _maxCrop.dx, _videoHeight * _maxCrop.dy);
-    final start = Offset(_videoWidth * _minCrop.dx, _videoHeight * _minCrop.dy);
+  //----------//
+  //VIDEO CROP//
+  //----------//
+  String _getCrop() {
+    final end = Offset(_videoWidth * maxCrop.dx, _videoHeight * maxCrop.dy);
+    final start = Offset(_videoWidth * minCrop.dx, _videoHeight * minCrop.dy);
     return "crop=${end.dx - start.dx}:${end.dy - start.dy}:${start.dx}:${start.dy}";
   }
 
   ///Update minCrop and maxCrop.
   ///Arguments range are `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`.
   void updateCrop(Offset min, Offset max) {
-    _minCrop = min;
-    _maxCrop = max;
+    minCrop = min;
+    maxCrop = max;
     notifyListeners();
   }
-
-  ///Get the **TopLeftOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
-  Offset get minCrop => _minCrop;
-
-  ///Get the **BottomRightOffset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
-  Offset get maxCrop => _maxCrop;
 
   //----------//
   //VIDEO TRIM//
   //----------//
-
   ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
   void updateTrim(double min, double max) {
-    _minTrim = min;
-    _maxTrim = max;
+    minTrim = min;
+    maxTrim = max;
     _updateTrimRange();
     notifyListeners();
   }
 
   void _updateTrimRange() {
-    _trimEnd = videoDuration * _maxTrim;
-    _trimStart = videoDuration * _minTrim;
+    _trimEnd = videoDuration * maxTrim;
+    _trimStart = videoDuration * minTrim;
   }
-
-  ///Get the **MinTrim** (Range is `0.0` to `1.0`).
-  double get minTrim => _minTrim;
-
-  ///Get the **MaxTrim** (Range is `0.0` to `1.0`).
-  double get maxTrim => _maxTrim;
 
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
@@ -239,12 +244,10 @@ class VideoEditorController extends ChangeNotifier with WidgetsBindingObserver {
     //CALCULATE FILTERS//
     //-----------------//
     final String gif = format != "gif" ? "" : "fps=10 -loop 0";
-    final String trim = _minTrim == 0.0 && _maxTrim == 1.0
-        ? ""
-        : "-ss $_trimStart -to $_trimEnd";
-    final String crop = _minCrop == Offset.zero && _maxCrop == Offset(1.0, 1.0)
-        ? ""
-        : await _getCrop(videoPath);
+    final String trim =
+        minTrim == 0.0 && maxTrim == 1.0 ? "" : "-ss $_trimStart -to $_trimEnd";
+    final String crop =
+        minCrop == Offset.zero && maxCrop == Offset(1.0, 1.0) ? "" : _getCrop();
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =

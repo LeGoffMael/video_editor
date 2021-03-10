@@ -32,8 +32,7 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
 
   void _pickVideo() async {
     final PickedFile file = await _picker.getVideo(source: ImageSource.gallery);
-    if (file != null)
-      PushRoute.page(context, VideoEditor(file: File(file.path)));
+    if (file != null) context.to(VideoEditor(file: File(file.path)));
   }
 
   @override
@@ -83,8 +82,8 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
-    _controller = VideoEditorController.file(widget.file)
-      ..initialize().then((_) => setState(() {}));
+    _controller = VideoEditorController.file(widget.file);
+    _controller.initialize().then((_) => setState(() {}));
     super.initState();
   }
 
@@ -122,7 +121,7 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   void _openCropScreen() {
-    PushRoute.page(context, CropScreen(controller: _controller));
+    context.to(CropScreen(controller: _controller));
   }
 
   @override
@@ -329,10 +328,10 @@ class _CropScreenState extends State<CropScreen> {
             Expanded(
               child: CropGridViewer(
                 controller: widget.controller,
-                onChangeCrop: (min, max) => setState(() {
+                onChangeCrop: (min, max) {
                   _minCrop = min;
                   _maxCrop = max;
-                }),
+                },
               ),
             ),
             SizedBox(height: 15),
