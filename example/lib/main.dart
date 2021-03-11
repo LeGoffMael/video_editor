@@ -83,6 +83,7 @@ class _VideoEditorState extends State<VideoEditor> {
   @override
   void initState() {
     _controller = VideoEditorController.file(widget.file);
+    _controller.preferredCropAspectRatio = 16 / 9;
     _controller.initialize().then((_) => setState(() {}));
     super.initState();
   }
@@ -120,9 +121,7 @@ class _VideoEditorState extends State<VideoEditor> {
     Misc.delayed(2000, () => setState(() => _exported = false));
   }
 
-  void _openCropScreen() {
-    context.to(CropScreen(controller: _controller));
-  }
+  void _openCropScreen() => context.to(CropScreen(controller: _controller));
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +330,7 @@ class _CropScreenState extends State<CropScreen> {
                 onChangeCrop: (min, max) {
                   _minCrop = min;
                   _maxCrop = max;
+                  print("$min $max");
                 },
               ),
             ),
@@ -348,8 +348,9 @@ class _CropScreenState extends State<CropScreen> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    widget.controller.updateCrop(_minCrop, _maxCrop);
-                    Navigator.of(context).pop();
+                    widget.controller.minCrop = _minCrop;
+                    widget.controller.maxCrop = _maxCrop;
+                    context.goBack();
                   },
                   child: Center(
                     child: TextDesigned("OK", color: Colors.white, bold: true),

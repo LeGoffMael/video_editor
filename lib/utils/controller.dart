@@ -30,6 +30,12 @@ enum VideoExportPreset {
   veryslow
 }
 
+///_max = Offset(1.0, 1.0);
+const Offset _max = Offset(1.0, 1.0);
+
+///_min = Offset.zero;
+const Offset _min = Offset.zero;
+
 class VideoEditorController extends ChangeNotifier {
   ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
@@ -57,25 +63,13 @@ class VideoEditorController extends ChangeNotifier {
   bool isTrimming = false;
   bool isCropping = false;
 
-  ///Get the **MinTrim** (Range is `0.0` to `1.0`).
-  double minTrim = 0.0;
+  double _preferredCropAspectRatio;
 
-  ///Get the **MaxTrim** (Range is `0.0` to `1.0`).
-  double maxTrim = 1.0;
+  double _minTrim = _max.dx;
+  double _maxTrim = _max.dy;
 
-  ///The **TopLeft Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
-  Offset minCrop = Offset.zero;
-
-  ///The **BottomRight Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
-  Offset maxCrop = Offset(1.0, 1.0);
-
-  ///The **TopLeft Offset Limit** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
-  Offset minCropLimit = Offset.zero;
-
-  ///The **BottomRight Offset Limit** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
-  Offset maxCropLimit = Offset(1.0, 1.0);
-
-  double preferredCropAspectRatio;
+  Offset _minCrop = _min;
+  Offset _maxCrop = _max;
 
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
@@ -86,6 +80,9 @@ class VideoEditorController extends ChangeNotifier {
 
   ///Get the `VideoPlayerController`
   VideoPlayerController get video => _video;
+
+  ///Get the [Rotation Degrees]
+  int get rotation => _rotation;
 
   ///Get the `VideoPlayerController.value.initialized`
   bool get initialized => _video.value.initialized;
@@ -99,8 +96,57 @@ class VideoEditorController extends ChangeNotifier {
   ///Get the `VideoPlayerController.value.duration`
   Duration get videoDuration => _video.value.duration;
 
-  Size get videoDimension =>
-      Size(_videoWidth.toDouble(), _videoHeight.toDouble());
+  ///Get the 'Video Dimension' like Video width and Video Height
+  Size get videoDimension => Size(
+        _videoWidth.toDouble(),
+        _videoHeight.toDouble(),
+      );
+
+  ///The the **MinTrim** (Range is `0.0` to `1.0`).
+  double get minTrim => _minTrim;
+  set minTrim(double value) {
+    if (value >= _min.dx && value <= _max.dx) {
+      _minTrim = value;
+      _updateTrimRange();
+    }
+  }
+
+  ///The the **MaxTrim** (Range is `0.0` to `1.0`).
+  double get maxTrim => _maxTrim;
+  set maxTrim(double value) {
+    if (value >= _min.dx && value <= _max.dx) {
+      _maxTrim = value;
+      _updateTrimRange();
+    }
+  }
+
+  ///The **TopLeft Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
+  Offset get minCrop => _minCrop;
+  set minCrop(Offset value) {
+    if (value >= _min && value <= _max) {
+      _minCrop = value;
+      notifyListeners();
+    }
+  }
+
+  ///The **BottomRight Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
+  Offset get maxCrop => _maxCrop;
+  set maxCrop(Offset value) {
+    if (value >= _min && value <= _max) {
+      _maxCrop = value;
+      notifyListeners();
+    }
+  }
+
+  double get preferredCropAspectRatio => _preferredCropAspectRatio;
+  set preferredCropAspectRatio(double value) {
+    final width = (maxCrop.dx - minCrop.dx);
+    final max = Offset(width, width / (value * 2));
+    if (value >= 0 && max <= _max) {
+      _preferredCropAspectRatio = value;
+      maxCrop = max;
+    }
+  }
 
   //----------------//
   //VIDEO CONTROLLER//
@@ -157,35 +203,19 @@ class VideoEditorController extends ChangeNotifier {
     return "crop=${end.dx - start.dx}:${end.dy - start.dy}:${start.dx}:${start.dy}";
   }
 
-  ///Update minCrop and maxCrop.
-  ///Arguments range are `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`.
-  void updateCrop(Offset min, Offset max) {
-    minCrop = min;
-    maxCrop = max;
-    notifyListeners();
-  }
-
   //----------//
   //VIDEO TRIM//
   //----------//
   ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
-  void updateTrim(double min, double max) {
-    minTrim = min;
-    maxTrim = max;
-    _updateTrimRange();
-    notifyListeners();
-  }
-
   void _updateTrimRange() {
     _trimEnd = videoDuration * maxTrim;
     _trimStart = videoDuration * minTrim;
+    notifyListeners();
   }
 
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
-
-  ///Don't touch this >:)
 
   //------------//
   //VIDEO ROTATE//
@@ -209,8 +239,6 @@ class VideoEditorController extends ChangeNotifier {
     for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
     return transpose.length > 0 ? "${transpose.join(',')}" : "";
   }
-
-  int get rotation => _rotation;
 
   //------------//
   //VIDEO EXPORT//

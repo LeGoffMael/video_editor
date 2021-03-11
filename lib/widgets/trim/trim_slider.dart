@@ -166,7 +166,8 @@ class _TrimSliderState extends State<TrimSlider> {
 
   void _updateControllerTrim() {
     final double width = _layout.width;
-    widget.controller.updateTrim(_rect.left / width, _rect.right / width);
+    widget.controller.minTrim = _rect.left / width;
+    widget.controller.maxTrim = _rect.right / width;
   }
 
   void _updateControllerIsTrimming(bool value) {

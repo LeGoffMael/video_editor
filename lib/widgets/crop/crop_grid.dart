@@ -206,8 +206,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
       final Rect rect = _rect.value;
       final double mindx = rect.left / _layout.width;
       final double mindy = rect.top / _layout.height;
-      final double maxdy = rect.bottom / _layout.height;
       final double maxdx = rect.right / _layout.width;
+      final double maxdy = rect.bottom / _layout.height;
+
       widget.onChangeCrop?.call(Offset(mindx, mindy), Offset(maxdx, maxdy));
       _controller.isCropping = false;
     }
@@ -251,20 +252,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   Rect _calculateCropRect() {
-    final double aspect = _controller.preferredCropAspectRatio;
     final Offset minCrop = _controller.minCrop;
     final Offset maxCrop = _controller.maxCrop;
 
-    if (aspect == null)
-      return Rect.fromPoints(
-        Offset(minCrop.dx * _layout.width, minCrop.dy * _layout.height),
-        Offset(maxCrop.dx * _layout.width, maxCrop.dy * _layout.height),
-      );
-    else {
-      final min = minCrop * _layout.width;
-      final width = (maxCrop.dx - minCrop.dx) * _layout.width;
-      return Rect.fromLTWH(min.dx, min.dy, width, width / aspect);
-    }
+    return Rect.fromPoints(
+      Offset(minCrop.dx * _layout.width, minCrop.dy * _layout.height),
+      Offset(maxCrop.dx * _layout.width, maxCrop.dy * _layout.height),
+    );
   }
 
   void _scaleRect() {
