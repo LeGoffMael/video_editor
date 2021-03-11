@@ -16,7 +16,6 @@ class CropGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print("xd2");
     if (rect != null) {
       _drawBackground(canvas, size);
       if (showGrid) {
