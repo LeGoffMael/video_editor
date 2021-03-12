@@ -82,16 +82,16 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
-    _controller = VideoEditorController.file(widget.file);
-    _controller.preferredCropAspectRatio = 16 / 9;
-    _controller.initialize().then((_) => setState(() {}));
     super.initState();
+    _controller = VideoEditorController.file(widget.file);
+    //_controller.preferredCropAspectRatio = 1;
+    _controller.initialize().then((_) => setState(() {}));
   }
 
   @override
   void dispose() async {
-    super.dispose();
     await _controller.dispose();
+    super.dispose();
   }
 
   void _exportVideo() async {
@@ -337,7 +337,7 @@ class _CropScreenState extends State<CropScreen> {
             SizedBox(height: 15),
             Row(children: [
               Expanded(
-                child: GestureDetector(
+                child: SplashTap(
                   onTap: () => Navigator.of(context).pop(),
                   child: Center(
                     child: TextDesigned("CANCELAR",
@@ -345,8 +345,11 @@ class _CropScreenState extends State<CropScreen> {
                   ),
                 ),
               ),
+              buildSplashTap("16:9", 16 / 9, padding: Margin.horizontal(10)),
+              buildSplashTap("1:1", 1 / 1),
+              buildSplashTap("5:4", 5 / 4, padding: Margin.horizontal(10)),
               Expanded(
-                child: GestureDetector(
+                child: SplashTap(
                   onTap: () {
                     widget.controller.minCrop = _minCrop;
                     widget.controller.maxCrop = _maxCrop;
@@ -359,6 +362,28 @@ class _CropScreenState extends State<CropScreen> {
               ),
             ]),
           ]),
+        ),
+      ),
+    );
+  }
+
+  Widget buildSplashTap(
+    String title,
+    double aspectRatio, {
+    EdgeInsetsGeometry padding,
+  }) {
+    return Padding(
+      padding: padding,
+      child: SplashTap(
+        onTap: () {
+          widget.controller.preferredCropAspectRatio = aspectRatio;
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.aspect_ratio, color: Colors.white),
+            TextDesigned(title, color: Colors.white, bold: true),
+          ],
         ),
       ),
     );

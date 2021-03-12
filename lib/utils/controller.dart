@@ -57,7 +57,6 @@ class VideoEditorController extends ChangeNotifier {
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
-  FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
   bool isTrimming = false;
@@ -97,12 +96,10 @@ class VideoEditorController extends ChangeNotifier {
   Duration get videoDuration => _video.value.duration;
 
   ///Get the 'Video Dimension' like Video width and Video Height
-  Size get videoDimension => Size(
-        _videoWidth.toDouble(),
-        _videoHeight.toDouble(),
-      );
+  Size get videoDimension =>
+      Size(_videoWidth.toDouble(), _videoHeight.toDouble());
 
-  ///The the **MinTrim** (Range is `0.0` to `1.0`).
+  ///The **MinTrim** (Range is `0.0` to `1.0`).
   double get minTrim => _minTrim;
   set minTrim(double value) {
     if (value >= _min.dx && value <= _max.dx) {
@@ -111,7 +108,7 @@ class VideoEditorController extends ChangeNotifier {
     }
   }
 
-  ///The the **MaxTrim** (Range is `0.0` to `1.0`).
+  ///The **MaxTrim** (Range is `0.0` to `1.0`).
   double get maxTrim => _maxTrim;
   set maxTrim(double value) {
     if (value >= _min.dx && value <= _max.dx) {
@@ -163,25 +160,24 @@ class VideoEditorController extends ChangeNotifier {
 
   @override
   Future<void> dispose() async {
-    if (isPlaying) _video?.pause();
+    _video?.pause();
     _video.removeListener(_videoListener);
     _video.dispose();
-    _video = null;
     final executions = await _ffmpeg.listExecutions();
     if (executions.length > 0) await _ffmpeg.cancel();
-    _ffprobe = null;
     _ffmpeg = null;
+    _video = null;
     super.dispose();
   }
 
   void _videoListener() {
     if (videoPosition < _trimStart || videoPosition >= _trimEnd)
       _video.seekTo(_trimStart);
-    notifyListeners();
   }
 
   Future<void> _getVideoDimensions() async {
-    final info = await _ffprobe.getMediaInformation(file.path);
+    final ffprobe = FlutterFFprobe();
+    final info = await ffprobe.getMediaInformation(file.path);
     final streams = info.getStreams();
 
     if (streams != null && streams.length > 0) {
@@ -198,19 +194,25 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO CROP//
   //----------//
   String _getCrop() {
-    final end = Offset(_videoWidth * maxCrop.dx, _videoHeight * maxCrop.dy);
-    final start = Offset(_videoWidth * minCrop.dx, _videoHeight * minCrop.dy);
-    return "crop=${end.dx - start.dx}:${end.dy - start.dy}:${start.dx}:${start.dy}";
+    int enddx = (_videoWidth * maxCrop.dx).floor();
+    int enddy = (_videoHeight * maxCrop.dy).floor();
+    int startdx = (_videoWidth * minCrop.dx).floor();
+    int startdy = (_videoHeight * minCrop.dy).floor();
+
+    if (enddx > _videoWidth) enddx = _videoWidth;
+    if (enddy > _videoHeight) enddy = _videoHeight;
+    if (startdx < 0) startdx = 0;
+    if (startdy < 0) startdy = 0;
+
+    return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
   }
 
   //----------//
   //VIDEO TRIM//
   //----------//
-  ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
   void _updateTrimRange() {
     _trimEnd = videoDuration * maxTrim;
     _trimStart = videoDuration * minTrim;
-    notifyListeners();
   }
 
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
@@ -249,11 +251,11 @@ class VideoEditorController extends ChangeNotifier {
   ///If the [name] is `null`, then it uses the filename.
   ///
   ///
-  ///The [scaleVideo] is `scale=width*scale:height*scale` and reduce o increase video size.
+  ///The [scale] is `scale=width*scale:height*scale` and reduce o increase video size.
   ///
   ///The [progressCallback] is called while the video is exporting. This argument is usually used to update the export progress percentage.
   ///
-  ///The [preset] is the `compress quality` **(Only available on full-lts package)**.
+  ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
   ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<File> exportVideo({
@@ -274,10 +276,10 @@ class VideoEditorController extends ChangeNotifier {
     //CALCULATE FILTERS//
     //-----------------//
     final String gif = format != "gif" ? "" : "fps=10 -loop 0";
-    final String trim =
-        minTrim == 0.0 && maxTrim == 1.0 ? "" : "-ss $_trimStart -to $_trimEnd";
-    final String crop =
-        minCrop == Offset.zero && maxCrop == Offset(1.0, 1.0) ? "" : _getCrop();
+    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
+    final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
+        ? "-ss $_trimStart -to $_trimEnd"
+        : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
