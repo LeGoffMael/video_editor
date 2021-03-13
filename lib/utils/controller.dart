@@ -65,7 +65,7 @@ class VideoEditorController extends ChangeNotifier {
 
   double _preferredCropAspectRatio;
 
-  double _minTrim = _max.dx;
+  double _minTrim = _min.dx;
   double _maxTrim = _max.dx;
 
   Offset _minCrop = _min;
@@ -139,12 +139,17 @@ class VideoEditorController extends ChangeNotifier {
 
   double get preferredCropAspectRatio => _preferredCropAspectRatio;
   set preferredCropAspectRatio(double value) {
-    final width = (maxCrop.dx - minCrop.dx);
-    final max = Offset(width, width / (value * 2));
-    if (value >= 0 && max <= _max) {
+    if (value == null) {
       _preferredCropAspectRatio = value;
-      maxCrop = max;
       notifyListeners();
+    } else {
+      final width = (maxCrop.dx - minCrop.dx);
+      final max = Offset(width, width / (value * 2));
+      if (value >= 0 && max <= _max) {
+        _preferredCropAspectRatio = value;
+        maxCrop = max;
+        notifyListeners();
+      }
     }
   }
 
@@ -165,16 +170,16 @@ class VideoEditorController extends ChangeNotifier {
   Future<void> dispose() async {
     if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
-    final executions = await _ffmpeg.listExecutions();
-    if (executions.length > 0) await _ffmpeg.cancel();
+    //final executions = await _ffmpeg.listExecutions();
+    //if (executions.length > 0) await _ffmpeg.cancel();
     _video.dispose();
     super.dispose();
   }
 
   void _videoListener() {
-    if (videoPosition < _trimStart || videoPosition >= _trimEnd)
-      print("seekTo");
-    //  _video.seekTo(_trimStart);
+    final position = videoPosition;
+    if (position < _trimStart || position >= _trimEnd)
+      _video.seekTo(_trimStart);
     notifyListeners();
   }
 
@@ -199,8 +204,9 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO TRIM//
   //----------//
   void _updateTrimRange() {
-    _trimEnd = videoDuration * maxTrim;
-    _trimStart = videoDuration * minTrim;
+    final duration = videoDuration;
+    _trimStart = duration * minTrim;
+    _trimEnd = duration * maxTrim;
   }
 
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
