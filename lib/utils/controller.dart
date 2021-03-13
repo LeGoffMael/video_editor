@@ -57,6 +57,7 @@ class VideoEditorController extends ChangeNotifier {
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
+  FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
   bool isTrimming = false;
@@ -65,7 +66,7 @@ class VideoEditorController extends ChangeNotifier {
   double _preferredCropAspectRatio;
 
   double _minTrim = _max.dx;
-  double _maxTrim = _max.dy;
+  double _maxTrim = _max.dx;
 
   Offset _minCrop = _min;
   Offset _maxCrop = _max;
@@ -95,9 +96,10 @@ class VideoEditorController extends ChangeNotifier {
   ///Get the `VideoPlayerController.value.duration`
   Duration get videoDuration => _video.value.duration;
 
-  ///Get the 'Video Dimension' like Video width and Video Height
-  Size get videoDimension =>
-      Size(_videoWidth.toDouble(), _videoHeight.toDouble());
+  ///Get the [Video Dimension] like VideoWidth and VideoHeight
+  Size videoDimension() {
+    return Size(_videoWidth.toDouble(), _videoHeight.toDouble());
+  }
 
   ///The **MinTrim** (Range is `0.0` to `1.0`).
   double get minTrim => _minTrim;
@@ -142,6 +144,7 @@ class VideoEditorController extends ChangeNotifier {
     if (value >= 0 && max <= _max) {
       _preferredCropAspectRatio = value;
       maxCrop = max;
+      notifyListeners();
     }
   }
 
@@ -151,7 +154,7 @@ class VideoEditorController extends ChangeNotifier {
   ///Attempts to open the given [File] and load metadata about the video.
   Future<void> initialize() async {
     await _video.initialize();
-    await _getVideoDimensions();
+    //await _getVideoDimensions();
     _video.addListener(_videoListener);
     _video.setLooping(true);
     _updateTrimRange();
@@ -160,40 +163,26 @@ class VideoEditorController extends ChangeNotifier {
 
   @override
   Future<void> dispose() async {
-    _video?.pause();
+    if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
-    _video.dispose();
     final executions = await _ffmpeg.listExecutions();
     if (executions.length > 0) await _ffmpeg.cancel();
-    _ffmpeg = null;
-    _video = null;
+    _video.dispose();
     super.dispose();
   }
 
   void _videoListener() {
     if (videoPosition < _trimStart || videoPosition >= _trimEnd)
-      _video.seekTo(_trimStart);
-  }
-
-  Future<void> _getVideoDimensions() async {
-    final ffprobe = FlutterFFprobe();
-    final info = await ffprobe.getMediaInformation(file.path);
-    final streams = info.getStreams();
-
-    if (streams != null && streams.length > 0) {
-      for (var stream in streams) {
-        final width = stream.getAllProperties()['width'];
-        final height = stream.getAllProperties()['height'];
-        if (width != null && width > _videoWidth) _videoWidth = width;
-        if (height != null && height > _videoHeight) _videoHeight = height;
-      }
-    }
+      print("seekTo");
+    //  _video.seekTo(_trimStart);
+    notifyListeners();
   }
 
   //----------//
   //VIDEO CROP//
   //----------//
-  String _getCrop() {
+  Future<String> _getCrop() async {
+    await _getVideoDimensions();
     int enddx = (_videoWidth * maxCrop.dx).floor();
     int enddy = (_videoHeight * maxCrop.dy).floor();
     int startdx = (_videoWidth * minCrop.dx).floor();
@@ -203,7 +192,6 @@ class VideoEditorController extends ChangeNotifier {
     if (enddy > _videoHeight) enddy = _videoHeight;
     if (startdx < 0) startdx = 0;
     if (startdy < 0) startdy = 0;
-
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
   }
 
@@ -245,6 +233,27 @@ class VideoEditorController extends ChangeNotifier {
   //------------//
   //VIDEO EXPORT//
   //------------//
+  Future<void> _getVideoDimensions() async {
+    if (!(_videoHeight > 0 && _videoWidth > 0)) {
+      final info = await _ffprobe.getMediaInformation(file.path);
+      final streams = info.getStreams();
+      int _height = 0;
+      int _width = 0;
+
+      if (streams != null && streams.length > 0) {
+        for (var stream in streams) {
+          final width = stream.getAllProperties()['width'];
+          final height = stream.getAllProperties()['height'];
+          if (width != null && width > _width) _width = width;
+          if (height != null && height > _height) _height = height;
+        }
+      }
+
+      _videoHeight = _height;
+      _videoWidth = _width;
+    }
+  }
+
   ///Export the video at `TemporaryDirectory` and return a `File`.
   ///
   ///
@@ -276,10 +285,11 @@ class VideoEditorController extends ChangeNotifier {
     //CALCULATE FILTERS//
     //-----------------//
     final String gif = format != "gif" ? "" : "fps=10 -loop 0";
-    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
     final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
         ? "-ss $_trimStart -to $_trimEnd"
         : "";
+    final String crop =
+        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
