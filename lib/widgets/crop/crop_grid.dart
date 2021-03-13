@@ -57,11 +57,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   @override
   void initState() {
-    super.initState();
     _controller = widget.controller;
     _boundariesLenght = _controller.cropStyle.boundariesLenght;
     _boundariesWidth = _controller.cropStyle.boundariesWidth;
     _videoAspectRatio = _controller.video.value.aspectRatio;
+    super.initState();
   }
 
   @override
@@ -325,6 +325,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
           painter: CropGridPainter(
             _rect.value,
             style: _controller.cropStyle,
+            repaint: widget.showGrid,
             showGrid: widget.showGrid,
             showCenterRects: _controller.preferredCropAspectRatio == null,
           ),

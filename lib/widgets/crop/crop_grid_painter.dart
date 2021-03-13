@@ -4,15 +4,15 @@ import 'package:video_editor/utils/styles.dart';
 class CropGridPainter extends CustomPainter {
   CropGridPainter(
     this.rect, {
-    this.showCenterRects = true,
-    this.showGrid = false,
     this.style,
+    this.showGrid = false,
+    this.repaint = false,
+    this.showCenterRects = true,
   });
 
   final Rect rect;
-  final bool showGrid;
   final CropGridStyle style;
-  final bool showCenterRects;
+  final bool showGrid, showCenterRects, repaint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -176,7 +176,7 @@ class CropGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CropGridPainter oldDelegate) => true;
+  bool shouldRepaint(CropGridPainter oldDelegate) => repaint;
 
   @override
   bool shouldRebuildSemantics(CropGridPainter oldDelegate) => false;
