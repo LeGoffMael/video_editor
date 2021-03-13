@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:helpers/helpers.dart';
 import 'package:video_editor/utils/controller.dart';
 import 'package:video_editor/widgets/trim/trim_slider_painter.dart';
 import 'package:video_editor/widgets/trim/thumbnail_slider.dart';
@@ -188,8 +187,8 @@ class _TrimSliderState extends State<TrimSlider> {
 
   @override
   Widget build(BuildContext context) {
-    return SizeBuilder(builder: (width, height) {
-      final Size layout = Size(width, height);
+    return LayoutBuilder(builder: (_, contrainst) {
+      final Size layout = Size(contrainst.maxWidth, contrainst.maxHeight);
       if (_layout != layout) {
         _layout = layout;
         _createTrimRect();

@@ -67,9 +67,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final String path = widget.controller.file.path;
     final int duration = widget.controller.videoDuration.inMilliseconds;
     final double eachPart = duration / _thumbnails;
-
     List<Uint8List> _byteList = [];
-
     for (int i = 1; i <= _thumbnails; i++) {
       Uint8List _bytes = await VideoThumbnail.thumbnailData(
         imageFormat: ImageFormat.JPEG,
@@ -104,7 +102,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;
-
         _size = _aspect <= 1.0
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);

@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
 
   path: ^1.7.0
-  helpers: ^1.1.0
   video_player: ^1.0.1
   path_provider: ^1.6.27
   flutter_ffmpeg: ^0.3.1
