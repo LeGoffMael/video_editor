@@ -82,15 +82,14 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
+    _controller = VideoEditorController.file(widget.file)
+      ..initialize().then((_) => setState(() {}));
     super.initState();
-    _controller = VideoEditorController.file(widget.file);
-    //_controller.preferredCropAspectRatio = 1;
-    _controller.initialize().then((_) => setState(() {}));
   }
 
   @override
-  void dispose() async {
-    await _controller.dispose();
+  void dispose() {
+    _controller.dispose();
     super.dispose();
   }
 
@@ -373,7 +372,7 @@ class _CropScreenState extends State<CropScreen> {
     EdgeInsetsGeometry padding,
   }) {
     return Padding(
-      padding: padding,
+      padding: padding ?? Margin.zero,
       child: SplashTap(
         onTap: () {
           widget.controller.preferredCropAspectRatio = aspectRatio;
