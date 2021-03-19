@@ -19,12 +19,8 @@ enum _CropBoundaries {
 
 class CropGridViewer extends StatefulWidget {
   //It is the viewer that allows you to crop the video
-  CropGridViewer({
-    Key key,
-    @required this.controller,
-    this.onChangeCrop,
-    this.showGrid = true,
-  }) : super(key: key);
+  CropGridViewer({Key key, @required this.controller, this.showGrid = true})
+      : super(key: key);
 
   /// If it is true, it shows the grid and allows cropping the video, if it is false
   /// does not show the grid and cannot be cropped
@@ -32,9 +28,6 @@ class CropGridViewer extends StatefulWidget {
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
-
-  ///When the pan gesture ended and the cropRect was updated, then it will execute the callback
-  final void Function(Offset min, Offset max) onChangeCrop;
 
   @override
   _CropGridViewerState createState() => _CropGridViewerState();
@@ -50,9 +43,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Size _layout = Size.zero;
   Offset _translate = Offset.zero;
 
-  double _rotation = 0.0;
-  double _videoAspectRatio = 1.0;
   double _scale = 1.0;
+  double _rotation = 0.0;
+  double _videoAspectRatio = 1.0, _preferredCropAspectRatio = 1.0;
   VideoEditorController _controller;
 
   @override
@@ -61,6 +54,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _boundariesLenght = _controller.cropStyle.boundariesLenght;
     _boundariesWidth = _controller.cropStyle.boundariesWidth;
     _videoAspectRatio = _controller.video.value.aspectRatio;
+    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
     super.initState();
   }
 
@@ -204,13 +198,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
   void _onPanEnd(_) {
     if (_boundary != _CropBoundaries.none) {
       final Rect rect = _rect.value;
-      final double mindx = rect.left / _layout.width;
-      final double mindy = rect.top / _layout.height;
-      final double maxdx = rect.right / _layout.width;
-      final double maxdy = rect.bottom / _layout.height;
-
-      widget.onChangeCrop?.call(Offset(mindx, mindy), Offset(maxdx, maxdy));
       _controller.isCropping = false;
+      _controller.cacheMinCrop = Offset(
+        rect.left / _layout.width,
+        rect.top / _layout.height,
+      );
+      _controller.cacheMaxCrop = Offset(
+        rect.right / _layout.width,
+        rect.bottom / _layout.height,
+      );
     }
   }
 
@@ -225,7 +221,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
     final double right = left + width;
     final double bottom = top + height;
-    final double aspect = _controller.preferredCropAspectRatio;
 
     if (height > _boundariesLenght && width > _boundariesLenght) {
       width = right <= _layout.width ? width : _rect.value.width;
@@ -243,9 +238,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
             : 0.0,
         width,
         bottom <= _layout.height
-            ? aspect == null
+            ? _preferredCropAspectRatio == null
                 ? height
-                : width / aspect
+                : width / _preferredCropAspectRatio
             : _rect.value.height,
       );
     }
@@ -317,20 +312,23 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   Widget _paint() {
-    return ValueListenableBuilder(
-      valueListenable: _rect,
-      builder: (_, Rect value, __) {
-        return CustomPaint(
-          size: Size.infinite,
-          painter: CropGridPainter(
-            _rect.value,
-            style: _controller.cropStyle,
-            repaint: widget.showGrid,
-            showGrid: widget.showGrid,
-            showCenterRects: _controller.preferredCropAspectRatio == null,
-          ),
-        );
-      },
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, __) => ValueListenableBuilder(
+        valueListenable: _rect,
+        builder: (_, Rect value, __) {
+          return CustomPaint(
+            size: Size.infinite,
+            painter: CropGridPainter(
+              _rect.value,
+              style: _controller.cropStyle,
+              repaint: widget.showGrid,
+              showGrid: widget.showGrid,
+              showCenterRects: _controller.preferredCropAspectRatio == null,
+            ),
+          );
+        },
+      ),
     );
   }
 }
