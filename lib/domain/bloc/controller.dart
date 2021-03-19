@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:video_editor/utils/styles.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_ffmpeg/statistics.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+
+import 'package:video_editor/domain/entities/crop_style.dart';
+import 'package:video_editor/domain/entities/trim_style.dart';
 
 enum RotateDirection { left, right }
 
@@ -85,7 +87,7 @@ class VideoEditorController extends ChangeNotifier {
   int get rotation => _rotation;
 
   ///Get the `VideoPlayerController.value.initialized`
-  bool get initialized => _video.value.initialized;
+  bool get initialized => _video.value.isInitialized;
 
   ///Get the `VideoPlayerController.value.isPlaying`
   bool get isPlaying => _video.value.isPlaying;
