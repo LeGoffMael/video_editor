@@ -89,9 +89,13 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void dispose() {
+    _exportingProgress.dispose();
+    _isExporting.dispose();
     _controller.dispose();
     super.dispose();
   }
+
+  void _openCropScreen() => context.to(CropScreen(controller: _controller));
 
   void _exportVideo() async {
     Misc.delayed(1000, () => _isExporting.value = true);
@@ -118,15 +122,13 @@ class _VideoEditorState extends State<VideoEditor> {
     Misc.delayed(2000, () => setState(() => _exported = false));
   }
 
-  void _openCropScreen() => context.to(CropScreen(controller: _controller));
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _controller.initialized
           ? AnimatedBuilder(
-              animation: _controller,
+              animation: _controller.video,
               builder: (_, __) {
                 return Stack(children: [
                   Column(children: [
@@ -290,28 +292,10 @@ class _VideoEditorState extends State<VideoEditor> {
 //-----------------//
 //CROP VIDEO SCREEN//
 //-----------------//
-class CropScreen extends StatefulWidget {
-  CropScreen({
-    Key key,
-    @required this.controller,
-  }) : super(key: key);
+class CropScreen extends StatelessWidget {
+  CropScreen({Key key, @required this.controller}) : super(key: key);
 
   final VideoEditorController controller;
-
-  @override
-  _CropScreenState createState() => _CropScreenState();
-}
-
-class _CropScreenState extends State<CropScreen> {
-  Offset _minCrop;
-  Offset _maxCrop;
-
-  @override
-  void initState() {
-    super.initState();
-    _minCrop = widget.controller.minCrop;
-    _maxCrop = widget.controller.maxCrop;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -322,35 +306,39 @@ class _CropScreenState extends State<CropScreen> {
           padding: Margin.all(30),
           child: Column(children: [
             Expanded(
-              child: CropGridViewer(
-                controller: widget.controller,
-                onChangeCrop: (min, max) {
-                  _minCrop = min;
-                  _maxCrop = max;
-                  print("$min $max");
-                },
-              ),
+              child: CropGridViewer(controller: controller),
             ),
             SizedBox(height: 15),
             Row(children: [
               Expanded(
                 child: SplashTap(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: context.goBack,
                   child: Center(
-                    child: TextDesigned("CANCELAR",
-                        color: Colors.white, bold: true),
+                    child: TextDesigned(
+                      "CANCELAR",
+                      color: Colors.white,
+                      bold: true,
+                    ),
                   ),
                 ),
               ),
               buildSplashTap("16:9", 16 / 9, padding: Margin.horizontal(10)),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("5:4", 5 / 4, padding: Margin.horizontal(10)),
+              buildSplashTap("4:5", 4 / 5, padding: Margin.horizontal(10)),
               buildSplashTap("NO", null, padding: Margin.right(10)),
               Expanded(
                 child: SplashTap(
                   onTap: () {
-                    widget.controller.minCrop = _minCrop;
-                    widget.controller.maxCrop = _maxCrop;
+                    //2 WAYS TO UPDATE CROP
+
+                    //WAY 1:
+                    controller.updateCrop();
+
+                    /*WAY 2:
+                    controller.minCrop = controller.cacheMinCrop;
+                    controller.maxCrop = controller.cacheMaxCrop;
+                    */
+
                     context.goBack();
                   },
                   child: Center(
@@ -370,12 +358,10 @@ class _CropScreenState extends State<CropScreen> {
     double aspectRatio, {
     EdgeInsetsGeometry padding,
   }) {
-    return Padding(
-      padding: padding ?? Margin.zero,
-      child: SplashTap(
-        onTap: () {
-          widget.controller.preferredCropAspectRatio = aspectRatio;
-        },
+    return SplashTap(
+      onTap: () => controller.preferredCropAspectRatio = aspectRatio,
+      child: Padding(
+        padding: padding ?? Margin.zero,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
