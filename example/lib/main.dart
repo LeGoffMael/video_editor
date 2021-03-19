@@ -3,7 +3,7 @@ import 'package:helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
-import 'package:gallery_saver/gallery_saver.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 void main() => runApp(MyApp());
 
@@ -97,9 +97,9 @@ class _VideoEditorState extends State<VideoEditor> {
     Misc.delayed(1000, () => _isExporting.value = true);
     //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
     final File file = await _controller.exportVideo(
-      customInstruction: "-crf 17",
       preset: VideoExportPreset.medium,
-      progressCallback: (statics) {
+      customInstruction: "-crf 17",
+      onProgress: (statics) {
         if (_controller.video != null)
           _exportingProgress.value =
               statics.time / _controller.video.value.duration.inMilliseconds;
@@ -107,10 +107,8 @@ class _VideoEditorState extends State<VideoEditor> {
     );
     _isExporting.value = false;
 
-    //GallerySaver.saveImage() for GIF or GallerySaver.saveVideo() for VIDEOS
-    //Note: GallerySave don't override files.
     if (file != null) {
-      await GallerySaver.saveVideo(file.path, albumName: "Video Editor");
+      await ImageGallerySaver.saveFile(file.path);
       _exportText = "Video success export!";
     } else {
       _exportText = "Error on export video :(";

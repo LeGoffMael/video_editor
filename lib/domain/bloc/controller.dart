@@ -161,7 +161,7 @@ class VideoEditorController extends ChangeNotifier {
   ///Attempts to open the given [File] and load metadata about the video.
   Future<void> initialize() async {
     await _video.initialize();
-    //await _getVideoDimensions();
+    await _getVideoDimensions();
     _video.addListener(_videoListener);
     _video.setLooping(true);
     _updateTrimRange();
@@ -172,8 +172,8 @@ class VideoEditorController extends ChangeNotifier {
   Future<void> dispose() async {
     if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
-    //final executions = await _ffmpeg.listExecutions();
-    //if (executions.length > 0) await _ffmpeg.cancel();
+    final executions = await _ffmpeg.listExecutions();
+    if (executions.length > 0) await _ffmpeg.cancel();
     _video.dispose();
     super.dispose();
   }
@@ -270,7 +270,7 @@ class VideoEditorController extends ChangeNotifier {
   ///
   ///The [scale] is `scale=width*scale:height*scale` and reduce o increase video size.
   ///
-  ///The [progressCallback] is called while the video is exporting. This argument is usually used to update the export progress percentage.
+  ///The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
   ///
   ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
   ///A slower preset will provide better compression (compression is quality per filesize).
@@ -280,7 +280,7 @@ class VideoEditorController extends ChangeNotifier {
     String format = "mp4",
     double scale = 1.0,
     String customInstruction,
-    void Function(Statistics) progressCallback,
+    void Function(Statistics) onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
@@ -313,8 +313,10 @@ class VideoEditorController extends ChangeNotifier {
     final String execute =
         " -i $videoPath ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
-    if (progressCallback != null)
-      _config.enableStatisticsCallback(progressCallback);
+    //------------------//
+    //PROGRESS CALLBACKS//
+    //------------------//
+    if (onProgress != null) _config.enableStatisticsCallback(onProgress);
     final int code = await _ffmpeg.execute(execute);
     _config.enableStatisticsCallback(null);
 
