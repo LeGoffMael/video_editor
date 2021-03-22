@@ -65,7 +65,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
   Stream<List<Uint8List>> _generateThumbnails() async* {
     final String path = widget.controller.file.path;
-    final int duration = widget.controller.videoDuration.inMilliseconds;
+    final int duration = widget.controller.video.value.duration.inMilliseconds;
     final double eachPart = duration / _thumbnails;
     List<Uint8List> _byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
@@ -144,7 +144,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                                   showGrid: false,
                                   style: widget.controller.cropStyle,
                                 ),
-                              )
+                              ),
                             ]),
                           ),
                         ),

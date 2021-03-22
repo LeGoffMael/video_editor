@@ -97,7 +97,7 @@ class TrimSliderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(TrimSliderPainter oldDelegate) => false;
+  bool shouldRepaint(TrimSliderPainter oldDelegate) => true;
 
   @override
   bool shouldRebuildSemantics(TrimSliderPainter oldDelegate) => false;
