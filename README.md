@@ -106,7 +106,6 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 - Dependencies used:
   - [Helpers](https://pub.dev/packages/helpers)
   - [Image Picker](https://pub.dev/packages/image_picker)
-  - [Image Gallery Saver](https://pub.dev/packages/image_gallery_saver)
 
 <br>
 
