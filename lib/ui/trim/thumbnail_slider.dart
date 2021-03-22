@@ -1,10 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:video_editor/ui/widgets/transform.dart';
+import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-import 'package:video_editor/ui/widgets/crop/crop_grid_painter.dart';
+import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/ui/widgets/transform.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   ThumbnailSlider({

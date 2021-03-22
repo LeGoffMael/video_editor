@@ -1,9 +1,10 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+
+import 'package:video_editor/domain/entities/transform_data.dart';
+import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
-import 'package:video_editor/ui/widgets/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/widgets/transform.dart';
-import 'package:video_editor/ui/widgets/video/video_viewer.dart';
+import 'package:video_editor/ui/video_viewer.dart';
 
 enum _CropBoundaries {
   topLeft,

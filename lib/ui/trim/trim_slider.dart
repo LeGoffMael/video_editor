@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:video_editor/domain/bloc/controller.dart';
-import 'package:video_editor/ui/widgets/trim/trim_slider_painter.dart';
-import 'package:video_editor/ui/widgets/trim/thumbnail_slider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/ui/trim/thumbnail_slider.dart';
+import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 
 enum _TrimBoundaries { left, right, inside, progress }
 
