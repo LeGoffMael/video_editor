@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/widgets/crop/crop_grid_painter.dart';
+import 'package:video_editor/ui/widgets/transform.dart';
 import 'package:video_editor/ui/widgets/video/video_viewer.dart';
 
 enum _CropBoundaries {
@@ -34,11 +35,11 @@ class CropGridViewer extends StatefulWidget {
 }
 
 class _CropGridViewerState extends State<CropGridViewer> {
-  ValueNotifier<Offset> _translate = ValueNotifier<Offset>(Offset.zero);
-  ValueNotifier<double> _rotation = ValueNotifier<double>(0.0);
-  ValueNotifier<double> _scale = ValueNotifier<double>(1.0);
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(null);
   _CropBoundaries _boundary = _CropBoundaries.none;
+  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(null);
+  ValueNotifier<TransformData> _data = ValueNotifier<TransformData>(
+    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
+  );
 
   double _boundariesLenght = 0;
   double _boundariesWidth = 0;
@@ -61,32 +62,17 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   void dispose() {
     if (!widget.showGrid) _controller.removeListener(_scaleRect);
-    _translate.dispose();
-    _rotation.dispose();
-    _scale.dispose();
+    _data.dispose();
     _rect.dispose();
     super.dispose();
   }
 
   void _scaleRect() {
     _rect.value = _calculateCropRect();
-    final double width = _rect.value.width;
-    final double height = _rect.value.height;
-
-    final double xScale = _layout.width / width;
-    final double yScale = _layout.height / height;
-
-    //_scale.value = width < height ? yScale : xScale;
-
-    _scale.value = xScale;
-
-    print(xScale);
-
-    _rotation.value = -_controller.rotation * (math.pi / 180.0);
-
-    _translate.value = Offset(
-      ((_layout.width - width) / 2) - _rect.value.left,
-      ((_layout.height - height) / 2) - _rect.value.top,
+    _data.value = TransformData.fromRect(
+      _rect.value,
+      _layout,
+      _controller.rotation,
     );
   }
 
@@ -284,34 +270,28 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_rotation, _scale, _translate]),
-      builder: (_, __) => Transform.rotate(
-        angle: _rotation.value,
-        child: Transform.scale(
-          scale: _scale.value,
-          child: Transform.translate(
-            offset: _translate.value,
-            child: VideoViewer(
-              controller: _controller,
-              child: LayoutBuilder(builder: (_, constraints) {
-                Size size = Size(constraints.maxWidth, constraints.maxHeight);
-                if (_layout != size) {
-                  _layout = size;
-                  _rect.value = _calculateCropRect();
-                }
+    return ValueListenableBuilder(
+      valueListenable: _data,
+      builder: (_, TransformData data, __) => CropTransform(
+        transform: data,
+        child: VideoViewer(
+          controller: _controller,
+          child: LayoutBuilder(builder: (_, constraints) {
+            Size size = Size(constraints.maxWidth, constraints.maxHeight);
+            if (_layout != size) {
+              _layout = size;
+              _rect.value = _calculateCropRect();
+            }
 
-                return widget.showGrid
-                    ? GestureDetector(
-                        onPanUpdate: _onPanUpdate,
-                        onPanStart: _onPanStart,
-                        onPanEnd: _onPanEnd,
-                        child: _paint(),
-                      )
-                    : _paint();
-              }),
-            ),
-          ),
+            return widget.showGrid
+                ? GestureDetector(
+                    onPanUpdate: _onPanUpdate,
+                    onPanStart: _onPanStart,
+                    onPanEnd: _onPanEnd,
+                    child: _paint(),
+                  )
+                : _paint();
+          }),
         ),
       ),
     );
