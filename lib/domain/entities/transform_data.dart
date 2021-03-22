@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/bloc/controller.dart';
 
 class TransformData {
   TransformData({
@@ -9,26 +10,29 @@ class TransformData {
   double rotation, scale;
   Offset translate;
 
-  factory TransformData.fromRect(Rect rect, Size layout, int degrees) {
-    final double width = rect.width;
-    final double height = rect.height;
+  factory TransformData.fromRect(
+    Rect rect,
+    Size layout,
+    VideoEditorController controller,
+  ) {
+    final double videoAspect = controller.video.value.aspectRatio;
+    final double relativeAspect = rect.width / rect.height;
 
-    final double xScale = layout.width / width;
-    final double yScale = layout.height / height;
+    final double xScale = layout.width / rect.width;
+    final double yScale = layout.height / rect.height;
 
-    final double scale = degrees == 90 || degrees == 270
-        ? width > height
+    final double scale = videoAspect < 1.0
+        ? relativeAspect < 1
             ? yScale
-            : xScale
-        : width < height
-            ? yScale
+            : xScale + videoAspect
+        : relativeAspect < 1
+            ? yScale + videoAspect
             : xScale;
 
-    final double rotation = -degrees * (3.1416 / 180.0);
-
+    final double rotation = -controller.rotation * (3.1416 / 180.0);
     final Offset translate = Offset(
-      ((layout.width - width) / 2) - rect.left,
-      ((layout.height - height) / 2) - rect.top,
+      ((layout.width - rect.width) / 2) - rect.left,
+      ((layout.height - rect.height) / 2) - rect.top,
     );
 
     return TransformData(
