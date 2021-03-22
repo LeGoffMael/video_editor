@@ -12,7 +12,7 @@ class TrimSlider extends StatefulWidget {
     Key? key,
     required this.controller,
     this.height = 60,
-    this.quality = 25,
+    this.quality = 10,
     this.maxDuration,
   }) : super(key: key);
 
@@ -35,7 +35,7 @@ class TrimSlider extends StatefulWidget {
 class _TrimSliderState extends State<TrimSlider> {
   final _boundary = ValueNotifier<_TrimBoundaries>(_TrimBoundaries.none);
 
-  Rect? _rect;
+  Rect _rect = Rect.zero;
   Size _layout = Size.zero;
   Duration? _maxDuration = Duration.zero;
   late VideoPlayerController _controller;
@@ -56,8 +56,8 @@ class _TrimSliderState extends State<TrimSlider> {
   void _onHorizontalDragStart(DragStartDetails details) {
     final double margin = 25.0;
     final double pos = details.localPosition.dx;
-    final double max = _rect!.right;
-    final double min = _rect!.left;
+    final double max = _rect.right;
+    final double min = _rect.left;
     final double progressTrim = _getTrimPosition();
     final List<double> minMargin = [min - margin, min + margin];
     final List<double> maxMargin = [max - margin, max + margin];
@@ -85,19 +85,19 @@ class _TrimSliderState extends State<TrimSlider> {
     final Offset delta = details.delta;
     switch (_boundary.value) {
       case _TrimBoundaries.left:
-        final pos = _rect!.topLeft + delta;
-        _changeTrimRect(left: pos.dx, width: _rect!.width - delta.dx);
+        final pos = _rect.topLeft + delta;
+        _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
         break;
       case _TrimBoundaries.right:
-        _changeTrimRect(width: _rect!.width + delta.dx);
+        _changeTrimRect(width: _rect.width + delta.dx);
         break;
       case _TrimBoundaries.inside:
-        final pos = _rect!.topLeft + delta;
+        final pos = _rect.topLeft + delta;
         _changeTrimRect(left: pos.dx);
         break;
       case _TrimBoundaries.progress:
         final double pos = details.localPosition.dx;
-        if (pos >= _rect!.left && pos <= _rect!.right) _controllerSeekTo(pos);
+        if (pos >= _rect.left && pos <= _rect.right) _controllerSeekTo(pos);
         break;
       case _TrimBoundaries.none:
         break;
@@ -107,7 +107,7 @@ class _TrimSliderState extends State<TrimSlider> {
   void _onHorizontalDragEnd(_) {
     if (_boundary.value != _TrimBoundaries.none) {
       final double _progressTrim = _getTrimPosition();
-      if (_progressTrim >= _rect!.right || _progressTrim < _rect!.left)
+      if (_progressTrim >= _rect.right || _progressTrim < _rect.left)
         _controllerSeekTo(_progressTrim);
       _updateControllerIsTrimming(false);
       _updateControllerTrim();
@@ -118,13 +118,13 @@ class _TrimSliderState extends State<TrimSlider> {
   //RECT//
   //----//
   void _changeTrimRect({double? left, double? width}) {
-    left = left ?? _rect!.left;
-    width = width ?? _rect!.width;
+    left = left ?? _rect.left;
+    width = width ?? _rect.width;
 
     final Duration diff = _getDurationDiff(left, width);
 
     if (left >= 0 && left + width <= _layout.width && diff <= _maxDuration!) {
-      _rect = Rect.fromLTWH(left, _rect!.top, width, _rect!.height);
+      _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
       _updateControllerTrim();
     }
   }
@@ -137,20 +137,17 @@ class _TrimSliderState extends State<TrimSlider> {
       );
     }
 
-    if (_rect == null) {
-      final Duration diff = _getDurationDiff(0.0, _layout.width);
-      if (diff >= _maxDuration!)
-        _rect = Rect.fromLTWH(
-          0.0,
-          0.0,
-          (_maxDuration!.inMilliseconds /
-                  _controller.value.duration.inMilliseconds) *
-              _layout.width,
-          widget.height,
-        );
-      else
-        _normalRect();
-    } else
+    final Duration diff = _getDurationDiff(0.0, _layout.width);
+    if (diff >= _maxDuration!)
+      _rect = Rect.fromLTWH(
+        0.0,
+        0.0,
+        (_maxDuration!.inMilliseconds /
+                _controller.value.duration.inMilliseconds) *
+            _layout.width,
+        widget.height,
+      );
+    else
       _normalRect();
   }
 
@@ -165,8 +162,8 @@ class _TrimSliderState extends State<TrimSlider> {
 
   void _updateControllerTrim() {
     final double width = _layout.width;
-    widget.controller.minTrim = _rect!.left / width;
-    widget.controller.maxTrim = _rect!.right / width;
+    widget.controller.minTrim = _rect.left / width;
+    widget.controller.maxTrim = _rect.right / width;
   }
 
   void _updateControllerIsTrimming(bool value) {
@@ -207,7 +204,7 @@ class _TrimSliderState extends State<TrimSlider> {
             quality: widget.quality,
           ),
           AnimatedBuilder(
-            animation: _controller,
+            animation: Listenable.merge([widget.controller, _controller]),
             builder: (_, __) {
               return CustomPaint(
                 size: Size.infinite,
