@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:video_editor/ui/widgets/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'package:video_editor/ui/widgets/crop/crop_grid_painter.dart';
@@ -25,42 +26,40 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  double _aspect = 1.0, _scale = 1.0, _width = 1.0;
+  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(null);
+  ValueNotifier<TransformData> _data = ValueNotifier<TransformData>(
+    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
+  );
+
+  double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;
 
-  Rect _rect;
-  Size _size = Size.zero;
-  Offset _translate = Offset.zero;
+  Size _layout = Size.zero;
   Stream<List<Uint8List>> _stream;
 
   @override
   void initState() {
     super.initState();
     _aspect = widget.controller.video.value.aspectRatio;
+    widget.controller.addListener(_scaleRect);
+    super.initState();
   }
 
   @override
-  void didUpdateWidget(ThumbnailSlider oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.controller.isPlaying)
-      setState(() {
-        _rect = _calculateTrimRect();
-        final double _scaleX = _size.width / _rect.width;
-        final double _scaleY = _size.height / _rect.height;
+  void dispose() {
+    widget.controller.removeListener(_scaleRect);
+    _data.dispose();
+    _rect.dispose();
+    super.dispose();
+  }
 
-        _scale = _aspect <= 1.0
-            ? _scaleX > _scaleY
-                ? _scaleY
-                : _scaleX
-            : _scaleX < _scaleY
-                ? _scaleY
-                : _scaleX;
-        _translate = Offset(
-              (_size.width - _rect.width) / 2,
-              (_size.height - _rect.height) / 2,
-            ) -
-            _rect.topLeft;
-      });
+  void _scaleRect() {
+    _rect.value = _calculateTrimRect();
+    _data.value = TransformData.fromRect(
+      _rect.value,
+      _layout,
+      widget.controller.rotation,
+    );
   }
 
   Stream<List<Uint8List>> _generateThumbnails() async* {
@@ -86,12 +85,12 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final Offset max = widget.controller.maxCrop;
     return Rect.fromPoints(
       Offset(
-        min.dx * _size.width,
-        min.dy * _size.height,
+        min.dx * _layout.width,
+        min.dy * _layout.height,
       ),
       Offset(
-        max.dx * _size.width,
-        max.dy * _size.height,
+        max.dx * _layout.width,
+        max.dy * _layout.height,
       ),
     );
   }
@@ -102,12 +101,12 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;
-        _size = _aspect <= 1.0
+        _layout = _aspect <= 1.0
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
-        _thumbnails = (_width ~/ _size.width) + 1;
+        _thumbnails = (_width ~/ _layout.width) + 1;
         _stream = _generateThumbnails();
-        _rect = _calculateTrimRect();
+        _rect.value = _calculateTrimRect();
       }
 
       return StreamBuilder(
@@ -122,32 +121,34 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                   itemCount: data.length,
                   itemBuilder: (_, int index) {
                     return ClipRRect(
-                      child: Transform.scale(
-                        scale: _scale,
-                        child: Transform.translate(
-                          offset: _translate,
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: _size.height,
-                            width: _size.width,
-                            child: Stack(children: [
-                              Image(
-                                image: MemoryImage(data[index]),
-                                width: _size.width,
-                                height: _size.height,
-                                alignment: Alignment.topLeft,
-                              ),
-                              CustomPaint(
-                                size: _size,
-                                painter: CropGridPainter(
-                                  _rect,
-                                  showGrid: false,
-                                  style: widget.controller.cropStyle,
+                      child: ValueListenableBuilder(
+                        valueListenable: _data,
+                        builder: (_, TransformData transform, __) {
+                          return CropTransform(
+                            transform: transform,
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: _layout.height,
+                              width: _layout.width,
+                              child: Stack(children: [
+                                Image(
+                                  image: MemoryImage(data[index]),
+                                  width: _layout.width,
+                                  height: _layout.height,
+                                  alignment: Alignment.topLeft,
                                 ),
-                              ),
-                            ]),
-                          ),
-                        ),
+                                CustomPaint(
+                                  size: _layout,
+                                  painter: CropGridPainter(
+                                    _rect.value,
+                                    showGrid: false,
+                                    style: widget.controller.cropStyle,
+                                  ),
+                                ),
+                              ]),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
