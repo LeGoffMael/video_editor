@@ -6,13 +6,12 @@ class CropGridPainter extends CustomPainter {
     this.rect, {
     this.style,
     this.showGrid = false,
-    this.repaint = false,
     this.showCenterRects = true,
   });
 
   final Rect rect;
   final CropGridStyle style;
-  final bool showGrid, showCenterRects, repaint;
+  final bool showGrid, showCenterRects;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -29,14 +28,29 @@ class CropGridPainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = showGrid ? style.croppingBackground : style.background;
 
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, rect.topRight.dy), paint);
+    //TOP
     canvas.drawRect(
-        Rect.fromLTWH(0.0, rect.bottomLeft.dy, size.width, size.height), paint);
+      Rect.fromLTWH(0.0, -5.0, size.width, rect.top + 5.0),
+      paint,
+    );
+    //BOTTOM
     canvas.drawRect(
-        Rect.fromPoints(Offset(0.0, rect.topLeft.dy), rect.bottomLeft), paint);
+      Rect.fromPoints(
+        Offset(0.0, rect.bottom),
+        Offset(size.width, size.height + 5.0),
+      ),
+      paint,
+    );
+    //LEFT
     canvas.drawRect(
-        Rect.fromPoints(rect.topRight, Offset(size.width, rect.bottomRight.dy)),
-        paint);
+      Rect.fromPoints(Offset(0.0, rect.topLeft.dy), rect.bottomLeft),
+      paint,
+    );
+    //RIGHT
+    canvas.drawRect(
+      Rect.fromPoints(rect.topRight, Offset(size.width, rect.bottom)),
+      paint,
+    );
   }
 
   void _drawGrid(Canvas canvas, Size size) {
@@ -176,7 +190,7 @@ class CropGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CropGridPainter oldDelegate) => repaint;
+  bool shouldRepaint(CropGridPainter oldDelegate) => true;
 
   @override
   bool shouldRebuildSemantics(CropGridPainter oldDelegate) => false;
