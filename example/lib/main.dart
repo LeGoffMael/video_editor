@@ -3,7 +3,6 @@ import 'package:helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 void main() => runApp(MyApp());
 
@@ -111,12 +110,10 @@ class _VideoEditorState extends State<VideoEditor> {
     );
     _isExporting.value = false;
 
-    if (file != null) {
-      await ImageGallerySaver.saveFile(file.path);
+    if (file != null)
       _exportText = "Video success export!";
-    } else {
+    else
       _exportText = "Error on export video :(";
-    }
 
     setState(() => _exported = true);
     Misc.delayed(2000, () => setState(() => _exported = false));
@@ -131,11 +128,9 @@ class _VideoEditorState extends State<VideoEditor> {
               Column(children: [
                 _topNavBar(),
                 Expanded(
-                  child: ClipRRect(
-                    child: CropGridViewer(
-                      controller: _controller,
-                      showGrid: false,
-                    ),
+                  child: CropGridViewer(
+                    controller: _controller,
+                    showGrid: false,
                   ),
                 ),
                 ..._trimSlider(),

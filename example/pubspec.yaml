@@ -17,7 +17,6 @@ dependencies:
   helpers: ^1.0.7
   image_picker: ^0.6.7+22
   cupertino_icons: ^1.0.1
-  image_gallery_saver: ^1.6.8
 
 dev_dependencies:
   flutter_test:
