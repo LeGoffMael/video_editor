@@ -34,6 +34,9 @@ class CropGridViewer extends StatefulWidget {
 }
 
 class _CropGridViewerState extends State<CropGridViewer> {
+  ValueNotifier<Offset> _translate = ValueNotifier<Offset>(Offset.zero);
+  ValueNotifier<double> _rotation = ValueNotifier<double>(0.0);
+  ValueNotifier<double> _scale = ValueNotifier<double>(1.0);
   ValueNotifier<Rect> _rect = ValueNotifier<Rect>(null);
   _CropBoundaries _boundary = _CropBoundaries.none;
 
@@ -41,31 +44,54 @@ class _CropGridViewerState extends State<CropGridViewer> {
   double _boundariesWidth = 0;
 
   Size _layout = Size.zero;
-  Offset _translate = Offset.zero;
 
-  double _scale = 1.0;
-  double _rotation = 0.0;
-  double _videoAspectRatio = 1.0, _preferredCropAspectRatio = 1.0;
+  double _preferredCropAspectRatio = 1.0;
   VideoEditorController _controller;
 
   @override
   void initState() {
     _controller = widget.controller;
-    _boundariesLenght = _controller.cropStyle.boundariesLenght;
     _boundariesWidth = _controller.cropStyle.boundariesWidth;
-    _videoAspectRatio = _controller.video.value.aspectRatio;
+    _boundariesLenght = _controller.cropStyle.boundariesLenght;
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+    if (!widget.showGrid) _controller.addListener(_scaleRect);
     super.initState();
   }
 
   @override
-  void didUpdateWidget(CropGridViewer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.showGrid && !widget.controller.isPlaying) setState(_scaleRect);
+  void dispose() {
+    if (!widget.showGrid) _controller.removeListener(_scaleRect);
+    _translate.dispose();
+    _rotation.dispose();
+    _scale.dispose();
+    _rect.dispose();
+    super.dispose();
+  }
+
+  void _scaleRect() {
+    _rect.value = _calculateCropRect();
+    final double width = _rect.value.width;
+    final double height = _rect.value.height;
+
+    final double xScale = _layout.width / width;
+    final double yScale = _layout.height / height;
+
+    //_scale.value = width < height ? yScale : xScale;
+
+    _scale.value = xScale;
+
+    print(xScale);
+
+    _rotation.value = -_controller.rotation * (math.pi / 180.0);
+
+    _translate.value = Offset(
+      ((_layout.width - width) / 2) - _rect.value.left,
+      ((_layout.height - height) / 2) - _rect.value.top,
+    );
   }
 
   void _onPanStart(DragStartDetails details) {
-    final Offset margin = Offset(_boundariesWidth * 5, _boundariesWidth * 5);
+    final Offset margin = Offset(_boundariesWidth, _boundariesWidth) * 6;
     final Offset pos = details.localPosition;
     final Offset max = _rect.value.bottomRight;
     final Offset min = _rect.value.topLeft;
@@ -256,55 +282,35 @@ class _CropGridViewerState extends State<CropGridViewer> {
     );
   }
 
-  void _scaleRect() {
-    _rect.value = _calculateCropRect();
-    final int degrees = _controller.rotation;
-    final double scaleX = _layout.width / _rect.value.width;
-    final double scaleY = _layout.height / _rect.value.height;
-
-    if (_videoAspectRatio < 1.0) {
-      if (degrees == 90 || degrees == 270)
-        _scale = _layout.width / _rect.value.height;
-      else
-        _scale = scaleX > scaleY ? scaleY : scaleX;
-    } else {
-      _scale = scaleX < scaleY ? scaleY : scaleX;
-    }
-
-    _rotation = -degrees * (math.pi / 180.0);
-    _translate = Offset(
-          (_layout.width - _rect.value.width) / 2,
-          (_layout.height - _rect.value.height) / 2,
-        ) -
-        _rect.value.topLeft;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: _rotation,
-      child: Transform.scale(
-        scale: _scale,
-        child: Transform.translate(
-          offset: _translate,
-          child: VideoViewer(
-            controller: _controller,
-            child: LayoutBuilder(builder: (_, constraints) {
-              Size size = Size(constraints.maxWidth, constraints.maxHeight);
-              if (_layout != size) {
-                _layout = size;
-                _rect.value = _calculateCropRect();
-              }
+    return AnimatedBuilder(
+      animation: Listenable.merge([_rotation, _scale, _translate]),
+      builder: (_, __) => Transform.rotate(
+        angle: _rotation.value,
+        child: Transform.scale(
+          scale: _scale.value,
+          child: Transform.translate(
+            offset: _translate.value,
+            child: VideoViewer(
+              controller: _controller,
+              child: LayoutBuilder(builder: (_, constraints) {
+                Size size = Size(constraints.maxWidth, constraints.maxHeight);
+                if (_layout != size) {
+                  _layout = size;
+                  _rect.value = _calculateCropRect();
+                }
 
-              return widget.showGrid
-                  ? GestureDetector(
-                      onPanUpdate: _onPanUpdate,
-                      onPanStart: _onPanStart,
-                      onPanEnd: _onPanEnd,
-                      child: _paint(),
-                    )
-                  : _paint();
-            }),
+                return widget.showGrid
+                    ? GestureDetector(
+                        onPanUpdate: _onPanUpdate,
+                        onPanStart: _onPanStart,
+                        onPanEnd: _onPanEnd,
+                        child: _paint(),
+                      )
+                    : _paint();
+              }),
+            ),
           ),
         ),
       ),
@@ -320,9 +326,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
           return CustomPaint(
             size: Size.infinite,
             painter: CropGridPainter(
-              _rect.value,
+              value,
               style: _controller.cropStyle,
-              repaint: widget.showGrid,
               showGrid: widget.showGrid,
               showCenterRects: _controller.preferredCropAspectRatio == null,
             ),
