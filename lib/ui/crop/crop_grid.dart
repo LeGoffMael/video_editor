@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
@@ -45,20 +44,18 @@ class _CropGridViewerState extends State<CropGridViewer> {
     TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
   );
 
-  double _boundariesLenght = 0;
-  double _boundariesWidth = 0;
-
   Size _layout = Size.zero;
+  Offset _margin = Offset.zero;
 
-  double? _preferredCropAspectRatio = 1.0;
+  double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
 
   @override
   void initState() {
     _controller = widget.controller;
-    _boundariesWidth = _controller.cropStyle.boundariesWidth;
-    _boundariesLenght = _controller.cropStyle.boundariesLenght;
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+    final double lenght = _controller.cropStyle.boundariesLenght;
+    _margin = Offset(lenght, lenght) * 2;
     if (!widget.showGrid) _controller.addListener(_scaleRect);
     super.initState();
   }
@@ -81,31 +78,29 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _onPanStart(DragStartDetails details) {
-    final Offset margin = Offset(_boundariesWidth, _boundariesWidth) * 6;
     final Offset pos = details.localPosition;
     final Offset max = _rect.value.bottomRight;
     final Offset min = _rect.value.topLeft;
 
-    final List<Offset> minMargin = [min - margin, min + margin];
-    final List<Offset> maxMargin = [max - margin, max + margin];
+    final List<Offset> minMargin = [min - _margin, min + _margin];
+    final List<Offset> maxMargin = [max - _margin, max + _margin];
 
-    //IS TOUCHING THE GRID
     if (pos >= minMargin[0] && pos <= maxMargin[1]) {
       final List<Offset> topCenter = [
-        _rect.value.topCenter - margin,
-        _rect.value.topCenter + margin,
+        _rect.value.topCenter - _margin,
+        _rect.value.topCenter + _margin,
       ];
       final List<Offset> centerLeft = [
-        _rect.value.centerLeft - margin,
-        _rect.value.centerLeft + margin,
+        _rect.value.centerLeft - _margin,
+        _rect.value.centerLeft + _margin,
       ];
       final List<Offset> bottomCenter = [
-        _rect.value.bottomCenter - margin,
-        _rect.value.bottomCenter + margin
+        _rect.value.bottomCenter - _margin,
+        _rect.value.bottomCenter + _margin
       ];
       final List<Offset> centerRight = [
-        _rect.value.centerRight - margin,
-        _rect.value.centerRight + margin,
+        _rect.value.centerRight - _margin,
+        _rect.value.centerRight + _margin,
       ];
 
       //CORNERS
@@ -141,10 +136,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
       } else {
         _boundary = _CropBoundaries.none;
       }
-      _controller.isCropping = true;
     } else {
       _boundary = _CropBoundaries.none;
     }
+    _controller.isCropping = true;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -238,7 +233,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     final double right = left + width;
     final double bottom = top + height;
 
-    if (height > _boundariesLenght && width > _boundariesLenght) {
+    if (height > _margin.dx && width > _margin.dx) {
       width = right <= _layout.width ? width : _rect.value.width;
 
       _rect.value = Rect.fromLTWH(
@@ -287,14 +282,34 @@ class _CropGridViewerState extends State<CropGridViewer> {
               _rect.value = _calculateCropRect();
             }
 
-            return widget.showGrid
-                ? GestureDetector(
-                    onPanUpdate: _onPanUpdate,
-                    onPanStart: _onPanStart,
-                    onPanEnd: _onPanEnd,
-                    child: _paint(),
-                  )
-                : _paint();
+            return AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) => ValueListenableBuilder(
+                  valueListenable: _rect,
+                  builder: (_, Rect value, __) {
+                    final left = value.left - _margin.dx;
+                    final top = value.top - _margin.dy;
+                    return widget.showGrid
+                        ? Stack(children: [
+                            _paint(),
+                            GestureDetector(
+                              onPanUpdate: _onPanUpdate,
+                              onPanStart: _onPanStart,
+                              onPanEnd: _onPanEnd,
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  left: left < 0.0 ? 0.0 : left,
+                                  top: top < 0.0 ? 0.0 : top,
+                                ),
+                                color: Colors.transparent,
+                                width: value.width + _margin.dx * 2,
+                                height: value.height + _margin.dy * 2,
+                              ),
+                            ),
+                          ])
+                        : _paint();
+                  }),
+            );
           }),
         ),
       ),
@@ -302,21 +317,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   Widget _paint() {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (_, __) => ValueListenableBuilder(
-        valueListenable: _rect,
-        builder: (_, Rect value, __) {
-          return CustomPaint(
-            size: Size.infinite,
-            painter: CropGridPainter(
-              value,
-              style: _controller.cropStyle,
-              showGrid: widget.showGrid,
-              showCenterRects: _controller.preferredCropAspectRatio == null,
-            ),
-          );
-        },
+    return CustomPaint(
+      size: Size.infinite,
+      painter: CropGridPainter(
+        _rect.value,
+        style: _controller.cropStyle,
+        showGrid: widget.showGrid,
+        showCenterRects: _controller.preferredCropAspectRatio == null,
       ),
     );
   }
