@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
-import 'package:video_editor/ui/widgets/transform.dart';
 import 'package:video_editor/ui/video_viewer.dart';
+import 'package:video_editor/ui/transform.dart';
 
 enum _CropBoundaries {
   topLeft,
@@ -20,9 +20,12 @@ enum _CropBoundaries {
 }
 
 class CropGridViewer extends StatefulWidget {
-  //It is the viewer that allows you to crop the video
-  CropGridViewer({Key key, @required this.controller, this.showGrid = true})
-      : super(key: key);
+  ///It is the viewer that allows you to crop the video
+  CropGridViewer({
+    Key key,
+    @required this.controller,
+    this.showGrid = true,
+  }) : super(key: key);
 
   /// If it is true, it shows the grid and allows cropping the video, if it is false
   /// does not show the grid and cannot be cropped
