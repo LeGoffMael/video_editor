@@ -127,58 +127,57 @@ class _VideoEditorState extends State<VideoEditor> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _controller.initialized
-          ? AnimatedBuilder(
-              animation: _controller.video,
-              builder: (_, __) {
-                return Stack(children: [
-                  Column(children: [
-                    _topNavBar(),
-                    Expanded(
-                      child: ClipRRect(
-                        child: CropGridViewer(
-                          controller: _controller,
-                          showGrid: false,
-                        ),
-                      ),
+          ? Stack(children: [
+              Column(children: [
+                _topNavBar(),
+                Expanded(
+                  child: ClipRRect(
+                    child: CropGridViewer(
+                      controller: _controller,
+                      showGrid: false,
                     ),
-                    ..._trimSlider(),
-                  ]),
-                  Center(
-                    child: OpacityTransition(
-                      visible: !_controller.isPlaying,
-                      child: GestureDetector(
-                        onTap: _controller.video.play,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.play_arrow),
+                  ),
+                ),
+                ..._trimSlider(),
+              ]),
+              Center(
+                child: AnimatedBuilder(
+                  animation: _controller.video,
+                  builder: (_, __) => OpacityTransition(
+                    visible: !_controller.isPlaying,
+                    child: GestureDetector(
+                      onTap: _controller.video.play,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
                         ),
+                        child: Icon(Icons.play_arrow),
                       ),
                     ),
                   ),
-                  _customSnackBar(),
-                  ValueListenableBuilder(
-                    valueListenable: _isExporting,
-                    builder: (_, bool export, __) => OpacityTransition(
-                      visible: export,
-                      child: AlertDialog(
-                        title: ValueListenableBuilder(
-                          valueListenable: _exportingProgress,
-                          builder: (_, double value, __) => TextDesigned(
-                            "Exporting video ${(value * 100).ceil()}%",
-                            color: Colors.black,
-                            bold: true,
-                          ),
-                        ),
+                ),
+              ),
+              _customSnackBar(),
+              ValueListenableBuilder(
+                valueListenable: _isExporting,
+                builder: (_, bool export, __) => OpacityTransition(
+                  visible: export,
+                  child: AlertDialog(
+                    title: ValueListenableBuilder(
+                      valueListenable: _exportingProgress,
+                      builder: (_, double value, __) => TextDesigned(
+                        "Exporting video ${(value * 100).ceil()}%",
+                        color: Colors.black,
+                        bold: true,
                       ),
                     ),
-                  )
-                ]);
-              })
+                  ),
+                ),
+              )
+            ])
           : Center(child: CircularProgressIndicator()),
     );
   }
@@ -219,41 +218,46 @@ class _VideoEditorState extends State<VideoEditor> {
     );
   }
 
+  String formatter(Duration duration) => [
+        duration.inMinutes.remainder(60).toString().padLeft(2, '0'),
+        duration.inSeconds.remainder(60).toString().padLeft(2, '0')
+      ].join(":");
+
   List<Widget> _trimSlider() {
-    final duration = _controller.videoDuration.inSeconds;
-    final pos = _controller.trimPosition * duration;
-    final start = _controller.minTrim * duration;
-    final end = _controller.maxTrim * duration;
-
-    String formatter(Duration duration) =>
-        duration.inMinutes.remainder(60).toString().padLeft(2, '0') +
-        ":" +
-        (duration.inSeconds.remainder(60)).toString().padLeft(2, '0');
-
     return [
-      Padding(
-        padding: Margin.horizontal(height / 4),
-        child: Row(children: [
-          TextDesigned(
-            formatter(Duration(seconds: pos.toInt())),
-            color: Colors.white,
-          ),
-          Expanded(child: SizedBox()),
-          OpacityTransition(
-            visible: _controller.isTrimming,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
+      AnimatedBuilder(
+        animation: _controller.video,
+        builder: (_, __) {
+          final duration = _controller.video.value.duration.inSeconds;
+          final pos = _controller.trimPosition * duration;
+          final start = _controller.minTrim * duration;
+          final end = _controller.maxTrim * duration;
+
+          return Padding(
+            padding: Margin.horizontal(height / 4),
+            child: Row(children: [
               TextDesigned(
-                formatter(Duration(seconds: start.toInt())),
+                formatter(Duration(seconds: pos.toInt())),
                 color: Colors.white,
               ),
-              SizedBox(width: 10),
-              TextDesigned(
-                formatter(Duration(seconds: end.toInt())),
-                color: Colors.white,
-              ),
+              Expanded(child: SizedBox()),
+              OpacityTransition(
+                visible: _controller.isTrimming,
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  TextDesigned(
+                    formatter(Duration(seconds: start.toInt())),
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 10),
+                  TextDesigned(
+                    formatter(Duration(seconds: end.toInt())),
+                    color: Colors.white,
+                  ),
+                ]),
+              )
             ]),
-          )
-        ]),
+          );
+        },
       ),
       Container(
         height: height,
@@ -305,9 +309,7 @@ class CropScreen extends StatelessWidget {
         child: Padding(
           padding: Margin.all(30),
           child: Column(children: [
-            Expanded(
-              child: CropGridViewer(controller: controller),
-            ),
+            Expanded(child: CropGridViewer(controller: controller)),
             SizedBox(height: 15),
             Row(children: [
               Expanded(
