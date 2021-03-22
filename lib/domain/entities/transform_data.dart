@@ -21,11 +21,11 @@ class TransformData {
     final double xScale = layout.width / rect.width;
     final double yScale = layout.height / rect.height;
 
-    final double scale = videoAspect < 1.0
-        ? relativeAspect < 1
+    final double scale = videoAspect < 0.8
+        ? relativeAspect < 0.8
             ? yScale
             : xScale + videoAspect
-        : relativeAspect < 1
+        : relativeAspect < 0.8
             ? yScale + videoAspect
             : xScale;
 
