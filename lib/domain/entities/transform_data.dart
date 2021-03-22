@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class TransformData {
   TransformData({
-    @required this.scale,
-    @required this.rotation,
-    @required this.translate,
+    required this.scale,
+    required this.rotation,
+    required this.translate,
   });
   double rotation, scale;
   Offset translate;

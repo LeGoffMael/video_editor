@@ -4,7 +4,7 @@ description: Video Editor allows trim, crop, rotate and scale video with a super
 homepage: https://github.com/seel-channel/video_editor
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
   flutter: ">=1.17.0"
 
 dependencies:
@@ -15,7 +15,7 @@ dependencies:
   video_player: ^2.0.2
   path_provider: ^2.0.1
   flutter_ffmpeg: ^0.4.0
-  video_thumbnail: ^0.2.5+1
+  video_thumbnail: ^0.3.1
 
 dev_dependencies:
   flutter_test:

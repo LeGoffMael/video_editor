@@ -3,9 +3,9 @@ import 'package:video_editor/domain/entities/transform_data.dart';
 
 class CropTransform extends StatelessWidget {
   const CropTransform({
-    Key key,
-    @required this.transform,
-    @required this.child,
+    Key? key,
+    required this.transform,
+    required this.child,
   }) : super(key: key);
 
   final Widget child;

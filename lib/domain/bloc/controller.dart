@@ -51,10 +51,9 @@ class VideoEditorController extends ChangeNotifier {
   ///Constructs a [VideoEditorController] that edits a video from a file.
   VideoEditorController.file(
     this.file, {
-    TrimSliderStyle trimStyle,
-    CropGridStyle cropStyle,
-  })  : assert(file != null),
-        _video = VideoPlayerController.file(file),
+    TrimSliderStyle? trimStyle,
+    CropGridStyle? cropStyle,
+  })  : _video = VideoPlayerController.file(file),
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
@@ -65,7 +64,7 @@ class VideoEditorController extends ChangeNotifier {
   bool isTrimming = false;
   bool isCropping = false;
 
-  double _preferredCropAspectRatio;
+  double? _preferredCropAspectRatio;
 
   double _minTrim = _min.dx;
   double _maxTrim = _max.dx;
@@ -141,8 +140,8 @@ class VideoEditorController extends ChangeNotifier {
     }
   }
 
-  double get preferredCropAspectRatio => _preferredCropAspectRatio;
-  set preferredCropAspectRatio(double value) {
+  double? get preferredCropAspectRatio => _preferredCropAspectRatio;
+  set preferredCropAspectRatio(double? value) {
     if (value == null) {
       _preferredCropAspectRatio = value;
       notifyListeners();
@@ -293,12 +292,12 @@ class VideoEditorController extends ChangeNotifier {
   ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
   ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
-  Future<File> exportVideo({
-    String name,
+  Future<File?> exportVideo({
+    String? name,
     String format = "mp4",
     double scale = 1.0,
-    String customInstruction,
-    void Function(Statistics) onProgress,
+    String? customInstruction,
+    void Function(Statistics)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();

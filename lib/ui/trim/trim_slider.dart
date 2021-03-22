@@ -4,13 +4,13 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/trim/thumbnail_slider.dart';
 import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 
-enum _TrimBoundaries { left, right, inside, progress }
+enum _TrimBoundaries { left, right, inside, progress, none }
 
 class TrimSlider extends StatefulWidget {
   ///Slider that trim video length.
   TrimSlider({
-    Key key,
-    @required this.controller,
+    Key? key,
+    required this.controller,
     this.height = 60,
     this.quality = 25,
     this.maxDuration,
@@ -23,7 +23,7 @@ class TrimSlider extends StatefulWidget {
   final double height;
 
   ///The max duration that can be trim video.
-  final Duration maxDuration;
+  final Duration? maxDuration;
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
@@ -33,18 +33,18 @@ class TrimSlider extends StatefulWidget {
 }
 
 class _TrimSliderState extends State<TrimSlider> {
-  final _boundary = ValueNotifier<_TrimBoundaries>(null);
+  final _boundary = ValueNotifier<_TrimBoundaries>(_TrimBoundaries.none);
 
-  Rect _rect;
+  Rect? _rect;
   Size _layout = Size.zero;
-  Duration _maxDuration = Duration.zero;
-  VideoPlayerController _controller;
+  Duration? _maxDuration = Duration.zero;
+  late VideoPlayerController _controller;
 
   @override
   void initState() {
     _controller = widget.controller.video;
     final Duration duration = _controller.value.duration;
-    _maxDuration = widget.maxDuration == null || _maxDuration > duration
+    _maxDuration = widget.maxDuration == null || _maxDuration! > duration
         ? duration
         : widget.maxDuration;
     super.initState();
@@ -56,8 +56,8 @@ class _TrimSliderState extends State<TrimSlider> {
   void _onHorizontalDragStart(DragStartDetails details) {
     final double margin = 25.0;
     final double pos = details.localPosition.dx;
-    final double max = _rect.right;
-    final double min = _rect.left;
+    final double max = _rect!.right;
+    final double min = _rect!.left;
     final double progressTrim = _getTrimPosition();
     final List<double> minMargin = [min - margin, min + margin];
     final List<double> maxMargin = [max - margin, max + margin];
@@ -74,40 +74,40 @@ class _TrimSliderState extends State<TrimSlider> {
       else if (pos >= minMargin[1] && pos <= maxMargin[0])
         _boundary.value = _TrimBoundaries.inside;
       else
-        _boundary.value = null;
+        _boundary.value = _TrimBoundaries.none;
       _updateControllerIsTrimming(true);
     } else {
-      _boundary.value = null;
+      _boundary.value = _TrimBoundaries.none;
     }
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    if (_boundary.value != null) {
-      final Offset delta = details.delta;
-      switch (_boundary.value) {
-        case _TrimBoundaries.left:
-          final pos = _rect.topLeft + delta;
-          _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
-          break;
-        case _TrimBoundaries.right:
-          _changeTrimRect(width: _rect.width + delta.dx);
-          break;
-        case _TrimBoundaries.inside:
-          final pos = _rect.topLeft + delta;
-          _changeTrimRect(left: pos.dx);
-          break;
-        case _TrimBoundaries.progress:
-          final double pos = details.localPosition.dx;
-          if (pos >= _rect.left && pos <= _rect.right) _controllerSeekTo(pos);
-          break;
-      }
+    final Offset delta = details.delta;
+    switch (_boundary.value) {
+      case _TrimBoundaries.left:
+        final pos = _rect!.topLeft + delta;
+        _changeTrimRect(left: pos.dx, width: _rect!.width - delta.dx);
+        break;
+      case _TrimBoundaries.right:
+        _changeTrimRect(width: _rect!.width + delta.dx);
+        break;
+      case _TrimBoundaries.inside:
+        final pos = _rect!.topLeft + delta;
+        _changeTrimRect(left: pos.dx);
+        break;
+      case _TrimBoundaries.progress:
+        final double pos = details.localPosition.dx;
+        if (pos >= _rect!.left && pos <= _rect!.right) _controllerSeekTo(pos);
+        break;
+      case _TrimBoundaries.none:
+        break;
     }
   }
 
   void _onHorizontalDragEnd(_) {
-    if (_boundary.value != null) {
+    if (_boundary.value != _TrimBoundaries.none) {
       final double _progressTrim = _getTrimPosition();
-      if (_progressTrim >= _rect.right || _progressTrim < _rect.left)
+      if (_progressTrim >= _rect!.right || _progressTrim < _rect!.left)
         _controllerSeekTo(_progressTrim);
       _updateControllerIsTrimming(false);
       _updateControllerTrim();
@@ -117,14 +117,14 @@ class _TrimSliderState extends State<TrimSlider> {
   //----//
   //RECT//
   //----//
-  void _changeTrimRect({double left, double width}) {
-    left = left ?? _rect.left;
-    width = width ?? _rect.width;
+  void _changeTrimRect({double? left, double? width}) {
+    left = left ?? _rect!.left;
+    width = width ?? _rect!.width;
 
     final Duration diff = _getDurationDiff(left, width);
 
-    if (left >= 0 && left + width <= _layout.width && diff <= _maxDuration) {
-      _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
+    if (left >= 0 && left + width <= _layout.width && diff <= _maxDuration!) {
+      _rect = Rect.fromLTWH(left, _rect!.top, width, _rect!.height);
       _updateControllerTrim();
     }
   }
@@ -139,11 +139,11 @@ class _TrimSliderState extends State<TrimSlider> {
 
     if (_rect == null) {
       final Duration diff = _getDurationDiff(0.0, _layout.width);
-      if (diff >= _maxDuration)
+      if (diff >= _maxDuration!)
         _rect = Rect.fromLTWH(
           0.0,
           0.0,
-          (_maxDuration.inMilliseconds /
+          (_maxDuration!.inMilliseconds /
                   _controller.value.duration.inMilliseconds) *
               _layout.width,
           widget.height,
@@ -165,12 +165,13 @@ class _TrimSliderState extends State<TrimSlider> {
 
   void _updateControllerTrim() {
     final double width = _layout.width;
-    widget.controller.minTrim = _rect.left / width;
-    widget.controller.maxTrim = _rect.right / width;
+    widget.controller.minTrim = _rect!.left / width;
+    widget.controller.maxTrim = _rect!.right / width;
   }
 
   void _updateControllerIsTrimming(bool value) {
-    if (_boundary.value != null && _boundary.value != _TrimBoundaries.progress)
+    if (_boundary.value != _TrimBoundaries.none &&
+        _boundary.value != _TrimBoundaries.progress)
       widget.controller.isTrimming = value;
   }
 

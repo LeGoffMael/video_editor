@@ -9,10 +9,10 @@ import 'package:video_editor/ui/transform.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   ThumbnailSlider({
-    @required this.controller,
+    required this.controller,
     this.height = 60,
     this.quality = 10,
-  }) : assert(controller != null);
+  });
 
   ///MAX QUALITY IS 100 - MIN QUALITY IS 0
   final int quality;
@@ -27,7 +27,7 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(null);
+  ValueNotifier<Rect?> _rect = ValueNotifier<Rect?>(null);
   ValueNotifier<TransformData> _data = ValueNotifier<TransformData>(
     TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
   );
@@ -36,7 +36,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   int _thumbnails = 8;
 
   Size _layout = Size.zero;
-  Stream<List<Uint8List>> _stream;
+  Stream<List<Uint8List>>? _stream;
 
   @override
   void initState() {
@@ -57,7 +57,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   void _scaleRect() {
     _rect.value = _calculateTrimRect();
     _data.value = TransformData.fromRect(
-      _rect.value,
+      _rect.value!,
       _layout,
       widget.controller.rotation,
     );
@@ -67,9 +67,9 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final String path = widget.controller.file.path;
     final int duration = widget.controller.video.value.duration.inMilliseconds;
     final double eachPart = duration / _thumbnails;
-    List<Uint8List> _byteList = [];
+    List<Uint8List?> _byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
-      Uint8List _bytes = await VideoThumbnail.thumbnailData(
+      Uint8List? _bytes = await VideoThumbnail.thumbnailData(
         imageFormat: ImageFormat.JPEG,
         video: path,
         timeMs: (eachPart * i).toInt(),
@@ -77,7 +77,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       );
       _byteList.add(_bytes);
 
-      yield _byteList;
+      yield _byteList as List<Uint8List>;
     }
   }
 
@@ -119,7 +119,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
                   physics: NeverScrollableScrollPhysics(),
-                  itemCount: data.length,
+                  itemCount: data!.length,
                   itemBuilder: (_, int index) {
                     return ClipRRect(
                       child: ValueListenableBuilder(
