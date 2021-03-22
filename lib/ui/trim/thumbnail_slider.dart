@@ -27,8 +27,8 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  ValueNotifier<Rect?> _rect = ValueNotifier<Rect?>(null);
-  ValueNotifier<TransformData> _data = ValueNotifier<TransformData>(
+  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
     TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
   );
 
@@ -49,17 +49,17 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   void dispose() {
     widget.controller.removeListener(_scaleRect);
-    _data.dispose();
+    _transform.dispose();
     _rect.dispose();
     super.dispose();
   }
 
   void _scaleRect() {
     _rect.value = _calculateTrimRect();
-    _data.value = TransformData.fromRect(
-      _rect.value!,
+    _transform.value = TransformData.fromRect(
+      _rect.value,
       _layout,
-      widget.controller.rotation,
+      widget.controller,
     );
   }
 
@@ -121,36 +121,34 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: data!.length,
                   itemBuilder: (_, int index) {
-                    return ClipRRect(
-                      child: ValueListenableBuilder(
-                        valueListenable: _data,
-                        builder: (_, TransformData transform, __) {
-                          return CropTransform(
-                            transform: transform,
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: _layout.height,
-                              width: _layout.width,
-                              child: Stack(children: [
-                                Image(
-                                  image: MemoryImage(data[index]),
-                                  width: _layout.width,
-                                  height: _layout.height,
-                                  alignment: Alignment.topLeft,
+                    return ValueListenableBuilder(
+                      valueListenable: _transform,
+                      builder: (_, TransformData transform, __) {
+                        return CropTransform(
+                          transform: transform,
+                          child: Container(
+                            alignment: Alignment.center,
+                            height: _layout.height,
+                            width: _layout.width,
+                            child: Stack(children: [
+                              Image(
+                                image: MemoryImage(data[index]),
+                                width: _layout.width,
+                                height: _layout.height,
+                                alignment: Alignment.topLeft,
+                              ),
+                              CustomPaint(
+                                size: _layout,
+                                painter: CropGridPainter(
+                                  _rect.value,
+                                  showGrid: false,
+                                  style: widget.controller.cropStyle,
                                 ),
-                                CustomPaint(
-                                  size: _layout,
-                                  painter: CropGridPainter(
-                                    _rect.value,
-                                    showGrid: false,
-                                    style: widget.controller.cropStyle,
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          );
-                        },
-                      ),
+                              ),
+                            ]),
+                          ),
+                        );
+                      },
                     );
                   },
                 )
