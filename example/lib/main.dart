@@ -304,7 +304,12 @@ class CropScreen extends StatelessWidget {
         child: Padding(
           padding: Margin.all(30),
           child: Column(children: [
-            Expanded(child: CropGridViewer(controller: controller)),
+            Expanded(
+              child: AnimatedInteractiveViewer(
+                maxScale: 2.4,
+                child: CropGridViewer(controller: controller),
+              ),
+            ),
             SizedBox(height: 15),
             Row(children: [
               Expanded(
@@ -327,15 +332,12 @@ class CropScreen extends StatelessWidget {
                 child: SplashTap(
                   onTap: () {
                     //2 WAYS TO UPDATE CROP
-
                     //WAY 1:
                     controller.updateCrop();
-
                     /*WAY 2:
                     controller.minCrop = controller.cacheMinCrop;
                     controller.maxCrop = controller.cacheMaxCrop;
                     */
-
                     context.goBack();
                   },
                   child: Center(
