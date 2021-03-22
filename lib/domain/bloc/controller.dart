@@ -73,6 +73,9 @@ class VideoEditorController extends ChangeNotifier {
   Offset _minCrop = _min;
   Offset _maxCrop = _max;
 
+  Offset cacheMinCrop = _min;
+  Offset cacheMaxCrop = _max;
+
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
   VideoPlayerController _video;
@@ -99,9 +102,8 @@ class VideoEditorController extends ChangeNotifier {
   Duration get videoDuration => _video.value.duration;
 
   ///Get the [Video Dimension] like VideoWidth and VideoHeight
-  Size videoDimension() {
-    return Size(_videoWidth.toDouble(), _videoHeight.toDouble());
-  }
+  Size get videoDimension =>
+      Size(_videoWidth.toDouble(), _videoHeight.toDouble());
 
   ///The **MinTrim** (Range is `0.0` to `1.0`).
   double get minTrim => _minTrim;
@@ -144,14 +146,24 @@ class VideoEditorController extends ChangeNotifier {
     if (value == null) {
       _preferredCropAspectRatio = value;
       notifyListeners();
-    } else {
-      final width = (maxCrop.dx - minCrop.dx);
-      final max = Offset(width, width / (value * 2));
-      if (value >= 0 && max <= _max) {
-        _preferredCropAspectRatio = value;
-        maxCrop = max;
-        notifyListeners();
+    } else if (value >= 0) {
+      final videoWidth = videoDimension.width;
+      final cropWidth = (cacheMaxCrop.dx - cacheMinCrop.dx) * videoWidth;
+      Offset max = Offset(
+        cropWidth / videoWidth,
+        (cropWidth / value) / videoWidth,
+      );
+      if (max >= _max) {
+        final videoHeight = videoDimension.height;
+        final cropHeight = (cacheMaxCrop.dy - cacheMinCrop.dy) * videoHeight;
+        max = Offset(
+          cropWidth / videoWidth,
+          (cropHeight * value) / cropHeight,
+        );
       }
+      cacheMaxCrop = max;
+      _preferredCropAspectRatio = value;
+      notifyListeners();
     }
   }
 
@@ -182,7 +194,6 @@ class VideoEditorController extends ChangeNotifier {
     final position = videoPosition;
     if (position < _trimStart || position >= _trimEnd)
       _video.seekTo(_trimStart);
-    notifyListeners();
   }
 
   //----------//
@@ -202,6 +213,12 @@ class VideoEditorController extends ChangeNotifier {
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
   }
 
+  ///Set the minCrop and maxCrop
+  void updateCrop() {
+    minCrop = cacheMinCrop;
+    maxCrop = cacheMaxCrop;
+  }
+
   //----------//
   //VIDEO TRIM//
   //----------//
@@ -209,6 +226,7 @@ class VideoEditorController extends ChangeNotifier {
     final duration = videoDuration;
     _trimStart = duration * minTrim;
     _trimEnd = duration * maxTrim;
+    notifyListeners();
   }
 
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
