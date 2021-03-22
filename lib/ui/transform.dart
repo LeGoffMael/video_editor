@@ -13,13 +13,15 @@ class CropTransform extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: transform.rotation,
-      child: Transform.scale(
-        scale: transform.scale,
-        child: Transform.translate(
-          offset: transform.translate,
-          child: child,
+    return ClipRRect(
+      child: Transform.rotate(
+        angle: transform.rotation,
+        child: Transform.scale(
+          scale: transform.scale,
+          child: Transform.translate(
+            offset: transform.translate,
+            child: child,
+          ),
         ),
       ),
     );
