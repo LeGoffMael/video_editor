@@ -9,7 +9,7 @@ class CropGridStyle {
     this.gridLineWidth = 1,
     this.gridSize = 3,
     this.boundariesColor = Colors.white,
-    this.boundariesLenght = 20,
+    this.boundariesLength = 20,
     this.boundariesWidth = 5,
   }) : this.croppingBackground =
             croppingBackground ?? Colors.black.withOpacity(0.48);
@@ -28,6 +28,6 @@ class CropGridStyle {
   final int gridSize;
 
   final Color boundariesColor;
-  final double boundariesLenght;
+  final double boundariesLength;
   final double boundariesWidth;
 }
