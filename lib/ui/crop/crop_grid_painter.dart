@@ -75,7 +75,7 @@ class CropGridPainter extends CustomPainter {
 
   void _drawBoundaries(Canvas canvas, Size size) {
     final double width = style!.boundariesWidth;
-    final double lenght = style!.boundariesLenght;
+    final double lenght = style!.boundariesLength;
     final Paint paint = Paint()..color = style!.boundariesColor;
 
     //----//

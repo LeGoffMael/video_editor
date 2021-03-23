@@ -53,19 +53,35 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   void initState() {
     _controller = widget.controller;
+    final length = _controller.cropStyle.boundariesLength;
+    _controller.addListener(!widget.showGrid ? _scaleRect : _updateRect);
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-    final double lenght = _controller.cropStyle.boundariesLenght;
-    _margin = Offset(lenght, lenght) * 2;
-    if (!widget.showGrid) _controller.addListener(_scaleRect);
+    _margin = Offset(length, length) * 2;
+    if (widget.showGrid) {
+      _controller.cacheMaxCrop = _controller.maxCrop;
+      _controller.cacheMinCrop = _controller.minCrop;
+    }
     super.initState();
   }
 
   @override
   void dispose() {
-    if (!widget.showGrid) _controller.removeListener(_scaleRect);
+    _controller.removeListener(!widget.showGrid ? _scaleRect : _updateRect);
     _transform.dispose();
     _rect.dispose();
     super.dispose();
+  }
+
+  void _updateRect() {
+    if (_controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
+      _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+      _rect.value = _calculateCropRect(
+        _controller.cacheMinCrop,
+        _controller.cacheMaxCrop,
+      );
+      _changeRect();
+      _onPanEnd();
+    }
   }
 
   void _scaleRect() {
@@ -155,17 +171,26 @@ class _CropGridViewerState extends State<CropGridViewer> {
         case _CropBoundaries.topLeft:
           final Offset pos = _rect.value.topLeft + delta;
           _changeRect(
-            top: pos.dy,
-            left: pos.dx,
+            top: _preferredCropAspectRatio == null ? pos.dy : pos.dy,
+            left: _preferredCropAspectRatio == null
+                ? pos.dx
+                : pos.dx / _preferredCropAspectRatio!,
             width: _rect.value.width - delta.dx,
-            height: _rect.value.height - delta.dy,
+            height: _preferredCropAspectRatio == null
+                ? _rect.value.height - delta.dy
+                : null,
           );
           break;
         case _CropBoundaries.topRight:
           _changeRect(
-            top: _rect.value.topRight.dy + delta.dy,
+            top: _preferredCropAspectRatio == null
+                ? _rect.value.topRight.dy + delta.dy
+                : (_rect.value.topRight.dy +
+                    (delta.dy * _preferredCropAspectRatio!)),
             width: _rect.value.width + delta.dx,
-            height: _rect.value.height - delta.dy,
+            height: _preferredCropAspectRatio == null
+                ? _rect.value.height - delta.dy
+                : null,
           );
           break;
         case _CropBoundaries.bottomRight:
@@ -206,10 +231,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
     }
   }
 
-  void _onPanEnd(_) {
+  void _onPanEnd() {
     if (_boundary != _CropBoundaries.none) {
       final Rect rect = _rect.value;
-      _controller.isCropping = false;
       _controller.cacheMinCrop = Offset(
         rect.left / _layout.width,
         rect.top / _layout.height,
@@ -218,6 +242,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
         rect.right / _layout.width,
         rect.bottom / _layout.height,
       );
+      _controller.isCropping = false;
     }
   }
 
@@ -230,11 +255,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
     width = width ?? _rect.value.width;
     height = height ?? _rect.value.height;
 
+    if (_preferredCropAspectRatio == null) {
+      height = width / _preferredCropAspectRatio!;
+    }
+
     final double right = left + width;
     final double bottom = top + height;
 
     if (height > _margin.dx && width > _margin.dx) {
-      width = right <= _layout.width ? width : _rect.value.width;
+      if (right > _layout.width) width = _rect.value.width;
 
       _rect.value = Rect.fromLTWH(
         left >= 0.0
@@ -248,18 +277,14 @@ class _CropGridViewerState extends State<CropGridViewer> {
                 : _rect.value.top
             : 0.0,
         width,
-        bottom <= _layout.height
-            ? _preferredCropAspectRatio == null
-                ? height
-                : width / _preferredCropAspectRatio!
-            : _rect.value.height,
+        bottom <= _layout.height ? height : _rect.value.height,
       );
     }
   }
 
-  Rect _calculateCropRect() {
-    final Offset minCrop = _controller.minCrop;
-    final Offset maxCrop = _controller.maxCrop;
+  Rect _calculateCropRect([Offset? min, Offset? max]) {
+    final Offset minCrop = min ?? _controller.minCrop;
+    final Offset maxCrop = max ?? _controller.maxCrop;
 
     return Rect.fromPoints(
       Offset(minCrop.dx * _layout.width, minCrop.dy * _layout.height),
@@ -282,34 +307,31 @@ class _CropGridViewerState extends State<CropGridViewer> {
               _rect.value = _calculateCropRect();
             }
 
-            return AnimatedBuilder(
-              animation: _controller,
-              builder: (_, __) => ValueListenableBuilder(
-                  valueListenable: _rect,
-                  builder: (_, Rect value, __) {
-                    final left = value.left - _margin.dx;
-                    final top = value.top - _margin.dy;
-                    return widget.showGrid
-                        ? Stack(children: [
-                            _paint(),
-                            GestureDetector(
-                              onPanUpdate: _onPanUpdate,
-                              onPanStart: _onPanStart,
-                              onPanEnd: _onPanEnd,
-                              child: Container(
-                                margin: EdgeInsets.only(
-                                  left: left < 0.0 ? 0.0 : left,
-                                  top: top < 0.0 ? 0.0 : top,
-                                ),
-                                color: Colors.transparent,
-                                width: value.width + _margin.dx * 2,
-                                height: value.height + _margin.dy * 2,
+            return ValueListenableBuilder(
+                valueListenable: _rect,
+                builder: (_, Rect value, __) {
+                  final left = value.left - _margin.dx;
+                  final top = value.top - _margin.dy;
+                  return widget.showGrid
+                      ? Stack(children: [
+                          _paint(),
+                          GestureDetector(
+                            onPanEnd: (_) => _onPanEnd(),
+                            onPanStart: _onPanStart,
+                            onPanUpdate: _onPanUpdate,
+                            child: Container(
+                              margin: EdgeInsets.only(
+                                left: left < 0.0 ? 0.0 : left,
+                                top: top < 0.0 ? 0.0 : top,
                               ),
+                              color: Colors.transparent,
+                              width: value.width + _margin.dx * 2,
+                              height: value.height + _margin.dy * 2,
                             ),
-                          ])
-                        : _paint();
-                  }),
-            );
+                          ),
+                        ])
+                      : _paint();
+                });
           }),
         ),
       ),
