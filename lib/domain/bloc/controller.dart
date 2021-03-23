@@ -146,23 +146,29 @@ class VideoEditorController extends ChangeNotifier {
       _preferredCropAspectRatio = value;
       notifyListeners();
     } else if (value >= 0) {
+      final length = cropStyle.boundariesLength * 4;
       final videoWidth = videoDimension.width;
+      final videoHeight = videoDimension.height;
+      final cropHeight = (cacheMaxCrop.dy - cacheMinCrop.dy) * videoHeight;
       final cropWidth = (cacheMaxCrop.dx - cacheMinCrop.dx) * videoWidth;
-      Offset max = Offset(
+      Offset newMax = Offset(
         cropWidth / videoWidth,
         (cropWidth / value) / videoWidth,
       );
-      if (max >= _max) {
-        final videoHeight = videoDimension.height;
-        final cropHeight = (cacheMaxCrop.dy - cacheMinCrop.dy) * videoHeight;
-        max = Offset(
-          cropWidth / videoWidth,
+
+      if (newMax.dy > _max.dy || newMax.dx > _max.dx) {
+        newMax = Offset(
           (cropHeight * value) / cropHeight,
+          cropHeight / videoHeight,
         );
       }
-      cacheMaxCrop = max;
-      _preferredCropAspectRatio = value;
-      notifyListeners();
+
+      if ((newMax.dx - cacheMinCrop.dx) * videoWidth > length &&
+          (newMax.dy - cacheMinCrop.dy) * videoHeight > length) {
+        cacheMaxCrop = newMax;
+        _preferredCropAspectRatio = value;
+        notifyListeners();
+      }
     }
   }
 
@@ -212,7 +218,7 @@ class VideoEditorController extends ChangeNotifier {
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
   }
 
-  ///Set the minCrop and maxCrop
+  ///Update the [minCrop] and [maxCrop]
   void updateCrop() {
     minCrop = cacheMinCrop;
     maxCrop = cacheMaxCrop;
