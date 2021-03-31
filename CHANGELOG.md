@@ -1,3 +1,9 @@
+## [1.1.0]
+
+- Sound Null Safety Migration
+- Preffered Aspect Ratio on crop
+- Improved gesture on crop screen
+
 ## [1.0.3+1]
 
 - [UNIDENTIFIED] ERROR FIXED.

@@ -300,14 +300,14 @@ packages:
       name: video_player
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.2"
+    version: "2.1.0"
   video_player_platform_interface:
     dependency: transitive
     description:
       name: video_player_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.0.0"
+    version: "4.1.0"
   video_player_web:
     dependency: transitive
     description:
@@ -321,7 +321,7 @@ packages:
       name: video_thumbnail
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.1"
+    version: "0.3.3"
   win32:
     dependency: transitive
     description:
