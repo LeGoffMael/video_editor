@@ -38,14 +38,14 @@ class CropGridViewer extends StatefulWidget {
 }
 
 class _CropGridViewerState extends State<CropGridViewer> {
-  _CropBoundaries _boundary = _CropBoundaries.none;
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
+  final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  final ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
     TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
   );
 
   Size _layout = Size.zero;
   Offset _margin = Offset.zero;
+  _CropBoundaries _boundary = _CropBoundaries.none;
 
   double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
@@ -74,13 +74,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   void _updateRect() {
     if (_controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
-      _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-      _rect.value = _calculateCropRect(
-        _controller.cacheMinCrop,
-        _controller.cacheMaxCrop,
-      );
-      _changeRect();
-      _onPanEnd();
+      setState(() {
+        _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+        _rect.value = _calculateCropRect(
+          _controller.cacheMinCrop,
+          _controller.cacheMaxCrop,
+        );
+        _changeRect();
+        _onPanEnd();
+      });
     }
   }
 
@@ -102,13 +104,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
     final List<Offset> maxMargin = [max - _margin, max + _margin];
 
     if (pos >= minMargin[0] && pos <= maxMargin[1]) {
-      final topLeft = Rect.fromPoints(minMargin[0], minMargin[1]);
-      final bottomRight = Rect.fromPoints(maxMargin[0], maxMargin[1]);
-      final topRight = Rect.fromPoints(
+      final Rect topLeft = Rect.fromPoints(minMargin[0], minMargin[1]);
+      final Rect bottomRight = Rect.fromPoints(maxMargin[0], maxMargin[1]);
+      final Rect topRight = Rect.fromPoints(
         Offset(maxMargin[0].dx, minMargin[0].dy),
         Offset(maxMargin[1].dx, minMargin[1].dy),
       );
-      final bottomLeft = Rect.fromPoints(
+      final Rect bottomLeft = Rect.fromPoints(
         Offset(minMargin[0].dx, maxMargin[0].dy),
         Offset(minMargin[1].dx, maxMargin[1].dy),
       );
