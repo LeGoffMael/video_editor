@@ -1,11 +1,11 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
+import 'package:flutter/material.dart';
+import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
-import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/transform.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   ThumbnailSlider({
@@ -67,7 +67,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final String path = widget.controller.file.path;
     final int duration = widget.controller.video.value.duration.inMilliseconds;
     final double eachPart = duration / _thumbnails;
-    List<Uint8List?> _byteList = [];
+    List<Uint8List> _byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
       Uint8List? _bytes = await VideoThumbnail.thumbnailData(
         imageFormat: ImageFormat.JPEG,
@@ -75,9 +75,11 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
         timeMs: (eachPart * i).toInt(),
         quality: widget.quality,
       );
-      _byteList.add(_bytes);
+      if (_bytes != null) {
+        _byteList.add(_bytes);
+      }
 
-      yield _byteList as List<Uint8List>;
+      yield _byteList;
     }
   }
 

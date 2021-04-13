@@ -1,6 +1,7 @@
 import 'dart:io';
-import 'package:helpers/helpers.dart';
+
 import 'package:flutter/material.dart';
+import 'package:helpers/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 
@@ -30,7 +31,8 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
   final ImagePicker _picker = ImagePicker();
 
   void _pickVideo() async {
-    final PickedFile file = await _picker.getVideo(source: ImageSource.gallery);
+    final PickedFile? file =
+        await _picker.getVideo(source: ImageSource.gallery);
     if (file != null) context.to(VideoEditor(file: File(file.path)));
   }
 
@@ -62,7 +64,7 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
 //VIDEO EDITOR SCREEN//
 //-------------------//
 class VideoEditor extends StatefulWidget {
-  VideoEditor({Key key, this.file}) : super(key: key);
+  VideoEditor({Key? key, required this.file}) : super(key: key);
 
   final File file;
 
@@ -77,7 +79,7 @@ class _VideoEditorState extends State<VideoEditor> {
 
   bool _exported = false;
   String _exportText = "";
-  VideoEditorController _controller;
+  late VideoEditorController _controller;
 
   @override
   void initState() {
@@ -99,7 +101,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportVideo() async {
     Misc.delayed(1000, () => _isExporting.value = true);
     //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
-    final File file = await _controller.exportVideo(
+    final File? file = await _controller.exportVideo(
       preset: VideoExportPreset.medium,
       customInstruction: "-crf 17",
       onProgress: (statics) {
@@ -292,7 +294,7 @@ class _VideoEditorState extends State<VideoEditor> {
 //CROP VIDEO SCREEN//
 //-----------------//
 class CropScreen extends StatelessWidget {
-  CropScreen({Key key, @required this.controller}) : super(key: key);
+  CropScreen({Key? key, required this.controller}) : super(key: key);
 
   final VideoEditorController controller;
 
@@ -354,8 +356,8 @@ class CropScreen extends StatelessWidget {
 
   Widget buildSplashTap(
     String title,
-    double aspectRatio, {
-    EdgeInsetsGeometry padding,
+    double? aspectRatio, {
+    EdgeInsetsGeometry? padding,
   }) {
     return SplashTap(
       onTap: () => controller.preferredCropAspectRatio = aspectRatio,
