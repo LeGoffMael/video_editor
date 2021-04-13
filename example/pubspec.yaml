@@ -5,7 +5,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -14,9 +14,9 @@ dependencies:
   video_editor:
     path: ../
 
-  helpers: ^1.0.7
-  image_picker: ^0.6.7+22
-  cupertino_icons: ^1.0.1
+  helpers: ^1.1.1
+  image_picker: ^0.7.4
+  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
