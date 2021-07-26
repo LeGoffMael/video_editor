@@ -2,11 +2,10 @@
 
 <br>
 
-## My other APIs
+## Goal of this fork
 
-- [Scroll Navigation](https://pub.dev/packages/scroll_navigation)
-- [Video Viewer](https://pub.dev/packages/video_viewer)
-- [Helpers](https://pub.dev/packages/helpers)
+- [ ] new trimmer style when the length of the video is greater than `maxDuration`
+- [ ] add possibility to select a frame of the video as the cover
 
 <br>
 
