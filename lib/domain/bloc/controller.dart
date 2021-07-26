@@ -51,9 +51,11 @@ class VideoEditorController extends ChangeNotifier {
   ///Constructs a [VideoEditorController] that edits a video from a file.
   VideoEditorController.file(
     this.file, {
+    Duration? maxDuration,
     TrimSliderStyle? trimStyle,
     CropGridStyle? cropStyle,
   })  : _video = VideoPlayerController.file(file),
+        this._maxDuration = maxDuration ?? Duration.zero,
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
@@ -78,6 +80,9 @@ class VideoEditorController extends ChangeNotifier {
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
   VideoPlayerController _video;
+
+  ///The max duration that can be trim video.
+  Duration _maxDuration;
 
   int _videoWidth = 0;
   int _videoHeight = 0;
@@ -181,7 +186,16 @@ class VideoEditorController extends ChangeNotifier {
     await _getVideoDimensions();
     _video.addListener(_videoListener);
     _video.setLooping(true);
-    _updateTrimRange();
+
+    _maxDuration = _maxDuration == Duration.zero ? videoDuration : _maxDuration;
+
+    // Trim straight away when maxDuration is lower than video duration
+    if (_maxDuration < videoDuration)
+      updateTrim(
+          0.0, _maxDuration.inMilliseconds / videoDuration.inMilliseconds);
+    else
+      _updateTrimRange();
+
     notifyListeners();
   }
 
@@ -227,12 +241,23 @@ class VideoEditorController extends ChangeNotifier {
   //----------//
   //VIDEO TRIM//
   //----------//
+  ///Update minTrim and maxTrim. Arguments range are `0.0` to `1.0`.
+  void updateTrim(double min, double max) {
+    _minTrim = min;
+    _maxTrim = max;
+    _updateTrimRange();
+    notifyListeners();
+  }
+
   void _updateTrimRange() {
     final duration = videoDuration;
     _trimStart = duration * minTrim;
     _trimEnd = duration * maxTrim;
     notifyListeners();
   }
+
+  ///Get the **maxDuration**
+  Duration get maxDuration => _maxDuration;
 
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
