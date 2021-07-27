@@ -39,11 +39,14 @@ class _TrimSliderState extends State<TrimSlider> {
 
   double _thumbnailPosition = 0.0;
   double? _ratio;
+  // trim line width set in the style
+  double _trimWidth = 0.0;
 
   @override
   void initState() {
     _controller = widget.controller.video;
     _ratio = getRatioDuration();
+    _trimWidth = widget.controller.trimStyle.lineWidth;
     super.initState();
   }
 
@@ -83,11 +86,14 @@ class _TrimSliderState extends State<TrimSlider> {
     switch (_boundary.value) {
       case _TrimBoundaries.left:
         final pos = _rect.topLeft + delta;
-        _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
+        // avoid minTrim to be bigger than maxTrim
+        if (pos.dx > 0.0 && pos.dx < _rect.right - _trimWidth * 2)
+          _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
         break;
       case _TrimBoundaries.right:
         final pos = _rect.topRight + delta;
-        if (pos.dx < _trimLayout.width && pos.dx > _rect.left)
+        // avoid maxTrim to be smaller than minTrim
+        if (pos.dx < _trimLayout.width && pos.dx > _rect.left + _trimWidth * 2)
           _changeTrimRect(width: _rect.width + delta.dx);
         break;
       case _TrimBoundaries.inside:

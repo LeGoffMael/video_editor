@@ -4,10 +4,22 @@
 
 ## Goal of this fork
 
-- [ ] new trimmer style when the length of the video is greater than `maxDuration`
+- [x] new trimmer style when the length of the video is greater than `maxDuration`
+- [ ] video timeline along the trimmer
 - [ ] add possibility to select a frame of the video as the cover
 
-<br>
+### Fix bugs
+
+- [x] avoid `maxTrim` to be smaller than `minTrim`
+- [x] avoid `minTrim` to be bigger than `maxTrim`
+- [ ] improve gesture of trimmer
+
+### New Features
+
+- New support actions
+  - New trim (if video length > `maxDuration` param)
+
+<br><br><br>
 
 ## Features
 
