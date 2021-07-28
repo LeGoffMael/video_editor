@@ -262,8 +262,11 @@ class _VideoEditorState extends State<VideoEditor> {
       ),
       Container(
         height: height,
-        margin: Margin.all(height / 4),
-        child: TrimSlider(controller: _controller, height: height),
+        margin: Margin.vertical(height / 4),
+        child: TrimSlider(
+            controller: _controller,
+            height: height,
+            horizontalMargin: height / 4),
       )
     ];
   }

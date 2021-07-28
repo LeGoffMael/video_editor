@@ -7,7 +7,7 @@
 - [x] new trimmer style when the length of the video is greater than `maxDuration`
   - [x] inside gesture scroll horizontally to change the maxDuration trim position in the video length
   - [x] inside gesture update progress position and video seek position
-  - [ ] see previous and next thumbnails out of the padding area
+  - [x] see previous and next thumbnails out of the padding area
 - [ ] video timeline along the trimmer
 - [ ] add possibility to select a frame of the video as the cover
   - [ ] try to select the cover using the seek position of the video player [#61004](https://github.com/flutter/flutter/issues/61004)
