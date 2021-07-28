@@ -260,7 +260,7 @@ class _TrimSliderState extends State<TrimSlider> {
                 animation: Listenable.merge([widget.controller, _controller]),
                 builder: (_, __) {
                   return CustomPaint(
-                    size: Size.infinite,
+                    size: Size.fromHeight(widget.height),
                     painter: TrimSliderPainter(
                       _rect,
                       _getTrimPosition(),

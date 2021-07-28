@@ -261,7 +261,7 @@ class _VideoEditorState extends State<VideoEditor> {
         },
       ),
       Container(
-        height: height,
+        width: MediaQuery.of(context).size.width,
         margin: Margin.vertical(height / 4),
         child: TrimSlider(
             controller: _controller,
