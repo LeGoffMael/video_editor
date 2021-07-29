@@ -9,6 +9,7 @@
   - [x] inside gesture update progress position and video seek position
   - [x] see previous and next thumbnails out of the padding area
 - [ ] video timeline along the trimmer
+- [ ] new style of trimmer
 - [ ] add possibility to select a frame of the video as the cover
   - [ ] try to select the cover using the seek position of the video player [#61004](https://github.com/flutter/flutter/issues/61004)
 
@@ -16,7 +17,6 @@
 
 - [x] avoid `maxTrim` to be smaller than `minTrim`
 - [x] avoid `minTrim` to be bigger than `maxTrim`
-- [ ] improve gesture of trimmer
 
 ### New Features
 
