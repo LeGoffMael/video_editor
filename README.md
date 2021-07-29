@@ -23,6 +23,10 @@
 - New support actions
   - New trim (if video length > `maxDuration` param)
 
+| New Trimmer                             |
+| --------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) |
+
 <br><br><br>
 
 ## Features
