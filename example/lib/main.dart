@@ -127,8 +127,7 @@ class _VideoEditorState extends State<VideoEditor> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: _controller.initialized
-          ? SafeArea(
-              child: Stack(children: [
+          ? Stack(children: [
               Column(children: [
                 _topNavBar(),
                 Expanded(
@@ -176,7 +175,7 @@ class _VideoEditorState extends State<VideoEditor> {
                   ),
                 ),
               )
-            ]))
+            ])
           : Center(child: CircularProgressIndicator()),
     );
   }

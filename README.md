@@ -2,32 +2,13 @@
 
 <br>
 
-## Goal of this fork
+## My other APIs
 
-- [x] new trimmer style when the length of the video is greater than `maxDuration`
-  - [x] inside gesture scroll horizontally to change the maxDuration trim position in the video length
-  - [x] inside gesture update progress position and video seek position
-  - [x] see previous and next thumbnails out of the padding area
-- [ ] video timeline along the trimmer
-- [ ] add possibility to select a frame of the video as the cover
-  - [ ] try to select the cover using the seek position of the video player [#61004](https://github.com/flutter/flutter/issues/61004)
+- [Scroll Navigation](https://pub.dev/packages/scroll_navigation)
+- [Video Viewer](https://pub.dev/packages/video_viewer)
+- [Helpers](https://pub.dev/packages/helpers)
 
-### Fix bugs
-
-- [x] avoid `maxTrim` to be smaller than `minTrim`
-- [x] avoid `minTrim` to be bigger than `maxTrim`
-- [ ] improve gesture of trimmer
-
-### New Features
-
-- New support actions
-  - New trim (if video length > `maxDuration` param)
-
-| New Trimmer                             |
-| --------------------------------------- |
-| ![](./assets/readme/new_trim_video.gif) |
-
-<br><br><br>
+<br>
 
 ## Features
 
@@ -134,6 +115,6 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 
 <br>
 
-| Trim Video                          | Export Video                          |
-| ----------------------------------- | ------------------------------------- |
-| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
+| Trim Video                          | Trimmer if maxDuration < videoDuration   | Export Video                          |
+| ----------------------------------- | ---------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/trim_video.gif) || ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/export_video.gif) |
