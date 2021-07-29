@@ -128,57 +128,55 @@ class _VideoEditorState extends State<VideoEditor> {
       backgroundColor: Colors.black,
       body: _controller.initialized
           ? SafeArea(
-              left: true,
-              right: true,
               child: Stack(children: [
-                Column(children: [
-                  _topNavBar(),
-                  Expanded(
-                    child: CropGridViewer(
-                      controller: _controller,
-                      showGrid: false,
-                    ),
+              Column(children: [
+                _topNavBar(),
+                Expanded(
+                  child: CropGridViewer(
+                    controller: _controller,
+                    showGrid: false,
                   ),
-                  ..._trimSlider(),
-                ]),
-                Center(
-                  child: AnimatedBuilder(
-                    animation: _controller.video,
-                    builder: (_, __) => OpacityTransition(
-                      visible: !_controller.isPlaying,
-                      child: GestureDetector(
-                        onTap: _controller.video.play,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.play_arrow),
+                ),
+                ..._trimSlider(),
+              ]),
+              Center(
+                child: AnimatedBuilder(
+                  animation: _controller.video,
+                  builder: (_, __) => OpacityTransition(
+                    visible: !_controller.isPlaying,
+                    child: GestureDetector(
+                      onTap: _controller.video.play,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
                         ),
+                        child: Icon(Icons.play_arrow),
                       ),
                     ),
                   ),
                 ),
-                _customSnackBar(),
-                ValueListenableBuilder(
-                  valueListenable: _isExporting,
-                  builder: (_, bool export, __) => OpacityTransition(
-                    visible: export,
-                    child: AlertDialog(
-                      title: ValueListenableBuilder(
-                        valueListenable: _exportingProgress,
-                        builder: (_, double value, __) => TextDesigned(
-                          "Exporting video ${(value * 100).ceil()}%",
-                          color: Colors.black,
-                          bold: true,
-                        ),
+              ),
+              _customSnackBar(),
+              ValueListenableBuilder(
+                valueListenable: _isExporting,
+                builder: (_, bool export, __) => OpacityTransition(
+                  visible: export,
+                  child: AlertDialog(
+                    title: ValueListenableBuilder(
+                      valueListenable: _exportingProgress,
+                      builder: (_, double value, __) => TextDesigned(
+                        "Exporting video ${(value * 100).ceil()}%",
+                        color: Colors.black,
+                        bold: true,
                       ),
                     ),
                   ),
-                )
-              ]))
+                ),
+              )
+            ]))
           : Center(child: CircularProgressIndicator()),
     );
   }
