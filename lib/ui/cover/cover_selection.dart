@@ -166,9 +166,13 @@ class _CoverSelectionState extends State<CoverSelection>
                                               color: thumb ==
                                                       widget.controller
                                                           .selectedCoverVal
-                                                  ? Colors.white
+                                                  ? widget.controller.coverStyle
+                                                      .selectedBorderColor
                                                   : Colors.transparent,
-                                              width: 2)),
+                                              width: widget
+                                                  .controller
+                                                  .coverStyle
+                                                  .selectedBorderWidth)),
                                       child: CropTransform(
                                         transform: _transform.value,
                                         child: Container(

@@ -10,8 +10,10 @@
   - [x] see previous and next thumbnails out of the padding area
 - [ ] video timeline along the trimmer
 - [ ] new style of trimmer
-- [ ] add possibility to select a frame of the video as the cover
-  - [ ] try to select the cover using the seek position of the video player [#61004](https://github.com/flutter/flutter/issues/61004)
+- [x] add possibility to select a frame of the video as the cover
+  - [x] choose between `x` frames exported from the trim selection
+  - [ ] display the selected frame on top of the video when cover tab is opened
+  - [ ] export cover as a file
 
 ### Fix bugs
 

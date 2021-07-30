@@ -9,6 +9,7 @@ import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 import 'package:video_editor/domain/entities/crop_style.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
+import 'package:video_editor/domain/entities/cover_style.dart';
 
 enum RotateDirection { left, right }
 
@@ -43,6 +44,9 @@ class VideoEditorController extends ChangeNotifier {
   ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
 
+  ///Style for [CoverSelection]
+  final CoverSelectionStyle coverStyle;
+
   ///Style for [CropGridViewer]
   final CropGridStyle cropStyle;
 
@@ -54,10 +58,12 @@ class VideoEditorController extends ChangeNotifier {
     this.file, {
     Duration? maxDuration,
     TrimSliderStyle? trimStyle,
+    CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
   })  : _video = VideoPlayerController.file(file),
         this._maxDuration = maxDuration ?? Duration.zero,
         this.cropStyle = cropStyle ?? CropGridStyle(),
+        this.coverStyle = coverStyle ?? CoverSelectionStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
