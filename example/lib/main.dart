@@ -122,6 +122,19 @@ class _VideoEditorState extends State<VideoEditor> {
     Misc.delayed(2000, () => setState(() => _exported = false));
   }
 
+  void _exportCover() async {
+    setState(() => _exported = false);
+    final File? cover = await _controller.extractCover();
+
+    if (cover != null)
+      _exportText = "Cover exported! ${cover.path}";
+    else
+      _exportText = "Error on cover exportation :(";
+
+    setState(() => _exported = true);
+    Misc.delayed(2000, () => setState(() => _exported = false));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -262,6 +275,12 @@ class _VideoEditorState extends State<VideoEditor> {
               child: GestureDetector(
                 onTap: _openCropScreen,
                 child: Icon(Icons.crop, color: Colors.white),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: _exportCover,
+                child: Icon(Icons.save_alt, color: Colors.white),
               ),
             ),
             Expanded(
