@@ -25,9 +25,9 @@
 - New support actions
   - New trim (if video length > `maxDuration` param)
 
-| New Trimmer                             |
-| --------------------------------------- |
-| ![](./assets/readme/new_trim_video.gif) |
+| New Trimmer                             | New Cover selection                      |
+| --------------------------------------- | ---------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/cover-selection.gif) |
 
 <br><br><br>
 
