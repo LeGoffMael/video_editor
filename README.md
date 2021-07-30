@@ -12,13 +12,15 @@
 - [ ] new style of trimmer
 - [x] add possibility to select a frame of the video as the cover
   - [x] choose between `x` frames exported from the trim selection
-  - [ ] display the selected frame on top of the video when cover tab is opened
+  - [ ] default select first frame
+  - [x] display the selected frame when cover tab is opened
   - [ ] export cover as a file
 
 ### Fix bugs
 
 - [x] avoid `maxTrim` to be smaller than `minTrim`
 - [x] avoid `minTrim` to be bigger than `maxTrim`
+- [ ] synch transformation data with video or coverViever
 
 ### New Features
 
