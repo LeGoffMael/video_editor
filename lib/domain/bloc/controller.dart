@@ -499,4 +499,73 @@ class VideoEditorController extends ChangeNotifier {
 
     return preset == VideoExportPreset.none ? "" : "-preset $newPreset";
   }
+
+  //------------//
+  //COVER EXPORT//
+  //------------//
+
+  String _printDurationFormat() {
+    Duration duration = Duration(
+        milliseconds: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds);
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    String stringMillis = duration.inMilliseconds.remainder(1000).toString();
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds.$stringMillis";
+  }
+
+  /// Extract the current cover selected by the user, or by default the first one
+  Future<File?> extractCover({
+    String? name,
+    double scale = 1.0,
+    void Function(Statistics)? onProgress,
+  }) async {
+    final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
+    final String tempPath = (await getTemporaryDirectory()).path;
+    final String videoPath = file.path;
+    if (name == null) name = path.basename(videoPath).split('.')[0];
+    final String outputPath = tempPath + name + ".jpg";
+
+    //-----------------//
+    //CALCULATE FILTERS//
+    //-----------------//
+    final String crop =
+        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    final String rotation =
+        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
+    final String scaleInstruction =
+        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+
+    //----------------//
+    //VALIDATE FILTERS//
+    //----------------//
+    final String timeFormat = _printDurationFormat();
+    final List<String> filters = [crop, scaleInstruction, rotation];
+    filters.removeWhere((item) => item.isEmpty);
+    final String filter =
+        filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
+    final String execute =
+        " -ss $timeFormat -i ${file.path} -y $filter -frames:v 1 $outputPath";
+
+    //------------------//
+    //PROGRESS CALLBACKS//
+    //------------------//
+    if (onProgress != null) _config.enableStatisticsCallback(onProgress);
+    final int code = await _ffmpeg.execute(execute);
+    _config.enableStatisticsCallback(null);
+
+    //------//
+    //RESULT//s
+    //------//
+    if (code == 0) {
+      print("SUCCESS COVER EXTRACTION AT $outputPath");
+      return File(outputPath);
+    } else if (code == 255) {
+      print("USER CANCEL COVER EXTRACTION");
+      return null;
+    } else {
+      print("ERROR ON COVER EXTRACTION (CODE $code)");
+      return null;
+    }
+  }
 }
