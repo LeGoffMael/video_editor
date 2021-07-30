@@ -12,7 +12,7 @@
 - [ ] new style of trimmer
 - [x] add possibility to select a frame of the video as the cover
   - [x] choose between `x` frames exported from the trim selection
-  - [ ] default select first frame
+  - [x] default select first frame
   - [x] display the selected frame when cover tab is opened
   - [ ] export cover as a file
 

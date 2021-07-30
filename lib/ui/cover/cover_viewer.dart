@@ -32,6 +32,9 @@ class _CoverViewerState extends State<CoverViewer> {
   void initState() {
     _controller = widget.controller;
     _controller.addListener(_scaleRect);
+
+    checkIfCoverIsNull();
+
     super.initState();
   }
 
@@ -50,6 +53,13 @@ class _CoverViewerState extends State<CoverViewer> {
       _layout,
       _controller,
     );
+
+    checkIfCoverIsNull();
+  }
+
+  void checkIfCoverIsNull() {
+    if (widget.controller.selectedCoverVal!.thumbData == null)
+      widget.controller.generateDefaultCoverThumnail();
   }
 
   //-----------//
@@ -83,7 +93,7 @@ class _CoverViewerState extends State<CoverViewer> {
         animation: Listenable.merge(
             [_transform, widget.controller.selectedCoverNotifier]),
         builder: (_, __) {
-          return (widget.controller.selectedCoverVal != null)
+          return (widget.controller.selectedCoverVal!.thumbData != null)
               ? CropTransform(
                   transform: _transform.value,
                   child: Container(
@@ -92,7 +102,8 @@ class _CoverViewerState extends State<CoverViewer> {
                     width: _layout.width,
                     child: Stack(children: [
                       Image(
-                        image: MemoryImage(widget.controller.selectedCoverVal!),
+                        image: MemoryImage(
+                            widget.controller.selectedCoverVal!.thumbData!),
                         width: _layout.width,
                         height: _layout.height,
                         alignment: Alignment.center,

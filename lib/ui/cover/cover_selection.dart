@@ -1,11 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 class CoverSelection extends StatefulWidget {
   ///Slider that trim video length.
@@ -43,7 +41,7 @@ class _CoverSelectionState extends State<CoverSelection>
   double _aspect = 1.0, _width = 1.0;
 
   Size _layout = Size.zero;
-  Stream<List<Uint8List>>? _stream;
+  Stream<List<CoverData>>? _stream;
 
   Duration? _startTrim, _endTrim;
 
@@ -87,25 +85,22 @@ class _CoverSelectionState extends State<CoverSelection>
     }
   }
 
-  Stream<List<Uint8List>> _generateThumbnails() async* {
-    final String path = widget.controller.file.path;
+  Stream<List<CoverData>> _generateThumbnails() async* {
     final int duration = widget.controller.isTrimmmed
         ? (widget.controller.endTrim - widget.controller.startTrim)
             .inMilliseconds
         : widget.controller.videoDuration.inMilliseconds;
     final double eachPart = duration / widget.nbSelection;
-    List<Uint8List> _byteList = [];
-    for (int i = 1; i <= widget.nbSelection; i++) {
-      Uint8List? _bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.JPEG,
-        video: path,
-        timeMs: (widget.controller.isTrimmmed
-                ? (eachPart * i) + widget.controller.startTrim.inMilliseconds
-                : (eachPart * i))
-            .toInt(),
-        quality: widget.quality,
-      );
-      if (_bytes != null) {
+    List<CoverData> _byteList = [];
+    for (int i = 0; i < widget.nbSelection; i++) {
+      CoverData _bytes = await widget.controller.generateCoverThumbnail(
+          timeMs: (widget.controller.isTrimmmed
+                  ? (eachPart * i) + widget.controller.startTrim.inMilliseconds
+                  : (eachPart * i))
+              .toInt(),
+          quality: 10);
+
+      if (_bytes.thumbData != null) {
         _byteList.add(_bytes);
       }
 
@@ -144,14 +139,14 @@ class _CoverSelectionState extends State<CoverSelection>
 
       return StreamBuilder(
         stream: _stream,
-        builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
+        builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
           final data = snapshot.data;
           return snapshot.hasData
               ? Wrap(
                   runSpacing: 10.0,
                   spacing: 10.0,
                   children: data!
-                      .map((thumb) => AnimatedBuilder(
+                      .map((coverData) => AnimatedBuilder(
                             animation: Listenable.merge([
                               _transform,
                               widget.controller.selectedCoverNotifier
@@ -159,13 +154,13 @@ class _CoverSelectionState extends State<CoverSelection>
                             builder: (_, __) {
                               return InkWell(
                                   onTap: () => widget.controller
-                                      .updateSelectedCover(thumb),
+                                      .updateSelectedCover(coverData),
                                   child: Container(
                                       decoration: BoxDecoration(
                                           border: Border.all(
-                                              color: thumb ==
-                                                      widget.controller
-                                                          .selectedCoverVal
+                                              color: coverData.sameTime(widget
+                                                      .controller
+                                                      .selectedCoverVal!)
                                                   ? widget.controller.coverStyle
                                                       .selectedBorderColor
                                                   : Colors.transparent,
@@ -181,7 +176,8 @@ class _CoverSelectionState extends State<CoverSelection>
                                           width: _layout.width,
                                           child: Stack(children: [
                                             Image(
-                                              image: MemoryImage(thumb),
+                                              image: MemoryImage(
+                                                  coverData.thumbData!),
                                               width: _layout.width,
                                               height: _layout.height,
                                               alignment: Alignment.topLeft,

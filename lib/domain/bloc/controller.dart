@@ -10,6 +10,8 @@ import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:video_editor/domain/entities/crop_style.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
+import 'package:video_editor/domain/entities/cover_data.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 enum RotateDirection { left, right }
 
@@ -93,7 +95,7 @@ class VideoEditorController extends ChangeNotifier {
   Duration _maxDuration;
 
   //Cover parameters
-  ValueNotifier<Uint8List?> _selectedCover = ValueNotifier<Uint8List?>(null);
+  ValueNotifier<CoverData?> _selectedCover = ValueNotifier<CoverData?>(null);
 
   int _videoWidth = 0;
   int _videoHeight = 0;
@@ -213,6 +215,8 @@ class VideoEditorController extends ChangeNotifier {
     else
       _updateTrimRange();
 
+    generateDefaultCoverThumnail();
+
     notifyListeners();
   }
 
@@ -276,6 +280,8 @@ class VideoEditorController extends ChangeNotifier {
     else
       _isTrimmed = false;
 
+    _checkUpdateDefaultCover();
+
     notifyListeners();
   }
 
@@ -299,15 +305,42 @@ class VideoEditorController extends ChangeNotifier {
   //-----------//
   //VIDEO COVER//
   //-----------//
-  void updateSelectedCover(Uint8List selectedCover) async {
+  void updateSelectedCover(CoverData selectedCover) async {
     _selectedCover.value = selectedCover;
   }
 
+  ///If condition are good update default cover
+  ///Update only milliseconds time for performance reason
+  void _checkUpdateDefaultCover() {
+    if (!_isTrimming || _selectedCover.value == null)
+      updateSelectedCover(CoverData(timeMs: startTrim.inMilliseconds));
+  }
+
+  ///Generate cover at 0 milliseconds
+  void generateDefaultCoverThumnail() async {
+    final defaultCover =
+        await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);
+    updateSelectedCover(defaultCover);
+  }
+
+  ///Generate cover data depending on milliseconds
+  Future<CoverData> generateCoverThumbnail(
+      {int timeMs = 0, int quality = 10}) async {
+    final Uint8List? _thumbData = await VideoThumbnail.thumbnailData(
+      imageFormat: ImageFormat.JPEG,
+      video: file.path,
+      timeMs: timeMs,
+      quality: quality,
+    );
+
+    return new CoverData(thumbData: _thumbData, timeMs: timeMs);
+  }
+
   ///Get the **selectedCover** notifier
-  ValueNotifier<Uint8List?> get selectedCoverNotifier => _selectedCover;
+  ValueNotifier<CoverData?> get selectedCoverNotifier => _selectedCover;
 
   ///Get the **selectedCover** value
-  Uint8List? get selectedCoverVal => _selectedCover.value;
+  CoverData? get selectedCoverVal => _selectedCover.value;
 
   //------------//
   //VIDEO ROTATE//
