@@ -132,33 +132,78 @@ class _VideoEditorState extends State<VideoEditor> {
               Column(children: [
                 _topNavBar(),
                 Expanded(
-                  child: CropGridViewer(
+                    child: Stack(alignment: Alignment.center, children: [
+                  CropGridViewer(
                     controller: _controller,
                     showGrid: false,
                   ),
-                ),
-                ..._trimSlider(),
-              ]),
-              Center(
-                child: AnimatedBuilder(
-                  animation: _controller.video,
-                  builder: (_, __) => OpacityTransition(
-                    visible: !_controller.isPlaying,
-                    child: GestureDetector(
-                      onTap: _controller.video.play,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                  AnimatedBuilder(
+                    animation: _controller.video,
+                    builder: (_, __) => OpacityTransition(
+                      visible: !_controller.isPlaying,
+                      child: GestureDetector(
+                        onTap: _controller.video.play,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.play_arrow),
                         ),
-                        child: Icon(Icons.play_arrow),
                       ),
                     ),
                   ),
-                ),
-              ),
+                ])),
+                Container(
+                    height: 200,
+                    margin: Margin.top(10),
+                    child: DefaultTabController(
+                      length: 2,
+                      child: Column(children: [
+                        TabBar(
+                          indicatorColor: Colors.white,
+                          tabs: [
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                      padding: Margin.all(5),
+                                      child: Icon(Icons.content_cut)),
+                                  Text('Trim',
+                                      style: TextStyle(color: Colors.white))
+                                ]),
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                      padding: Margin.all(5),
+                                      child: Icon(Icons.video_label)),
+                                  Text('Cover',
+                                      style: TextStyle(color: Colors.white))
+                                ]),
+                          ],
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              Container(
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: _trimSlider())),
+                              Container(
+                                child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [_coverSelection()]),
+                              ),
+                            ],
+                          ),
+                        )
+                      ]),
+                    ))
+              ]),
               _customSnackBar(),
               ValueListenableBuilder(
                 valueListenable: _isExporting,
@@ -267,6 +312,16 @@ class _VideoEditorState extends State<VideoEditor> {
             horizontalMargin: height / 4),
       )
     ];
+  }
+
+  Widget _coverSelection() {
+    return Container(
+        margin: Margin.horizontal(height / 4),
+        child: CoverSelection(
+          controller: _controller,
+          height: height,
+          nbSelection: 8,
+        ));
   }
 
   Widget _customSnackBar() {
