@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -63,7 +64,8 @@ class VideoEditorController extends ChangeNotifier {
   FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
-  bool isTrimming = false;
+  bool _isTrimming = false;
+  bool _isTrimmed = false;
   bool isCropping = false;
 
   double? _preferredCropAspectRatio;
@@ -83,6 +85,9 @@ class VideoEditorController extends ChangeNotifier {
 
   ///The max duration that can be trim video.
   Duration _maxDuration;
+
+  //Cover parameters
+  ValueNotifier<Uint8List?> _selectedCover = ValueNotifier<Uint8List?>(null);
 
   int _videoWidth = 0;
   int _videoHeight = 0;
@@ -126,6 +131,12 @@ class VideoEditorController extends ChangeNotifier {
       _updateTrimRange();
     }
   }
+
+  ///The **startTrim**
+  Duration get startTrim => _trimStart;
+
+  ///The **endTrim**
+  Duration get endTrim => _trimEnd;
 
   ///The **TopLeft Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get minCrop => _minCrop;
@@ -253,6 +264,22 @@ class VideoEditorController extends ChangeNotifier {
     final duration = videoDuration;
     _trimStart = duration * minTrim;
     _trimEnd = duration * maxTrim;
+
+    if (_trimStart != Duration.zero || _trimEnd != videoDuration)
+      _isTrimmed = true;
+    else
+      _isTrimmed = false;
+
+    notifyListeners();
+  }
+
+  ///Get the **isTrimmed**
+  bool get isTrimmmed => _isTrimmed;
+
+  ///Get the **isTrimming**
+  bool get isTrimming => _isTrimming;
+  set isTrimming(bool value) {
+    _isTrimming = value;
     notifyListeners();
   }
 
@@ -262,6 +289,19 @@ class VideoEditorController extends ChangeNotifier {
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
+
+  //-----------//
+  //VIDEO COVER//
+  //-----------//
+  void updateSelectedCover(Uint8List selectedCover) async {
+    _selectedCover.value = selectedCover;
+  }
+
+  ///Get the **selectedCover** notifier
+  ValueNotifier<Uint8List?> get selectedCoverNotifier => _selectedCover;
+
+  ///Get the **selectedCover** value
+  Uint8List? get selectedCoverVal => _selectedCover.value;
 
   //------------//
   //VIDEO ROTATE//
