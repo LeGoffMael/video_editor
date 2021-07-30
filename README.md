@@ -22,8 +22,9 @@
 
 ### New Features
 
-- New support actions
+- New supported actions
   - New trim (if video length > `maxDuration` param)
+  - New widget to select a cover between `x` exported thumbnails from the trimmed period 
 
 | New Trimmer                             | New Cover selection                      |
 | --------------------------------------- | ---------------------------------------- |
