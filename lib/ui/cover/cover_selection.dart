@@ -52,6 +52,7 @@ class _CoverSelectionState extends State<CoverSelection>
     _startTrim = widget.controller.startTrim;
     _endTrim = widget.controller.endTrim;
     widget.controller.addListener(_scaleRect);
+    _transform.value.initWithController(widget.controller);
   }
 
   @override

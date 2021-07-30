@@ -43,6 +43,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     super.initState();
     _aspect = widget.controller.video.value.aspectRatio;
     widget.controller.addListener(_scaleRect);
+    _transform.value.initWithController(widget.controller);
     super.initState();
   }
 

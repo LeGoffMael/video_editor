@@ -33,6 +33,8 @@ class _CoverViewerState extends State<CoverViewer> {
     _controller = widget.controller;
     _controller.addListener(_scaleRect);
 
+    _transform.value.initWithController(_controller);
+
     checkIfCoverIsNull();
 
     super.initState();

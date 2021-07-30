@@ -21,6 +21,8 @@
 - [x] avoid `maxTrim` to be smaller than `minTrim`
 - [x] avoid `minTrim` to be bigger than `maxTrim`
 - [ ] synch transformation data with video or coverViever
+  - [x] synch rotation
+  - [ ] synch scale and crop
 
 ### New Features
 

@@ -61,6 +61,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
     }
+
+    _transform.value.initWithController(_controller);
+
     super.initState();
   }
 
