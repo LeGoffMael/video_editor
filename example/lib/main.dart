@@ -83,7 +83,8 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
-    _controller = VideoEditorController.file(widget.file)
+    _controller = VideoEditorController.file(widget.file,
+        maxDuration: Duration(seconds: 30))
       ..initialize().then((_) => setState(() {}));
     super.initState();
   }
@@ -257,12 +258,12 @@ class _VideoEditorState extends State<VideoEditor> {
         },
       ),
       Container(
-        height: height,
-        margin: Margin.all(height / 4),
+        width: MediaQuery.of(context).size.width,
+        margin: Margin.vertical(height / 4),
         child: TrimSlider(
-          controller: _controller,
-          height: height,
-        ),
+            controller: _controller,
+            height: height,
+            horizontalMargin: height / 4),
       )
     ];
   }
