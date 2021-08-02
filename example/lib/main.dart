@@ -13,7 +13,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        brightness: Brightness.dark,
+        textTheme: TextTheme(
+          bodyText1: TextStyle(),
+          bodyText2: TextStyle(),
+        ).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
+      ),
       home: VideoPickerPage(),
     );
   }
@@ -39,7 +49,9 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Image / Video Picker")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+          backgroundColor: Colors.blue, title: Text("Image / Video Picker")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -170,7 +182,8 @@ class _VideoEditorState extends State<VideoEditor> {
                                           color: Colors.white,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(Icons.play_arrow),
+                                        child: Icon(Icons.play_arrow,
+                                            color: Colors.black),
                                       ),
                                     ),
                                   ),
@@ -193,9 +206,7 @@ class _VideoEditorState extends State<VideoEditor> {
                                           Padding(
                                               padding: Margin.all(5),
                                               child: Icon(Icons.content_cut)),
-                                          Text('Trim',
-                                              style: TextStyle(
-                                                  color: Colors.white))
+                                          Text('Trim')
                                         ]),
                                     Row(
                                         mainAxisAlignment:
@@ -204,9 +215,7 @@ class _VideoEditorState extends State<VideoEditor> {
                                           Padding(
                                               padding: Margin.all(5),
                                               child: Icon(Icons.video_label)),
-                                          Text('Cover',
-                                              style: TextStyle(
-                                                  color: Colors.white))
+                                          Text('Cover')
                                         ]),
                                   ],
                                 ),
@@ -262,31 +271,31 @@ class _VideoEditorState extends State<VideoEditor> {
             Expanded(
               child: GestureDetector(
                 onTap: () => _controller.rotate90Degrees(RotateDirection.left),
-                child: Icon(Icons.rotate_left, color: Colors.white),
+                child: Icon(Icons.rotate_left),
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: () => _controller.rotate90Degrees(RotateDirection.right),
-                child: Icon(Icons.rotate_right, color: Colors.white),
+                child: Icon(Icons.rotate_right),
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: _openCropScreen,
-                child: Icon(Icons.crop, color: Colors.white),
+                child: Icon(Icons.crop),
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: _exportCover,
-                child: Icon(Icons.save_alt, color: Colors.white),
+                child: Icon(Icons.save_alt),
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: _exportVideo,
-                child: Icon(Icons.save, color: Colors.white),
+                child: Icon(Icons.save),
               ),
             ),
           ],
@@ -313,23 +322,14 @@ class _VideoEditorState extends State<VideoEditor> {
           return Padding(
             padding: Margin.horizontal(height / 4),
             child: Row(children: [
-              TextDesigned(
-                formatter(Duration(seconds: pos.toInt())),
-                color: Colors.white,
-              ),
+              TextDesigned(formatter(Duration(seconds: pos.toInt()))),
               Expanded(child: SizedBox()),
               OpacityTransition(
                 visible: _controller.isTrimming,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  TextDesigned(
-                    formatter(Duration(seconds: start.toInt())),
-                    color: Colors.white,
-                  ),
+                  TextDesigned(formatter(Duration(seconds: start.toInt()))),
                   SizedBox(width: 10),
-                  TextDesigned(
-                    formatter(Duration(seconds: end.toInt())),
-                    color: Colors.white,
-                  ),
+                  TextDesigned(formatter(Duration(seconds: end.toInt()))),
                 ]),
               )
             ]),
@@ -340,6 +340,7 @@ class _VideoEditorState extends State<VideoEditor> {
         width: MediaQuery.of(context).size.width,
         margin: Margin.vertical(height / 4),
         child: TrimSlider(
+            timeline: true,
             controller: _controller,
             height: height,
             horizontalMargin: height / 4),
@@ -370,7 +371,6 @@ class _VideoEditorState extends State<VideoEditor> {
           child: Center(
             child: TextDesigned(
               _exportText,
-              color: Colors.white,
               bold: true,
             ),
           ),
@@ -409,8 +409,7 @@ class CropScreen extends StatelessWidget {
                   onTap: context.goBack,
                   child: Center(
                     child: TextDesigned(
-                      "CANCELAR",
-                      color: Colors.white,
+                      "CANCEL",
                       bold: true,
                     ),
                   ),
@@ -433,7 +432,7 @@ class CropScreen extends StatelessWidget {
                     context.goBack();
                   },
                   child: Center(
-                    child: TextDesigned("OK", color: Colors.white, bold: true),
+                    child: TextDesigned("OK", bold: true),
                   ),
                 ),
               ),
@@ -457,7 +456,7 @@ class CropScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.aspect_ratio, color: Colors.white),
-            TextDesigned(title, color: Colors.white, bold: true),
+            TextDesigned(title, bold: true),
           ],
         ),
       ),

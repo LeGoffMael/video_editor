@@ -2,7 +2,7 @@
 
 <br>
 
-## Goal of this fork
+## My other APIs
 
 - [x] new trimmer style when the length of the video is greater than `maxDuration`
   - [x] inside gesture scroll horizontally to change the maxDuration trim position in the video length
@@ -147,6 +147,6 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 
 <br>
 
-| Trim Video                          | Export Video                          |
-| ----------------------------------- | ------------------------------------- |
-| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
+| Trim Video                          | Trimmer if maxDuration < videoDuration  | Export Video                          |
+| ----------------------------------- | --------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/export_video.gif) |
