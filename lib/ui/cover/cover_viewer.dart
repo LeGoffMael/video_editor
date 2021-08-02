@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
@@ -49,7 +50,7 @@ class _CoverViewerState extends State<CoverViewer> {
   }
 
   void _scaleRect() {
-    _rect.value = _calculateCoverRect();
+    _rect.value = _calculateCropRect();
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
@@ -60,70 +61,77 @@ class _CoverViewerState extends State<CoverViewer> {
   }
 
   void checkIfCoverIsNull() {
-    if (widget.controller.selectedCoverVal!.thumbData == null)
+    if (!widget.controller.isTrimming &&
+        widget.controller.selectedCoverVal!.thumbData == null)
       widget.controller.generateDefaultCoverThumnail();
   }
 
   //-----------//
   //RECT CHANGE//
   //-----------//
-  Rect _calculateCoverRect() {
-    final Offset min = widget.controller.minCrop;
-    final Offset max = widget.controller.maxCrop;
+  Rect _calculateCropRect([Offset? min, Offset? max]) {
+    final Offset minCrop = min ?? _controller.minCrop;
+    final Offset maxCrop = max ?? _controller.maxCrop;
+
     return Rect.fromPoints(
-      Offset(
-        min.dx * _layout.width,
-        min.dy * _layout.height,
-      ),
-      Offset(
-        max.dx * _layout.width,
-        max.dy * _layout.height,
-      ),
+      Offset(minCrop.dx * _layout.width, minCrop.dy * _layout.height),
+      Offset(maxCrop.dx * _layout.width, maxCrop.dy * _layout.height),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, constraints) {
-      Size size = Size(constraints.maxWidth, constraints.maxHeight);
-      if (_layout != size) {
-        _layout = size;
-        _rect.value = _calculateCoverRect();
-      }
-
-      return AnimatedBuilder(
-        animation: Listenable.merge(
-            [_transform, widget.controller.selectedCoverNotifier]),
-        builder: (_, __) {
-          return (widget.controller.selectedCoverVal!.thumbData != null)
-              ? CropTransform(
-                  transform: _transform.value,
-                  child: Container(
-                    alignment: Alignment.center,
-                    height: _layout.height,
-                    width: _layout.width,
-                    child: Stack(children: [
-                      Image(
-                        image: MemoryImage(
-                            widget.controller.selectedCoverVal!.thumbData!),
-                        width: _layout.width,
-                        height: _layout.height,
-                        alignment: Alignment.center,
-                      ),
-                      CustomPaint(
-                        size: _layout,
-                        painter: CropGridPainter(
-                          _rect.value,
-                          showGrid: false,
-                          style: widget.controller.cropStyle,
+    return ValueListenableBuilder(
+        valueListenable: _transform,
+        builder: (_, TransformData transform, __) => ValueListenableBuilder(
+            valueListenable: widget.controller.selectedCoverNotifier,
+            builder: (context, CoverData? selectedCover, __) => selectedCover
+                        ?.thumbData ==
+                    null
+                ? Text('No selection')
+                : CropTransform(
+                    transform: _transform.value,
+                    child: Center(
+                        child: Stack(children: [
+                      AspectRatio(
+                        aspectRatio: widget.controller.video.value.aspectRatio,
+                        child: Image(
+                          image: MemoryImage(selectedCover!.thumbData!),
+                          width: _layout.width,
+                          height: _layout.height,
+                          alignment: Alignment.center,
                         ),
-                      )
-                    ]),
-                  ),
-                )
-              : Text('No selection');
-        },
-      );
-    });
+                      ),
+                      AspectRatio(
+                          aspectRatio:
+                              widget.controller.video.value.aspectRatio,
+                          child: LayoutBuilder(
+                            builder: (_, constraints) {
+                              Size size = Size(
+                                  constraints.maxWidth, constraints.maxHeight);
+                              if (_layout != size) {
+                                _layout = size;
+                                _scaleRect();
+                              }
+
+                              return ValueListenableBuilder(
+                                valueListenable: _rect,
+                                builder: (_, Rect value, __) {
+                                  return CustomPaint(
+                                    size: Size.infinite,
+                                    painter: CropGridPainter(
+                                      value,
+                                      style: _controller.cropStyle,
+                                      showGrid: false,
+                                      showCenterRects: _controller
+                                              .preferredCropAspectRatio ==
+                                          null,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ))
+                    ])))));
   }
 }

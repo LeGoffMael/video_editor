@@ -67,7 +67,7 @@ class _CoverSelectionState extends State<CoverSelection>
   }
 
   void _scaleRect() {
-    _rect.value = _calculateTrimRect();
+    _rect.value = _calculateCoverRect();
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
@@ -109,7 +109,7 @@ class _CoverSelectionState extends State<CoverSelection>
     }
   }
 
-  Rect _calculateTrimRect() {
+  Rect _calculateCoverRect() {
     final Offset min = widget.controller.minCrop;
     final Offset max = widget.controller.maxCrop;
     return Rect.fromPoints(
@@ -135,74 +135,78 @@ class _CoverSelectionState extends State<CoverSelection>
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
         _stream = _generateThumbnails();
-        _rect.value = _calculateTrimRect();
+        _rect.value = _calculateCoverRect();
       }
 
       return StreamBuilder(
-        stream: _stream,
-        builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
-          final data = snapshot.data;
-          return snapshot.hasData
-              ? Wrap(
-                  runSpacing: 10.0,
-                  spacing: 10.0,
-                  children: data!
-                      .map((coverData) => AnimatedBuilder(
-                            animation: Listenable.merge([
-                              _transform,
-                              widget.controller.selectedCoverNotifier
-                            ]),
-                            builder: (_, __) {
-                              return InkWell(
-                                  onTap: () => widget.controller
-                                      .updateSelectedCover(coverData),
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: coverData.sameTime(widget
-                                                      .controller
-                                                      .selectedCoverVal!)
-                                                  ? widget.controller.coverStyle
-                                                      .selectedBorderColor
-                                                  : Colors.transparent,
-                                              width: widget
-                                                  .controller
-                                                  .coverStyle
-                                                  .selectedBorderWidth)),
-                                      child: CropTransform(
-                                        transform: _transform.value,
+          stream: _stream,
+          builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
+            final data = snapshot.data;
+            return snapshot.hasData
+                ? Wrap(
+                    runSpacing: 10.0,
+                    spacing: 10.0,
+                    children: data!
+                        .map((coverData) => ValueListenableBuilder(
+                            valueListenable: _transform,
+                            builder: (_, TransformData transform, __) {
+                              return ValueListenableBuilder(
+                                  valueListenable:
+                                      widget.controller.selectedCoverNotifier,
+                                  builder:
+                                      (context, CoverData? selectedCover, __) {
+                                    return InkWell(
+                                        onTap: () => widget.controller
+                                            .updateSelectedCover(coverData),
                                         child: Container(
-                                          alignment: Alignment.center,
-                                          height: _layout.height,
-                                          width: _layout.width,
-                                          child: Stack(children: [
-                                            Image(
-                                              image: MemoryImage(
-                                                  coverData.thumbData!),
-                                              width: _layout.width,
-                                              height: _layout.height,
-                                              alignment: Alignment.topLeft,
-                                            ),
-                                            CustomPaint(
-                                              size: _layout,
-                                              painter: CropGridPainter(
-                                                _rect.value,
-                                                showGrid: false,
-                                                style:
-                                                    widget.controller.cropStyle,
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: coverData.sameTime(
+                                                            widget.controller
+                                                                .selectedCoverVal!)
+                                                        ? widget
+                                                            .controller
+                                                            .coverStyle
+                                                            .selectedBorderColor
+                                                        : Colors.transparent,
+                                                    width: widget
+                                                        .controller
+                                                        .coverStyle
+                                                        .selectedBorderWidth)),
+                                            child: CropTransform(
+                                              transform: transform,
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                height: _layout.height,
+                                                width: _layout.width,
+                                                child: Stack(children: [
+                                                  Image(
+                                                    image: MemoryImage(
+                                                        coverData.thumbData!),
+                                                    width: _layout.width,
+                                                    height: _layout.height,
+                                                    alignment:
+                                                        Alignment.topLeft,
+                                                  ),
+                                                  CustomPaint(
+                                                    size: _layout,
+                                                    painter: CropGridPainter(
+                                                      _rect.value,
+                                                      showGrid: false,
+                                                      style: widget
+                                                          .controller.cropStyle,
+                                                    ),
+                                                  )
+                                                ]),
                                               ),
-                                            )
-                                          ]),
-                                        ),
-                                      )));
-                            },
-                          ))
-                      .toList()
-                      .cast<Widget>(),
-                )
-              : SizedBox();
-        },
-      );
+                                            )));
+                                  });
+                            }))
+                        .toList()
+                        .cast<Widget>(),
+                  )
+                : SizedBox();
+          });
     });
   }
 }
