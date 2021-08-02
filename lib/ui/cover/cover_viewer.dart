@@ -34,9 +34,10 @@ class _CoverViewerState extends State<CoverViewer> {
     _controller = widget.controller;
     _controller.addListener(_scaleRect);
 
-    _transform.value.initWithController(_controller);
-
-    checkIfCoverIsNull();
+    // init the widget with controller values
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      _scaleRect();
+    });
 
     super.initState();
   }
@@ -111,7 +112,7 @@ class _CoverViewerState extends State<CoverViewer> {
                                   constraints.maxWidth, constraints.maxHeight);
                               if (_layout != size) {
                                 _layout = size;
-                                _scaleRect();
+                                _rect.value = _calculateCropRect();
                               }
 
                               return ValueListenableBuilder(

@@ -62,7 +62,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _controller.cacheMinCrop = _controller.minCrop;
     }
 
-    _transform.value.initWithController(_controller);
+    // init the widget with controller values
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      _scaleRect();
+    });
 
     super.initState();
   }

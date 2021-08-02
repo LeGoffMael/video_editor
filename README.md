@@ -21,9 +21,8 @@
 - [x] avoid `maxTrim` to be smaller than `minTrim`
 - [x] avoid `minTrim` to be bigger than `maxTrim`
 - [ ] synch transformation data with video or coverViever
-  - [x] synch rotation
-  - [x] synch scale and crop
-  - [ ] save and init scale rect for CoverViewer and CropGrid
+  - [x] synch rotation, scale and crop
+  - [x] save and init scale rect for CoverViewer and CropGrid
 
 ### New Features
 

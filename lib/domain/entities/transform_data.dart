@@ -41,8 +41,4 @@ class TransformData {
       translate: translate,
     );
   }
-
-  void initWithController(VideoEditorController controller) {
-    rotation = -controller.rotation * (3.1416 / 180.0);
-  }
 }
