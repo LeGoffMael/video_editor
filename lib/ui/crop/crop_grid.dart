@@ -60,7 +60,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
+
+      _transform.value.initRotationFromController(_controller);
+    } else {
+      // init the widget with controller values if it is not the croping screen
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        _scaleRect();
+      });
     }
+
     super.initState();
   }
 

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -8,6 +9,9 @@ import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 import 'package:video_editor/domain/entities/crop_style.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
+import 'package:video_editor/domain/entities/cover_style.dart';
+import 'package:video_editor/domain/entities/cover_data.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 enum RotateDirection { left, right }
 
@@ -42,6 +46,9 @@ class VideoEditorController extends ChangeNotifier {
   ///Style for [TrimSlider]
   final TrimSliderStyle trimStyle;
 
+  ///Style for [CoverSelection]
+  final CoverSelectionStyle coverStyle;
+
   ///Style for [CropGridViewer]
   final CropGridStyle cropStyle;
 
@@ -53,17 +60,20 @@ class VideoEditorController extends ChangeNotifier {
     this.file, {
     Duration? maxDuration,
     TrimSliderStyle? trimStyle,
+    CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
   })  : _video = VideoPlayerController.file(file),
         this._maxDuration = maxDuration ?? Duration.zero,
         this.cropStyle = cropStyle ?? CropGridStyle(),
+        this.coverStyle = coverStyle ?? CoverSelectionStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
   FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
-  bool isTrimming = false;
+  bool _isTrimming = false;
+  bool _isTrimmed = false;
   bool isCropping = false;
 
   double? _preferredCropAspectRatio;
@@ -83,6 +93,9 @@ class VideoEditorController extends ChangeNotifier {
 
   ///The max duration that can be trim video.
   Duration _maxDuration;
+
+  //Cover parameters
+  ValueNotifier<CoverData?> _selectedCover = ValueNotifier<CoverData?>(null);
 
   int _videoWidth = 0;
   int _videoHeight = 0;
@@ -126,6 +139,12 @@ class VideoEditorController extends ChangeNotifier {
       _updateTrimRange();
     }
   }
+
+  ///The **startTrim**
+  Duration get startTrim => _trimStart;
+
+  ///The **endTrim**
+  Duration get endTrim => _trimEnd;
 
   ///The **TopLeft Offset** (Range is `Offset(0.0, 0.0)` to `Offset(1.0, 1.0)`).
   Offset get minCrop => _minCrop;
@@ -196,6 +215,8 @@ class VideoEditorController extends ChangeNotifier {
     else
       _updateTrimRange();
 
+    generateDefaultCoverThumnail();
+
     notifyListeners();
   }
 
@@ -253,6 +274,24 @@ class VideoEditorController extends ChangeNotifier {
     final duration = videoDuration;
     _trimStart = duration * minTrim;
     _trimEnd = duration * maxTrim;
+
+    if (_trimStart != Duration.zero || _trimEnd != videoDuration)
+      _isTrimmed = true;
+    else
+      _isTrimmed = false;
+
+    _checkUpdateDefaultCover();
+
+    notifyListeners();
+  }
+
+  ///Get the **isTrimmed**
+  bool get isTrimmmed => _isTrimmed;
+
+  ///Get the **isTrimming**
+  bool get isTrimming => _isTrimming;
+  set isTrimming(bool value) {
+    _isTrimming = value;
     notifyListeners();
   }
 
@@ -262,6 +301,46 @@ class VideoEditorController extends ChangeNotifier {
   ///Get the **VideoPosition** (Range is `0.0` to `1.0`).
   double get trimPosition =>
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
+
+  //-----------//
+  //VIDEO COVER//
+  //-----------//
+  void updateSelectedCover(CoverData selectedCover) async {
+    _selectedCover.value = selectedCover;
+  }
+
+  ///If condition are good update default cover
+  ///Update only milliseconds time for performance reason
+  void _checkUpdateDefaultCover() {
+    if (!_isTrimming || _selectedCover.value == null)
+      updateSelectedCover(CoverData(timeMs: startTrim.inMilliseconds));
+  }
+
+  ///Generate cover at startTrim time in milliseconds
+  void generateDefaultCoverThumnail() async {
+    final defaultCover =
+        await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);
+    updateSelectedCover(defaultCover);
+  }
+
+  ///Generate cover data depending on milliseconds
+  Future<CoverData> generateCoverThumbnail(
+      {int timeMs = 0, int quality = 10}) async {
+    final Uint8List? _thumbData = await VideoThumbnail.thumbnailData(
+      imageFormat: ImageFormat.JPEG,
+      video: file.path,
+      timeMs: timeMs,
+      quality: quality,
+    );
+
+    return new CoverData(thumbData: _thumbData, timeMs: timeMs);
+  }
+
+  ///Get the **selectedCover** notifier
+  ValueNotifier<CoverData?> get selectedCoverNotifier => _selectedCover;
+
+  ///Get the **selectedCover** value
+  CoverData? get selectedCoverVal => _selectedCover.value;
 
   //------------//
   //VIDEO ROTATE//
@@ -419,5 +498,74 @@ class VideoEditorController extends ChangeNotifier {
     }
 
     return preset == VideoExportPreset.none ? "" : "-preset $newPreset";
+  }
+
+  //------------//
+  //COVER EXPORT//
+  //------------//
+
+  String _printDurationFormat() {
+    Duration duration = Duration(
+        milliseconds: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds);
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    String stringMillis = duration.inMilliseconds.remainder(1000).toString();
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds.$stringMillis";
+  }
+
+  /// Extract the current cover selected by the user, or by default the first one
+  Future<File?> extractCover({
+    String? name,
+    double scale = 1.0,
+    void Function(Statistics)? onProgress,
+  }) async {
+    final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
+    final String tempPath = (await getTemporaryDirectory()).path;
+    final String videoPath = file.path;
+    if (name == null) name = path.basename(videoPath).split('.')[0];
+    final String outputPath = tempPath + name + ".jpg";
+
+    //-----------------//
+    //CALCULATE FILTERS//
+    //-----------------//
+    final String crop =
+        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    final String rotation =
+        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
+    final String scaleInstruction =
+        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+
+    //----------------//
+    //VALIDATE FILTERS//
+    //----------------//
+    final String timeFormat = _printDurationFormat();
+    final List<String> filters = [crop, scaleInstruction, rotation];
+    filters.removeWhere((item) => item.isEmpty);
+    final String filter =
+        filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
+    final String execute =
+        " -ss $timeFormat -i ${file.path} -y $filter -frames:v 1 $outputPath";
+
+    //------------------//
+    //PROGRESS CALLBACKS//
+    //------------------//
+    if (onProgress != null) _config.enableStatisticsCallback(onProgress);
+    final int code = await _ffmpeg.execute(execute);
+    _config.enableStatisticsCallback(null);
+
+    //------//
+    //RESULT//s
+    //------//
+    if (code == 0) {
+      print("SUCCESS COVER EXTRACTION AT $outputPath");
+      return File(outputPath);
+    } else if (code == 255) {
+      print("USER CANCEL COVER EXTRACTION");
+      return null;
+    } else {
+      print("ERROR ON COVER EXTRACTION (CODE $code)");
+      return null;
+    }
   }
 }
