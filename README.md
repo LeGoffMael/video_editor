@@ -120,6 +120,6 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 | ----------------------------------- | --------------------------------------- | ------------------------------------- |
 | ![](./assets/readme/trim_video.gif) | ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/export_video.gif) |
 
-| New Cover widgets (selection, viewer)    | New Cover exportation                 |
-| ---------------------------------------- | ------------------------------------- |
-| ![](./assets/readme/cover_viewer.gif)    | ![](./assets/readme/export_cover.gif) |
+| Video cover (selection, viewer)       | Export cover                          |
+| ------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/cover_viewer.gif) | ![](./assets/readme/export_cover.gif) |
