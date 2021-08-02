@@ -9,7 +9,8 @@
   - [x] inside gesture update progress position and video seek position
   - [x] see previous and next thumbnails out of the padding area
 - [x] video timeline along the trimmer
-- [ ] new style of trimmer
+- [x] new style of trimmer
+  - [ ] hide crop part around trimmer style
 - [x] add possibility to select a frame of the video as the cover
   - [x] choose between `x` frames exported from the trim selection
   - [x] default select first frame by default and when trim values changed
