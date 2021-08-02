@@ -20,7 +20,7 @@
 
 - [x] avoid `maxTrim` to be smaller than `minTrim`
 - [x] avoid `minTrim` to be bigger than `maxTrim`
-- [ ] synch transformation data with video or coverViever
+- [x] synch transformation data with video or coverViever
   - [x] synch rotation, scale and crop
   - [x] save and init scale rect for CoverViewer and CropGrid
 
@@ -30,9 +30,15 @@
   - New trim (if video length > `maxDuration` param)
   - New widget to select a cover between `x` exported thumbnails from the trimmed period 
 
-| New Trimmer                             | New Cover selection                      |
-| --------------------------------------- | ---------------------------------------- |
-| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/cover-selection.gif) |
+| New Trimmer                             |
+| --------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) |
+
+<br>
+
+| New Cover viewer (select, crop, rotate) | New Cover exportation                 |
+| --------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/cover_viewer.gif)   | ![](./assets/readme/export_cover.gif) |
 
 <br><br><br>
 
