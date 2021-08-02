@@ -8,7 +8,7 @@
   - [x] inside gesture scroll horizontally to change the maxDuration trim position in the video length
   - [x] inside gesture update progress position and video seek position
   - [x] see previous and next thumbnails out of the padding area
-- [ ] video timeline along the trimmer
+- [x] video timeline along the trimmer
 - [ ] new style of trimmer
 - [x] add possibility to select a frame of the video as the cover
   - [x] choose between `x` frames exported from the trim selection
@@ -30,9 +30,9 @@
   - New trim (if video length > `maxDuration` param)
   - New widget to select a cover between `x` exported thumbnails from the trimmed period 
 
-| New Trimmer                             |
-| --------------------------------------- |
-| ![](./assets/readme/new_trim_video.gif) |
+| New Trimmer                             | Trim timeline                           |
+| --------------------------------------- |  -------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  |
 
 <br>
 
@@ -150,7 +150,3 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 | Trim Video                          | Export Video                          |
 | ----------------------------------- | ------------------------------------- |
 | ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
-
-| Trimmer if maxDuration < videoDuration  | Trim timeline                           |
-| --------------------------------------- |  -------------------------------------- |
-| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  |
