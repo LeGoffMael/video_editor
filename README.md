@@ -1,8 +1,6 @@
 # video_editor
 
-<br>
-
-## My other APIs
+## Fork features
 
 - [x] new trimmer style when the length of the video is greater than `maxDuration`
   - [x] inside gesture scroll horizontally to change the maxDuration trim position in the video length
@@ -10,7 +8,7 @@
   - [x] see previous and next thumbnails out of the padding area
 - [x] video timeline along the trimmer
 - [x] new style of trimmer
-  - [ ] hide crop part around trimmer style
+  - [ ] hide crop part around trimmer style?
 - [x] add possibility to select a frame of the video as the cover
   - [x] choose between `x` frames exported from the trim selection
   - [x] default select first frame by default and when trim values changed
@@ -42,6 +40,14 @@
 | ![](./assets/readme/cover_viewer.gif)    | ![](./assets/readme/export_cover.gif) |
 
 <br><br><br>
+
+## My other APIs
+
+- [Scroll Navigation](https://pub.dev/packages/scroll_navigation)
+- [Video Viewer](https://pub.dev/packages/video_viewer)
+- [Helpers](https://pub.dev/packages/helpers)
+
+<br>
 
 ## Features
 
