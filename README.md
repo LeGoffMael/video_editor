@@ -18,6 +18,7 @@
   - Trim
   - Scale
   - Rotate
+  - Cover selection
 
 <br><br>
 
