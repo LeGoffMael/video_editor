@@ -7,14 +7,16 @@ class TrimTimeline extends StatefulWidget {
     Key? key,
     required this.controller,
     required this.width,
-    this.secondGap = 5,
+    this.secondGap,
   }) : super(key: key);
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
 
-  ///The time in seconds between every point of the timeline
-  final double secondGap;
+  ///The time in seconds between every point of the timeline (5 sec by default)
+  final double? secondGap;
+
+  ///The available width size for the widget
   final double width;
 
   @override
@@ -26,11 +28,12 @@ class _TrimTimelineState extends State<TrimTimeline> {
 
   @override
   void initState() {
-    final Duration duration =
+    final double _secondGap = widget.secondGap ?? 5;
+    final Duration _duration =
         widget.controller.maxDuration < widget.controller.videoDuration
             ? widget.controller.maxDuration
             : widget.controller.videoDuration;
-    _timeGap = (duration.inSeconds / (widget.secondGap + 1)).ceil();
+    _timeGap = (_duration.inSeconds / (_secondGap + 1)).ceil();
     super.initState();
   }
 

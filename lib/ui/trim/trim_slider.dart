@@ -15,7 +15,8 @@ class TrimSlider extends StatefulWidget {
       this.height = 60,
       this.quality = 10,
       this.horizontalMargin = 0.0,
-      this.timeline = false})
+      this.timeline = false,
+      this.secondGap})
       : super(key: key);
 
   ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
@@ -32,6 +33,9 @@ class TrimSlider extends StatefulWidget {
 
   ///Should the widget display the trimmer timeline
   final bool timeline;
+
+  ///The time in seconds between every point of the timeline
+  final double? secondGap;
 
   @override
   _TrimSliderState createState() => _TrimSliderState();
@@ -248,7 +252,8 @@ class _TrimSliderState extends State<TrimSlider> {
                         if (widget.timeline)
                           TrimTimeline(
                               controller: widget.controller,
-                              width: _fullLayout.width)
+                              width: _fullLayout.width,
+                              secondGap: widget.secondGap)
                       ]))),
               onNotification: (notification) {
                 _boundary.value = _TrimBoundaries.inside;
