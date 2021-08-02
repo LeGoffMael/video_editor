@@ -36,9 +36,9 @@
 
 <br>
 
-| New Cover viewer (select, crop, rotate) | New Cover exportation                 |
-| --------------------------------------- | ------------------------------------- |
-| ![](./assets/readme/cover_viewer.gif)   | ![](./assets/readme/export_cover.gif) |
+| New Cover widgets (selection, viewer)    | New Cover exportation                 |
+| ---------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/cover_viewer.gif)    | ![](./assets/readme/export_cover.gif) |
 
 <br><br><br>
 
