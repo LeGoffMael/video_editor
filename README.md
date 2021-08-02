@@ -40,6 +40,12 @@
 | ---------------------------------------- | ------------------------------------- |
 | ![](./assets/readme/cover_viewer.gif)    | ![](./assets/readme/export_cover.gif) |
 
+### Cover explanation
+
+Originally, I had planned to select the cover like in the Instagram interface while using the video player, but it looks like Flutter [video_player](https://pub.dev/packages/video_player)'s [seekTo()](https://pub.dev/documentation/video_player/latest/video_player/VideoPlayerController/seekTo.html) function is not instantaneous and does not work properly when the video is paused ([#61004](https://github.com/flutter/flutter/issues/61004),[#80054](https://github.com/flutter/flutter/issues/80054)).
+
+So I preferred to generate a fixed number of thumbnails each time the video is trimmed, so that the user can select his favorite thumbnail.
+
 <br><br><br>
 
 ## Features
