@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_editor/ui/trim/trim_timeline.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/trim/thumbnail_slider.dart';
@@ -8,13 +9,14 @@ enum _TrimBoundaries { left, right, inside, progress, none }
 
 class TrimSlider extends StatefulWidget {
   ///Slider that trim video length.
-  TrimSlider({
-    Key? key,
-    required this.controller,
-    this.height = 60,
-    this.quality = 10,
-    this.horizontalMargin = 0.0,
-  }) : super(key: key);
+  TrimSlider(
+      {Key? key,
+      required this.controller,
+      this.height = 60,
+      this.quality = 10,
+      this.horizontalMargin = 0.0,
+      this.child})
+      : super(key: key);
 
   ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
   final int quality;
@@ -27,6 +29,9 @@ class TrimSlider extends StatefulWidget {
 
   ///Space to put around the trimmmer to show next and previous thumbnails if videoDuration > maxDuration
   final double horizontalMargin;
+
+  ///A widget displayed under the trimmer slider
+  final Widget? child;
 
   @override
   _TrimSliderState createState() => _TrimSliderState();
@@ -232,13 +237,18 @@ class _TrimSliderState extends State<TrimSlider> {
                   child: Container(
                       margin: EdgeInsets.symmetric(
                           horizontal: widget.horizontalMargin),
-                      child: SizedBox(
-                          height: widget.height,
-                          width: _fullLayout.width,
-                          child: ThumbnailSlider(
-                              controller: widget.controller,
-                              height: widget.height,
-                              quality: widget.quality)))),
+                      child: Column(children: [
+                        SizedBox(
+                            height: widget.height,
+                            width: _fullLayout.width,
+                            child: ThumbnailSlider(
+                                controller: widget.controller,
+                                height: widget.height,
+                                quality: widget.quality)),
+                        if (widget.child != null)
+                          Container(
+                              width: _fullLayout.width, child: widget.child)
+                      ]))),
               onNotification: (notification) {
                 _boundary.value = _TrimBoundaries.inside;
                 _updateControllerIsTrimming(true);
