@@ -316,7 +316,7 @@ class VideoEditorController extends ChangeNotifier {
       updateSelectedCover(CoverData(timeMs: startTrim.inMilliseconds));
   }
 
-  ///Generate cover at 0 milliseconds
+  ///Generate cover at startTrim time in milliseconds
   void generateDefaultCoverThumnail() async {
     final defaultCover =
         await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);

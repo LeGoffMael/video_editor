@@ -34,10 +34,7 @@ class _CoverViewerState extends State<CoverViewer> {
     _controller = widget.controller;
     _controller.addListener(_scaleRect);
 
-    // init the widget with controller values
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
-      _scaleRect();
-    });
+    _checkIfCoverIsNull();
 
     super.initState();
   }
@@ -58,12 +55,11 @@ class _CoverViewerState extends State<CoverViewer> {
       _controller,
     );
 
-    checkIfCoverIsNull();
+    _checkIfCoverIsNull();
   }
 
-  void checkIfCoverIsNull() {
-    if (!widget.controller.isTrimming &&
-        widget.controller.selectedCoverVal!.thumbData == null)
+  void _checkIfCoverIsNull() {
+    if (widget.controller.selectedCoverVal!.thumbData == null)
       widget.controller.generateDefaultCoverThumnail();
   }
 
@@ -98,8 +94,6 @@ class _CoverViewerState extends State<CoverViewer> {
                         aspectRatio: widget.controller.video.value.aspectRatio,
                         child: Image(
                           image: MemoryImage(selectedCover!.thumbData!),
-                          width: _layout.width,
-                          height: _layout.height,
                           alignment: Alignment.center,
                         ),
                       ),
@@ -112,7 +106,11 @@ class _CoverViewerState extends State<CoverViewer> {
                                   constraints.maxWidth, constraints.maxHeight);
                               if (_layout != size) {
                                 _layout = size;
-                                _rect.value = _calculateCropRect();
+                                // init the widget with controller values
+                                WidgetsBinding.instance!
+                                    .addPostFrameCallback((_) {
+                                  _scaleRect();
+                                });
                               }
 
                               return ValueListenableBuilder(
