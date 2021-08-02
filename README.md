@@ -30,9 +30,9 @@
   - New trim (if video length > `maxDuration` param)
   - New widget to select a cover between `x` exported thumbnails from the trimmed period 
 
-| New Trimmer                             | Trim timeline                           |
-| --------------------------------------- |  -------------------------------------- |
-| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  |
+| New Trimmer                             | Trim timeline                           | New trim style                          |
+| --------------------------------------- |  -------------------------------------- | --------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  | ![](./assets/readme/new_trim_style.gif) |
 
 <br>
 
