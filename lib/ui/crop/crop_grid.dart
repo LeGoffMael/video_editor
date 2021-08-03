@@ -259,7 +259,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
     height = height ?? _rect.value.height;
 
     if (_preferredCropAspectRatio != null) {
-      height = width / _preferredCropAspectRatio!;
+      if (height > width) {
+        height = width / _preferredCropAspectRatio!;
+      } else if (height < width) {
+        width = height / _preferredCropAspectRatio!;
+      }
     }
 
     final double right = left + width;
