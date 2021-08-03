@@ -55,13 +55,16 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _controller = widget.controller;
     final length = _controller.cropStyle.boundariesLength;
     _controller.addListener(!widget.showGrid ? _scaleRect : _updateRect);
-    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
     _margin = Offset(length, length) * 2;
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
 
       _transform.value.initRotationFromController(_controller);
+      // init the crop area with preferredCropAspectRatio
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        _updateRect();
+      });
     } else {
       // init the widget with controller values if it is not the croping screen
       WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -81,7 +84,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _updateRect() {
-    if (_controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
+    if (_preferredCropAspectRatio == null ||
+        _controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
       setState(() {
         _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
         _rect.value = _calculateCropRect(
