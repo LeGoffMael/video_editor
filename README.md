@@ -18,6 +18,7 @@
   - Trim
   - Scale
   - Rotate
+  - Cover selection
 
 <br><br>
 
@@ -122,3 +123,7 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 | Trimmer if maxDuration < videoDuration  | Trim timeline                           |
 | --------------------------------------- |  -------------------------------------- |
 | ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  |
+
+| Video cover (selection, viewer)       | Export cover                          |
+| ------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/cover_viewer.gif) | ![](./assets/readme/export_cover.gif) |

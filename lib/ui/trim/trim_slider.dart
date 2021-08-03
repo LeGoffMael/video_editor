@@ -37,7 +37,8 @@ class TrimSlider extends StatefulWidget {
   _TrimSliderState createState() => _TrimSliderState();
 }
 
-class _TrimSliderState extends State<TrimSlider> {
+class _TrimSliderState extends State<TrimSlider>
+    with AutomaticKeepAliveClientMixin<TrimSlider> {
   final _boundary = ValueNotifier<_TrimBoundaries>(_TrimBoundaries.none);
   final _scrollController = ScrollController();
 
@@ -58,6 +59,9 @@ class _TrimSliderState extends State<TrimSlider> {
     _trimWidth = widget.controller.trimStyle.lineWidth;
     super.initState();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   //--------//
   //GESTURES//
@@ -215,6 +219,7 @@ class _TrimSliderState extends State<TrimSlider> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return LayoutBuilder(builder: (_, contrainst) {
       final Size trimLayout = Size(
           contrainst.maxWidth - widget.horizontalMargin * 2,
