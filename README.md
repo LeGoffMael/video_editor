@@ -116,9 +116,13 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 
 <br>
 
-| Trim Video                          | Trimmer if maxDuration < videoDuration  | Export Video                          |
-| ----------------------------------- | --------------------------------------- | ------------------------------------- |
-| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/export_video.gif) |
+| Trim Video                          | Export Video                          |
+| ----------------------------------- | ------------------------------------- |
+| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
+
+| Trimmer if maxDuration < videoDuration  | Trim timeline                           |
+| --------------------------------------- |  -------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  |
 
 | Video cover (selection, viewer)       | Export cover                          |
 | ------------------------------------- | ------------------------------------- |
