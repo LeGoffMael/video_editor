@@ -94,6 +94,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
         );
         _changeRect();
         _onPanEnd();
+        _transform.value.initRotationFromController(_controller);
       });
     }
   }
