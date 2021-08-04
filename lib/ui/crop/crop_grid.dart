@@ -60,7 +60,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
 
-      _transform.value.initRotationFromController(_controller);
       // init the crop area with preferredCropAspectRatio
       WidgetsBinding.instance!.addPostFrameCallback((_) {
         _updateRect();
@@ -84,6 +83,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _updateRect() {
+    _transform.value = TransformData.fromController(_controller);
     if (_preferredCropAspectRatio == null ||
         _controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
       setState(() {
@@ -93,9 +93,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _controller.cacheMaxCrop,
         );
         _changeRect();
-        _onPanEnd();
-        _transform.value.initRotationFromController(_controller);
+        _onPanEnd(force: true);
       });
+    } else {
+      _onPanEnd(force: true);
     }
   }
 
@@ -239,8 +240,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
     }
   }
 
-  void _onPanEnd() {
-    if (_boundary != _CropBoundaries.none) {
+  void _onPanEnd({bool force = false}) {
+    if (_boundary != _CropBoundaries.none || force) {
       final Rect rect = _rect.value;
       _controller.cacheMinCrop = Offset(
         rect.left / _layout.width,
