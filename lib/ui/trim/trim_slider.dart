@@ -56,7 +56,7 @@ class _TrimSliderState extends State<TrimSlider>
   void initState() {
     _controller = widget.controller.video;
     _ratio = getRatioDuration();
-    _trimWidth = widget.controller.trimStyle.sideTrimmerWidth;
+    _trimWidth = widget.controller.trimStyle.lineWidth;
     super.initState();
   }
 
