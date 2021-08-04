@@ -6,11 +6,12 @@ class TrimSliderStyle {
       {Color? background,
       this.positionLineColor = Colors.red,
       this.positionlineWidth = 2,
-      this.sideTrimmerColor = Colors.white,
-      this.sideTrimmerWidth = 10,
-      this.innerSideTrimmerColor = Colors.black,
-      this.innerSideTrimmerWidth = 5,
-      this.outsideLines = true})
+      this.lineColor = Colors.white,
+      this.lineWidth = 2,
+      this.iconColor = Colors.black,
+      this.iconSize = 25,
+      this.leftIcon = Icons.arrow_left,
+      this.rightIcon = Icons.arrow_right})
       : this.background = background ?? Colors.black.withOpacity(0.6);
 
   ///It is the color line that indicate the video position
@@ -20,11 +21,10 @@ class TrimSliderStyle {
   ///It is the deactive color. Default `Colors.black.withOpacity(0.6)
   final Color background;
 
-  final Color sideTrimmerColor;
-  final double sideTrimmerWidth;
+  final Color lineColor;
+  final double lineWidth;
 
-  final Color innerSideTrimmerColor;
-  final double innerSideTrimmerWidth;
-
-  final bool outsideLines;
+  final Color iconColor;
+  final double iconSize;
+  final IconData leftIcon, rightIcon;
 }

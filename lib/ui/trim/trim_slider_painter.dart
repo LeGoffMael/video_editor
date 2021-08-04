@@ -14,20 +14,21 @@ class TrimSliderPainter extends CustomPainter {
     final progress = Paint()
       ..color = style.positionLineColor
       ..strokeWidth = style.positionlineWidth;
-    final side = Paint()
-      ..color = style.sideTrimmerColor
-      ..strokeWidth = style.sideTrimmerWidth
+    final line = Paint()
+      ..color = style.lineColor
+      ..strokeWidth = style.lineWidth
       ..strokeCap = StrokeCap.square;
-    final sideInner = Paint()
-      ..color = style.innerSideTrimmerColor
-      ..strokeWidth = style.innerSideTrimmerWidth
-      ..strokeCap = StrokeCap.round;
+    final double circleRadius = style.iconSize / 4 + style.lineWidth;
+    final circle = Paint()..color = style.lineColor;
+
+    final double halfLineWidth = style.lineWidth / 2;
+    final double halfHeight = rect.height / 2;
 
     // POSITION BAR
     canvas.drawRect(
       Rect.fromPoints(
-        Offset(position - progress.strokeWidth / 2, 0.0),
-        Offset(position + progress.strokeWidth / 2, size.height),
+        Offset(position - halfLineWidth, 0.0),
+        Offset(position + halfLineWidth, size.height),
       ),
       progress,
     );
@@ -48,44 +49,83 @@ class TrimSliderPainter extends CustomPainter {
       background,
     );
 
-    if (style.outsideLines) {
-      //TOP RECT
-      canvas.drawRect(
-        Rect.fromPoints(
-          rect.topLeft,
-          rect.topRight - Offset(0.0, style.sideTrimmerWidth / 2),
-        ),
-        side,
-      );
-
-      //BOTTOM RECT
-      canvas.drawRect(
-        Rect.fromPoints(
-          rect.bottomRight + Offset(0.0, style.sideTrimmerWidth / 2),
-          rect.bottomLeft,
-        ),
-        side,
-      );
-    }
-
-    //LEFT LINE
-    canvas.drawLine(
-      rect.bottomLeft,
-      rect.topLeft,
-      side,
+    //TOP RECT
+    canvas.drawRect(
+      Rect.fromPoints(
+        rect.topLeft,
+        rect.topRight + Offset(0.0, line.strokeWidth),
+      ),
+      line,
     );
-    //RIGHT LINE
-    canvas.drawLine(
-      rect.bottomRight,
-      rect.topRight,
-      side,
+
+    //RIGHT RECT
+    canvas.drawRect(
+      Rect.fromPoints(
+        rect.topRight - Offset(line.strokeWidth, -line.strokeWidth),
+        rect.bottomRight,
+      ),
+      line,
     );
-    //LEFT INNER LINE
-    canvas.drawLine(Offset(rect.left, rect.height * 0.25),
-        Offset(rect.left, rect.height * 0.75), sideInner);
-    //RIGHT INNER LINE
-    canvas.drawLine(Offset(rect.right, rect.height * 0.25),
-        Offset(rect.right, rect.height * 0.75), sideInner);
+
+    //BOTTOM RECT
+    canvas.drawRect(
+      Rect.fromPoints(
+        rect.bottomRight - Offset(line.strokeWidth, line.strokeWidth),
+        rect.bottomLeft,
+      ),
+      line,
+    );
+
+    //LEFT RECT
+    canvas.drawRect(
+      Rect.fromPoints(
+        rect.bottomLeft - Offset(-line.strokeWidth, line.strokeWidth),
+        rect.topLeft,
+      ),
+      line,
+    );
+
+    //LECT CIRCLE
+    canvas.drawCircle(
+      Offset(rect.left + halfLineWidth, halfHeight),
+      circleRadius,
+      circle,
+    );
+
+    //LECT ARROW
+    TextPainter leftArrow = TextPainter(textDirection: TextDirection.rtl);
+    leftArrow.text = TextSpan(
+        text: String.fromCharCode(style.leftIcon.codePoint),
+        style: TextStyle(
+            fontSize: style.iconSize,
+            fontFamily: style.leftIcon.fontFamily,
+            color: style.iconColor));
+    leftArrow.layout();
+    leftArrow.paint(
+        canvas,
+        Offset(
+            rect.left - style.iconSize / 2, halfHeight - style.iconSize / 2));
+
+    //RIGHT CIRCLE
+    canvas.drawCircle(
+      Offset(rect.right - halfLineWidth, halfHeight),
+      circleRadius,
+      circle,
+    );
+
+    //RIGHT ARROW
+    TextPainter rightArrow = TextPainter(textDirection: TextDirection.rtl);
+    rightArrow.text = TextSpan(
+        text: String.fromCharCode(style.rightIcon.codePoint),
+        style: TextStyle(
+            fontSize: style.iconSize,
+            fontFamily: style.rightIcon.fontFamily,
+            color: style.iconColor));
+    rightArrow.layout();
+    rightArrow.paint(
+        canvas,
+        Offset(
+            rect.right - style.iconSize / 2, halfHeight - style.iconSize / 2));
   }
 
   @override
