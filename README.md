@@ -2,6 +2,24 @@
 
 <br>
 
+- Crop bug fixes:
+  - [x] fix crop prefered aspect ratio on landscape video
+  - [x] init `CropScreen` with prefered aspect ratio
+
+```dart
+_controller.initialize().then((_) {
+  _controller.preferredCropAspectRatio = 1;
+  _controller.updateCrop();
+  setState(() {});
+});
+```
+
+  - [x] rotation is synch with controller on `CropScreen`
+  - [x] crop in init of `CropScreen` without gesture
+
+
+<br>
+
 ## My other APIs
 
 - [Scroll Navigation](https://pub.dev/packages/scroll_navigation)
