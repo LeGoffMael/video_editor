@@ -279,7 +279,7 @@ class _TrimSliderState extends State<TrimSlider>
                     painter: TrimSliderPainter(
                       _rect,
                       _getTrimPosition(),
-                      style: widget.controller.trimStyle,
+                      widget.controller.trimStyle,
                     ),
                   );
                 },
