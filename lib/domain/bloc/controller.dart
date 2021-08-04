@@ -377,10 +377,25 @@ class VideoEditorController extends ChangeNotifier {
 
       if (streams != null && streams.length > 0) {
         for (var stream in streams) {
-          final width = stream.getAllProperties()['width'];
-          final height = stream.getAllProperties()['height'];
-          if (width != null && width > _width) _width = width;
-          if (height != null && height > _height) _height = height;
+          if (stream.getAllProperties()['codec_type'] == 'video') {
+            _width = stream.getAllProperties()['width'];
+            _height = stream.getAllProperties()['height'];
+
+            //If video is portrait mode use the rotate to adjust
+            final metadataMap = stream.getAllProperties()['side_data_list'];
+            if (metadataMap != null) {
+              for (var metadata in metadataMap) {
+                if (metadata.containsKey('rotation')) {
+                  int rotate = metadata['rotation'];
+                  var rotateTimes = rotate / 90;
+                  if (rotateTimes % 2 != 0) {
+                    _width = stream.getAllProperties()['height'];
+                    _height = stream.getAllProperties()['width'];
+                  }
+                }
+              }
+            }
+          }
         }
       }
 
