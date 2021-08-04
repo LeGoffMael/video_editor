@@ -8,7 +8,7 @@ class TrimSliderStyle {
       this.positionlineWidth = 2,
       this.lineColor = Colors.white,
       this.lineWidth = 2,
-      this.iconColor = Colors.red,
+      this.iconColor = Colors.black,
       this.iconSize = 25,
       this.leftIcon = Icons.arrow_left,
       this.rightIcon = Icons.arrow_right})
