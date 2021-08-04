@@ -115,7 +115,7 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
           File.symlink(plugin_path, symlink)
 
           if plugin_name == 'flutter_ffmpeg'
-            pod 'flutter_ffmpeg/<package name>', :path => File.join(relative_symlink_dir, 'plugins', plugin_name, platform)
+            pod 'flutter_ffmpeg/min-gpl-lts', :path => File.join(relative_symlink_dir, 'plugins', plugin_name, platform)
           else
             pod plugin_name, :path => File.join(relative_symlink_dir, 'plugins', plugin_name, platform)
           end
