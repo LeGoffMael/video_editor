@@ -93,10 +93,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _controller.cacheMaxCrop,
         );
         _changeRect();
-        _onPanEnd();
+        _onPanEnd(force: true);
       });
     } else {
-      _onPanEnd();
+      _onPanEnd(force: true);
     }
   }
 
@@ -240,8 +240,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
     }
   }
 
-  void _onPanEnd() {
-    if (_boundary != _CropBoundaries.none) {
+  void _onPanEnd({bool force = false}) {
+    if (_boundary != _CropBoundaries.none || force) {
       final Rect rect = _rect.value;
       _controller.cacheMinCrop = Offset(
         rect.left / _layout.width,
