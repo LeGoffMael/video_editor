@@ -9,6 +9,7 @@ class TrimSliderStyle {
       this.lineColor = Colors.white,
       this.lineWidth = 2,
       this.iconColor = Colors.black,
+      this.circleSize = 8,
       this.iconSize = 25,
       this.leftIcon = Icons.arrow_left,
       this.rightIcon = Icons.arrow_right})
@@ -25,6 +26,6 @@ class TrimSliderStyle {
   final double lineWidth;
 
   final Color iconColor;
-  final double iconSize;
+  final double iconSize, circleSize;
   final IconData leftIcon, rightIcon;
 }
