@@ -18,7 +18,7 @@ class TrimSliderPainter extends CustomPainter {
       ..color = style.lineColor
       ..strokeWidth = style.lineWidth
       ..strokeCap = StrokeCap.square;
-    final double circleRadius = style.iconSize / 4 + style.lineWidth;
+    final double circleRadius = style.circleSize;
     final circle = Paint()..color = style.lineColor;
 
     final double halfLineWidth = style.lineWidth / 2;
