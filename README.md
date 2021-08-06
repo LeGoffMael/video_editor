@@ -34,14 +34,20 @@ _controller.initialize().then((_) {
 ```
   - [x] rotation is synch with controller on `CropScreen`
   - [x] crop in init of `CropScreen` without gesture
+  - [x] when cropping portrait video, the width of the preview was not the same as the width of the screen
+  - [ ] thumbnails are not cropped properly
+- Exportation fixes:
+  - [x] add ffmepg configuration on iOS when flutter > 2.x
+  - [x] fix exportation of portrait video
 
 ### New Features
 
 - New supported actions
   - New trim (if video length > `maxDuration` param)
-  - New widget to select a cover between `x` exported thumbnails from the trimmed period 
+  - New widget to select a cover between `x` exported thumbnails from the trimmed period
+  - Rotation on CropScreen
 
-| New Trimmer                             | Trim timeline                           | New trim style                          |
+| New Trimmer                             | Trim timeline                           | New trim style (with icons)             |
 | --------------------------------------- |  -------------------------------------- | --------------------------------------- |
 | ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  | ![](./assets/readme/new_trim_style.gif) |
 
