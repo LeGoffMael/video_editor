@@ -12,10 +12,10 @@ dependencies:
     sdk: flutter
 
   path: ^1.8.0
-  video_player: ^2.1.0
-  path_provider: ^2.0.1
-  flutter_ffmpeg: ^0.4.0
-  video_thumbnail: ^0.3.3
+  video_player: ^2.1.12
+  path_provider: ^2.0.2
+  flutter_ffmpeg: ^0.4.2
+  video_thumbnail: ^0.4.3
 
 dev_dependencies:
   flutter_test:
