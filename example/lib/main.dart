@@ -118,9 +118,8 @@ class _VideoEditorState extends State<VideoEditor> {
       preset: VideoExportPreset.medium,
       customInstruction: "-crf 17",
       onProgress: (statics) {
-        if (_controller.video != null)
-          _exportingProgress.value =
-              statics.time / _controller.video.value.duration.inMilliseconds;
+        _exportingProgress.value =
+            statics.time / _controller.video.value.duration.inMilliseconds;
       },
     );
     _isExporting.value = false;
