@@ -36,6 +36,7 @@ _controller.initialize().then((_) {
   - [x] crop in init of `CropScreen` without gesture
   - [x] when cropping portrait video, the width of the preview was not the same as the width of the screen
   - [x] cover thumbnails are not cropped properly
+  - [x] fix crop grid width when there is rotation to avoid width to be > than screen width
 - Exportation fixes:
   - [x] add ffmepg configuration on iOS when flutter > 2.x
   - [x] fix exportation of portrait video
