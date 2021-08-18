@@ -215,3 +215,23 @@ ext.flutterFFmpegPackage = "min-gpl-lts"
 | Trim Video                          | Export Video                          |
 | ----------------------------------- | ------------------------------------- |
 | ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
+
+| Trimmer if maxDuration < videoDuration  | Trim timeline                           |
+| --------------------------------------- |  -------------------------------------- |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  |
+
+| Video cover (selection, viewer)       | Export cover                          |
+| ------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/cover_viewer.gif) | ![](./assets/readme/export_cover.gif) |
+
+
+<br><br>
+
+## Main Contributors
+
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/LeGoffMael"><img src="https://avatars.githubusercontent.com/u/22376981?v=4?s=200" width="200px;" alt=""/><br/><sub><b>Le Goff Maël</b></sub></a></td>
+  </tr>
+</table>
+<br/>
