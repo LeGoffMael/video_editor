@@ -90,18 +90,22 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _transform.value = TransformData.fromController(_controller);
     if (_preferredCropAspectRatio == null ||
         _controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
-      setState(() {
-        _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-        _rect.value = _calculateCropRect(
-          _controller.cacheMinCrop,
-          _controller.cacheMaxCrop,
-        );
-        _changeRect();
-        _onPanEnd(force: true);
-      });
+      _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+      _calculatePreferedCrop();
     } else {
       _onPanEnd(force: true);
     }
+  }
+
+  void _calculatePreferedCrop() {
+    setState(() {
+      _rect.value = _calculateCropRect(
+        _controller.cacheMinCrop,
+        _controller.cacheMaxCrop,
+      );
+      _changeRect();
+      _onPanEnd(force: true);
+    });
   }
 
   void _scaleRect() {
@@ -317,8 +321,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
           child: Container(
               constraints: BoxConstraints(
                   maxHeight: ((_controller.rotation == 90 ||
-                              _controller.rotation == 270) &&
-                          widget.showGrid)
+                          _controller.rotation == 270))
                       ? MediaQuery.of(context).size.width -
                           widget.horizontalMargin
                       : Size.infinite.height),
@@ -331,7 +334,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
                           Size(constraints.maxWidth, constraints.maxHeight);
                       if (_layout != size) {
                         _layout = size;
-                        _rect.value = _calculateCropRect();
+                        if (widget.showGrid) {
+                          WidgetsBinding.instance!.addPostFrameCallback((_) {
+                            _calculatePreferedCrop();
+                          });
+                        } else {
+                          _rect.value = _calculateCropRect();
+                        }
                       }
                       return widget.showGrid
                           ? Stack(children: [
