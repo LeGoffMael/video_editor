@@ -22,7 +22,7 @@ class TransformData {
     final double yScale = layout.height / rect.height;
 
     final double scale = videoAspect < 0.8
-        ? relativeAspect < 0.8
+        ? relativeAspect <= 1
             ? yScale
             : xScale + videoAspect
         : relativeAspect < 0.8
@@ -42,7 +42,13 @@ class TransformData {
     );
   }
 
-  void initRotationFromController(VideoEditorController controller) {
-    rotation = -controller.rotation * (3.1416 / 180.0);
+  factory TransformData.fromController(
+    VideoEditorController controller,
+  ) {
+    return TransformData(
+      rotation: -controller.rotation * (3.1416 / 180.0),
+      scale: 1.0,
+      translate: Offset.zero,
+    );
   }
 }

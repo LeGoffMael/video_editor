@@ -1,3 +1,13 @@
+## [1.2.0]
+
+  MAËL LE GOFF changes
+  - Trim slider timeline
+  - New smooth trimmer when video durarion > maxDuration
+  - Export video cover
+  - Crop's bugs fixed
+  - Video export's bugs fixed
+  - Portrait scale's bugs fixed
+
 ## [1.1.0]
 
 - Sound Null Safety Migration

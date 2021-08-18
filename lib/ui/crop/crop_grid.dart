@@ -55,13 +55,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _controller = widget.controller;
     final length = _controller.cropStyle.boundariesLength;
     _controller.addListener(!widget.showGrid ? _scaleRect : _updateRect);
-    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
     _margin = Offset(length, length) * 2;
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
 
-      _transform.value.initRotationFromController(_controller);
+      // init the crop area with preferredCropAspectRatio
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        _updateRect();
+      });
     } else {
       // init the widget with controller values if it is not the croping screen
       WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -81,7 +83,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _updateRect() {
-    if (_controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
+    _transform.value = TransformData.fromController(_controller);
+    if (_preferredCropAspectRatio == null ||
+        _controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
       setState(() {
         _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
         _rect.value = _calculateCropRect(
@@ -89,8 +93,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _controller.cacheMaxCrop,
         );
         _changeRect();
-        _onPanEnd();
+        _onPanEnd(force: true);
       });
+    } else {
+      _onPanEnd(force: true);
     }
   }
 
@@ -234,8 +240,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
     }
   }
 
-  void _onPanEnd() {
-    if (_boundary != _CropBoundaries.none) {
+  void _onPanEnd({bool force = false}) {
+    if (_boundary != _CropBoundaries.none || force) {
       final Rect rect = _rect.value;
       _controller.cacheMinCrop = Offset(
         rect.left / _layout.width,
@@ -259,7 +265,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
     height = height ?? _rect.value.height;
 
     if (_preferredCropAspectRatio != null) {
-      height = width / _preferredCropAspectRatio!;
+      if (height > width) {
+        height = width / _preferredCropAspectRatio!;
+      } else if (height < width) {
+        width = height / _preferredCropAspectRatio!;
+      }
     }
 
     final double right = left + width;
