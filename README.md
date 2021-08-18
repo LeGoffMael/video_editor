@@ -35,7 +35,7 @@ _controller.initialize().then((_) {
   - [x] rotation is synch with controller on `CropScreen`
   - [x] crop in init of `CropScreen` without gesture
   - [x] when cropping portrait video, the width of the preview was not the same as the width of the screen
-  - [ ] thumbnails are not cropped properly
+  - [x] cover thumbnails are not cropped properly
 - Exportation fixes:
   - [x] add ffmepg configuration on iOS when flutter > 2.x
   - [x] fix exportation of portrait video
