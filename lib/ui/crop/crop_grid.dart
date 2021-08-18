@@ -20,11 +20,12 @@ enum _CropBoundaries {
 
 class CropGridViewer extends StatefulWidget {
   ///It is the viewer that allows you to crop the video
-  CropGridViewer({
-    Key? key,
-    required this.controller,
-    this.showGrid = true,
-  }) : super(key: key);
+  CropGridViewer(
+      {Key? key,
+      required this.controller,
+      this.showGrid = true,
+      this.horizontalMargin = 0.0})
+      : super(key: key);
 
   /// If it is true, it shows the grid and allows cropping the video, if it is false
   /// does not show the grid and cannot be cropped
@@ -32,6 +33,9 @@ class CropGridViewer extends StatefulWidget {
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
+
+  ///Space to put around the grid to compute when the video is rotated
+  final double horizontalMargin;
 
   @override
   _CropGridViewerState createState() => _CropGridViewerState();
@@ -309,46 +313,54 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: _transform,
-      builder: (_, TransformData transform, __) => CropTransform(
-        transform: transform,
-        child: VideoViewer(
-          controller: _controller,
-          child: LayoutBuilder(builder: (_, constraints) {
-            Size size = Size(constraints.maxWidth, constraints.maxHeight);
-            if (_layout != size) {
-              _layout = size;
-              _rect.value = _calculateCropRect();
-            }
-
-            return widget.showGrid
-                ? Stack(children: [
-                    _paint(),
-                    GestureDetector(
-                      onPanEnd: (_) => _onPanEnd(),
-                      onPanStart: _onPanStart,
-                      onPanUpdate: _onPanUpdate,
-                      child: ValueListenableBuilder(
-                        valueListenable: _rect,
-                        builder: (_, Rect value, __) {
-                          final left = value.left - _margin.dx;
-                          final top = value.top - _margin.dy;
-                          return Container(
-                            margin: EdgeInsets.only(
-                              left: left < 0.0 ? 0.0 : left,
-                              top: top < 0.0 ? 0.0 : top,
-                            ),
-                            color: Colors.transparent,
-                            width: value.width + _margin.dx * 2,
-                            height: value.height + _margin.dy * 2,
-                          );
-                        },
-                      ),
-                    ),
-                  ])
-                : _paint();
-          }),
-        ),
-      ),
+      builder: (_, TransformData transform, __) => Center(
+          child: Container(
+              constraints: BoxConstraints(
+                  maxHeight: ((_controller.rotation == 90 ||
+                              _controller.rotation == 270) &&
+                          widget.showGrid)
+                      ? MediaQuery.of(context).size.width -
+                          widget.horizontalMargin
+                      : Size.infinite.height),
+              child: CropTransform(
+                  transform: transform,
+                  child: VideoViewer(
+                    controller: _controller,
+                    child: LayoutBuilder(builder: (_, constraints) {
+                      Size size =
+                          Size(constraints.maxWidth, constraints.maxHeight);
+                      if (_layout != size) {
+                        _layout = size;
+                        _rect.value = _calculateCropRect();
+                      }
+                      return widget.showGrid
+                          ? Stack(children: [
+                              _paint(),
+                              GestureDetector(
+                                onPanEnd: (_) => _onPanEnd(),
+                                onPanStart: _onPanStart,
+                                onPanUpdate: _onPanUpdate,
+                                child: ValueListenableBuilder(
+                                  valueListenable: _rect,
+                                  builder: (_, Rect value, __) {
+                                    final left = value.left - _margin.dx;
+                                    final top = value.top - _margin.dy;
+                                    return Container(
+                                      margin: EdgeInsets.only(
+                                        left: left < 0.0 ? 0.0 : left,
+                                        top: top < 0.0 ? 0.0 : top,
+                                      ),
+                                      color: Colors.transparent,
+                                      width: value.width + _margin.dx * 2,
+                                      height: value.height + _margin.dy * 2,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ])
+                          : _paint();
+                    }),
+                  )))),
     );
   }
 

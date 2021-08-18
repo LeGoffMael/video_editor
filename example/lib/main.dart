@@ -400,7 +400,8 @@ class CropScreen extends StatelessWidget {
             Expanded(
               child: AnimatedInteractiveViewer(
                 maxScale: 2.4,
-                child: CropGridViewer(controller: controller),
+                child: CropGridViewer(
+                    controller: controller, horizontalMargin: 60),
               ),
             ),
             SizedBox(height: 15),
