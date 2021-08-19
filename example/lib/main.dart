@@ -397,10 +397,27 @@ class CropScreen extends StatelessWidget {
         child: Padding(
           padding: Margin.all(30),
           child: Column(children: [
+            Row(children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => controller.rotate90Degrees(RotateDirection.left),
+                  child: Icon(Icons.rotate_left),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () =>
+                      controller.rotate90Degrees(RotateDirection.right),
+                  child: Icon(Icons.rotate_right),
+                ),
+              )
+            ]),
+            SizedBox(height: 15),
             Expanded(
               child: AnimatedInteractiveViewer(
                 maxScale: 2.4,
-                child: CropGridViewer(controller: controller),
+                child: CropGridViewer(
+                    controller: controller, horizontalMargin: 60),
               ),
             ),
             SizedBox(height: 15),
