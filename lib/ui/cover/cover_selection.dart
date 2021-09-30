@@ -110,7 +110,7 @@ class _CoverSelectionState extends State<CoverSelection>
                   ? (eachPart * i) + widget.controller.startTrim.inMilliseconds
                   : (eachPart * i))
               .toInt(),
-          quality: 10);
+          quality: widget.quality);
 
       if (_bytes.thumbData != null) {
         _byteList.add(_bytes);
