@@ -85,26 +85,28 @@ class TrimSliderPainter extends CustomPainter {
       line,
     );
 
-    //LECT CIRCLE
+    //LEFT CIRCLE
     canvas.drawCircle(
       Offset(rect.left + halfLineWidth, halfHeight),
       circleRadius,
       circle,
     );
 
-    //LECT ARROW
-    TextPainter leftArrow = TextPainter(textDirection: TextDirection.rtl);
-    leftArrow.text = TextSpan(
-        text: String.fromCharCode(style.leftIcon.codePoint),
-        style: TextStyle(
-            fontSize: style.iconSize,
-            fontFamily: style.leftIcon.fontFamily,
-            color: style.iconColor));
-    leftArrow.layout();
-    leftArrow.paint(
-        canvas,
-        Offset(
-            rect.left - style.iconSize / 2, halfHeight - style.iconSize / 2));
+    //LEFT ARROW
+    if (style.leftIcon != null) {
+      TextPainter leftArrow = TextPainter(textDirection: TextDirection.rtl);
+      leftArrow.text = TextSpan(
+          text: String.fromCharCode(style.leftIcon!.codePoint),
+          style: TextStyle(
+              fontSize: style.iconSize,
+              fontFamily: style.leftIcon!.fontFamily,
+              color: style.iconColor));
+      leftArrow.layout();
+      leftArrow.paint(
+          canvas,
+          Offset(
+              rect.left - style.iconSize / 2, halfHeight - style.iconSize / 2));
+    }
 
     //RIGHT CIRCLE
     canvas.drawCircle(
@@ -114,18 +116,20 @@ class TrimSliderPainter extends CustomPainter {
     );
 
     //RIGHT ARROW
-    TextPainter rightArrow = TextPainter(textDirection: TextDirection.rtl);
-    rightArrow.text = TextSpan(
-        text: String.fromCharCode(style.rightIcon.codePoint),
-        style: TextStyle(
-            fontSize: style.iconSize,
-            fontFamily: style.rightIcon.fontFamily,
-            color: style.iconColor));
-    rightArrow.layout();
-    rightArrow.paint(
-        canvas,
-        Offset(
-            rect.right - style.iconSize / 2, halfHeight - style.iconSize / 2));
+    if (style.rightIcon != null) {
+      TextPainter rightArrow = TextPainter(textDirection: TextDirection.rtl);
+      rightArrow.text = TextSpan(
+          text: String.fromCharCode(style.rightIcon!.codePoint),
+          style: TextStyle(
+              fontSize: style.iconSize,
+              fontFamily: style.rightIcon!.fontFamily,
+              color: style.iconColor));
+      rightArrow.layout();
+      rightArrow.paint(
+          canvas,
+          Offset(rect.right - style.iconSize / 2,
+              halfHeight - style.iconSize / 2));
+    }
   }
 
   @override
