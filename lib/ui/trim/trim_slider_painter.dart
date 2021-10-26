@@ -2,29 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
 
 class TrimSliderPainter extends CustomPainter {
-  TrimSliderPainter(this.rect, this.position, {this.style});
+  TrimSliderPainter(this.rect, this.position, this.style);
 
   final Rect rect;
   final double position;
-  final TrimSliderStyle? style;
+  final TrimSliderStyle style;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double width = style!.lineWidth;
-    final double radius = style!.dotRadius;
-    final double halfWidth = width / 2;
+    final Paint background = Paint()..color = style.background;
+    final progress = Paint()
+      ..color = style.positionLineColor
+      ..strokeWidth = style.positionlineWidth;
+    final line = Paint()
+      ..color = style.lineColor
+      ..strokeWidth = style.lineWidth
+      ..strokeCap = StrokeCap.square;
+    final double circleRadius = style.circleSize;
+    final circle = Paint()..color = style.lineColor;
+
+    final double halfLineWidth = style.lineWidth / 2;
     final double halfHeight = rect.height / 2;
-    final Paint dotPaint = Paint()..color = style!.dotColor;
-    final Paint linePaint = Paint()..color = style!.lineColor;
-    final Paint progressPaint = Paint()..color = style!.positionLineColor;
-    final Paint background = Paint()..color = Colors.black.withOpacity(0.6);
 
     canvas.drawRect(
       Rect.fromPoints(
-        Offset(position - halfWidth, 0.0),
-        Offset(position + halfWidth, size.height),
+        Offset(position - halfLineWidth, 0.0),
+        Offset(position + halfLineWidth, size.height),
       ),
-      progressPaint,
+      progress,
     );
 
     //BACKGROUND LEFT
@@ -49,51 +54,83 @@ class TrimSliderPainter extends CustomPainter {
     canvas.drawRect(
       Rect.fromPoints(
         rect.topLeft,
-        rect.topRight + Offset(0.0, width),
+        rect.topRight + Offset(0.0, line.strokeWidth),
       ),
-      linePaint,
+      line,
     );
 
     //RIGHT RECT
     canvas.drawRect(
       Rect.fromPoints(
-        rect.topRight - Offset(width, -width),
+        rect.topRight - Offset(line.strokeWidth, -line.strokeWidth),
         rect.bottomRight,
       ),
-      linePaint,
+      line,
     );
 
     //BOTTOM RECT
     canvas.drawRect(
       Rect.fromPoints(
-        rect.bottomRight - Offset(width, width),
+        rect.bottomRight - Offset(line.strokeWidth, line.strokeWidth),
         rect.bottomLeft,
       ),
-      linePaint,
+      line,
     );
 
     //LEFT RECT
     canvas.drawRect(
       Rect.fromPoints(
-        rect.bottomLeft - Offset(-width, width),
+        rect.bottomLeft - Offset(-line.strokeWidth, line.strokeWidth),
         rect.topLeft,
       ),
-      linePaint,
+      line,
     );
 
-    //LECT CIRCLE
+    //LEFT CIRCLE
     canvas.drawCircle(
-      Offset(rect.left + halfWidth, halfHeight),
-      radius,
-      dotPaint,
+      Offset(rect.left + halfLineWidth, halfHeight),
+      circleRadius,
+      circle,
     );
+
+    //LEFT ARROW
+    if (style.leftIcon != null) {
+      TextPainter leftArrow = TextPainter(textDirection: TextDirection.rtl);
+      leftArrow.text = TextSpan(
+          text: String.fromCharCode(style.leftIcon!.codePoint),
+          style: TextStyle(
+              fontSize: style.iconSize,
+              fontFamily: style.leftIcon!.fontFamily,
+              color: style.iconColor));
+      leftArrow.layout();
+      leftArrow.paint(
+          canvas,
+          Offset(
+              rect.left - style.iconSize / 2, halfHeight - style.iconSize / 2));
+    }
 
     //RIGHT CIRCLE
     canvas.drawCircle(
-      Offset(rect.right - halfWidth, halfHeight),
-      radius,
-      dotPaint,
+      Offset(rect.right - halfLineWidth, halfHeight),
+      circleRadius,
+      circle,
     );
+
+    //RIGHT ARROW
+    if (style.rightIcon != null) {
+      TextPainter rightArrow = TextPainter(textDirection: TextDirection.rtl);
+      rightArrow.text = TextSpan(
+          text: String.fromCharCode(style.rightIcon!.codePoint),
+          style: TextStyle(
+              fontSize: style.iconSize,
+              fontFamily: style.rightIcon!.fontFamily,
+              color: style.iconColor));
+      rightArrow.layout();
+      rightArrow.paint(
+          canvas,
+          Offset(rect.right - style.iconSize / 2,
+              halfHeight - style.iconSize / 2));
+    }
   }
 
   @override
