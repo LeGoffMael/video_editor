@@ -27,5 +27,5 @@ class TrimSliderStyle {
 
   final Color iconColor;
   final double iconSize, circleSize;
-  final IconData leftIcon, rightIcon;
+  final IconData? leftIcon, rightIcon;
 }
