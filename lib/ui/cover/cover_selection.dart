@@ -48,7 +48,8 @@ class _CoverSelectionState extends State<CoverSelection>
   @override
   void initState() {
     super.initState();
-    _aspect = widget.controller.video.value.aspectRatio;
+    _aspect = widget.controller.preferredCropAspectRatio ??
+        widget.controller.video.value.aspectRatio;
     _startTrim = widget.controller.startTrim;
     _endTrim = widget.controller.endTrim;
     widget.controller.addListener(_scaleRect);
@@ -77,6 +78,12 @@ class _CoverSelectionState extends State<CoverSelection>
       _layout,
       widget.controller,
     );
+
+    if (widget.controller.preferredCropAspectRatio != null &&
+        _aspect != widget.controller.preferredCropAspectRatio) {
+      _aspect = widget.controller.preferredCropAspectRatio!;
+      _layout = _calculateLayout();
+    }
 
     // if trim values changed generate new thumbnails
     if (!widget.controller.isTrimming &&
@@ -128,6 +135,12 @@ class _CoverSelectionState extends State<CoverSelection>
     );
   }
 
+  Size _calculateLayout() {
+    return _aspect < 1.0
+        ? Size(widget.height * _aspect, widget.height)
+        : Size(widget.height, widget.height / _aspect);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -135,9 +148,7 @@ class _CoverSelectionState extends State<CoverSelection>
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;
-        _layout = _aspect <= 1.0
-            ? Size(widget.height * _aspect, widget.height)
-            : Size(widget.height, widget.height / _aspect);
+        _layout = _calculateLayout();
         _stream = _generateThumbnails();
         _rect.value = _calculateCoverRect();
       }
@@ -185,21 +196,17 @@ class _CoverSelectionState extends State<CoverSelection>
                                                 width: _layout.width,
                                                 child: Stack(children: [
                                                   Image(
-                                                    image: MemoryImage(
-                                                        coverData.thumbData!),
-                                                    width: _layout.width,
-                                                    height: _layout.height,
-                                                    alignment:
-                                                        Alignment.topLeft,
-                                                  ),
+                                                      image: MemoryImage(
+                                                          coverData.thumbData!),
+                                                      width: _layout.width,
+                                                      height: _layout.height),
                                                   CustomPaint(
                                                     size: _layout,
                                                     painter: CropGridPainter(
-                                                      _rect.value,
-                                                      showGrid: false,
-                                                      style: widget
-                                                          .controller.cropStyle,
-                                                    ),
+                                                        _rect.value,
+                                                        showGrid: false,
+                                                        style: widget.controller
+                                                            .cropStyle),
                                                   )
                                                 ]),
                                               ),
