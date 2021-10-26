@@ -519,14 +519,14 @@ class VideoEditorController extends ChangeNotifier {
   //COVER EXPORT//
   //------------//
 
-  String _printDurationFormat() {
-    Duration duration = Duration(
-        milliseconds: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds);
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    String stringMillis = duration.inMilliseconds.remainder(1000).toString();
-    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds.$stringMillis";
+  ///Generate cover as a [File]
+  Future<String?> _generateCoverFile() async {
+    return await VideoThumbnail.thumbnailFile(
+      imageFormat: ImageFormat.JPEG,
+      video: file.path,
+      timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
+      quality: 1000,
+    );
   }
 
   /// Extract the current cover selected by the user, or by default the first one
@@ -537,8 +537,13 @@ class VideoEditorController extends ChangeNotifier {
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = (await getTemporaryDirectory()).path;
-    final String videoPath = file.path;
-    if (name == null) name = path.basename(videoPath).split('.')[0];
+    final String? _coverPath =
+        await _generateCoverFile(); // file generated from the thumbnail library or video source
+    if (_coverPath == null) {
+      print("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
+      return null;
+    }
+    if (name == null) name = path.basename(file.path).split('.')[0];
     final String outputPath = tempPath + name + ".jpg";
 
     //-----------------//
@@ -554,13 +559,12 @@ class VideoEditorController extends ChangeNotifier {
     //----------------//
     //VALIDATE FILTERS//
     //----------------//
-    final String timeFormat = _printDurationFormat();
     final List<String> filters = [crop, scaleInstruction, rotation];
     filters.removeWhere((item) => item.isEmpty);
     final String filter =
         filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
     final String execute =
-        " -ss $timeFormat -i ${file.path} -y $filter -frames:v 1 $outputPath";
+        "-i $_coverPath $filter -y $outputPath"; // TODO : cover file is not overwritten even while using -y param
 
     //------------------//
     //PROGRESS CALLBACKS//
