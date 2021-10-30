@@ -520,25 +520,30 @@ class VideoEditorController extends ChangeNotifier {
   //------------//
 
   ///Generate cover as a [File]
-  Future<String?> _generateCoverFile() async {
+  Future<String?> _generateCoverFile({
+    int quality = 100,
+  }) async {
     return await VideoThumbnail.thumbnailFile(
       imageFormat: ImageFormat.JPEG,
       video: file.path,
       timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
-      quality: 1000,
+      quality: quality,
     );
   }
 
-  /// Extract the current cover selected by the user, or by default the first one
+  /// Extract the current cover selected by the user, or by default the first one into a JPG image
   Future<File?> extractCover({
     String? name,
     double scale = 1.0,
+    int quality = 100,
     void Function(Statistics)? onProgress,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = (await getTemporaryDirectory()).path;
-    final String? _coverPath =
-        await _generateCoverFile(); // file generated from the thumbnail library or video source
+    // file generated from the thumbnail library or video source
+    final String? _coverPath = await _generateCoverFile(
+      quality: quality,
+    );
     if (_coverPath == null) {
       print("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
       return null;
