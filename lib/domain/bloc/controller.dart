@@ -410,6 +410,8 @@ class VideoEditorController extends ChangeNotifier {
   ///
   ///If the [outDir] is `null`, then it uses `TemporaryDirectory`.
   ///
+  ///The [format] of the video to be exported, by default `mp4`.
+  ///
   ///The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
   ///
   ///The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
@@ -540,12 +542,15 @@ class VideoEditorController extends ChangeNotifier {
   ///
   ///If the [outDir] is `null`, then it uses `TemporaryDirectory`.
   ///
+  ///The [format] of the image to be exported, by default `jpg`.
+  ///
   ///The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
   ///
   ///The [quality] of the exported image (from 0 to 100)
   Future<File?> extractCover({
     String? name,
     String? outDir,
+    String format = "jpg",
     double scale = 1.0,
     int quality = 100,
     void Function(Statistics)? onProgress,
@@ -561,7 +566,7 @@ class VideoEditorController extends ChangeNotifier {
       return null;
     }
     if (name == null) name = path.basenameWithoutExtension(file.path);
-    final String outputPath = "$tempPath/$name.jpg";
+    final String outputPath = "$tempPath/$name.$format";
 
     //-----------------//
     //CALCULATE FILTERS//
