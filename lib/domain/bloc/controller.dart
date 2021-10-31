@@ -404,13 +404,13 @@ class VideoEditorController extends ChangeNotifier {
     }
   }
 
-  ///Export the video at `TemporaryDirectory` and return a `File`.
+  ///Export the video using this edition parameters and return a `File`.
   ///
+  ///If the [name] is `null`, then it uses this video filename.
   ///
-  ///If the [name] is `null`, then it uses the filename.
+  ///If the [outDir] is `null`, then it uses `TemporaryDirectory`.
   ///
-  ///
-  ///The [scale] is `scale=width*scale:height*scale` and reduce o increase video size.
+  ///The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
   ///
   ///The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
   ///
@@ -419,6 +419,7 @@ class VideoEditorController extends ChangeNotifier {
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<File?> exportVideo({
     String? name,
+    String? outDir,
     String format = "mp4",
     double scale = 1.0,
     String? customInstruction,
@@ -426,10 +427,10 @@ class VideoEditorController extends ChangeNotifier {
     VideoExportPreset preset = VideoExportPreset.none,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
-    final String tempPath = (await getTemporaryDirectory()).path;
+    final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
-    if (name == null) name = path.basename(videoPath).split('.')[0];
-    final String outputPath = tempPath + name + ".$format";
+    if (name == null) name = path.basenameWithoutExtension(videoPath);
+    final String outputPath = "$tempPath/$name.$format";
 
     //-----------------//
     //CALCULATE FILTERS//
@@ -519,7 +520,9 @@ class VideoEditorController extends ChangeNotifier {
   //COVER EXPORT//
   //------------//
 
-  ///Generate cover as a [File]
+  ///Generate this selected cover image as a JPEG [File]
+  ///
+  ///If this [selectedCoverVal] is `null`, then it return the first frame of this video.
   Future<String?> _generateCoverFile({
     int quality = 100,
   }) async {
@@ -531,15 +534,24 @@ class VideoEditorController extends ChangeNotifier {
     );
   }
 
-  /// Extract the current cover selected by the user, or by default the first one into a JPG image
+  ///Export this selected cover, or by default the first one, return an image `File`.
+  ///
+  ///If the [name] is `null`, then it uses this video filename.
+  ///
+  ///If the [outDir] is `null`, then it uses `TemporaryDirectory`.
+  ///
+  ///The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
+  ///
+  ///The [quality] of the exported image (from 0 to 100)
   Future<File?> extractCover({
     String? name,
+    String? outDir,
     double scale = 1.0,
     int quality = 100,
     void Function(Statistics)? onProgress,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
-    final String tempPath = (await getTemporaryDirectory()).path;
+    final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     // file generated from the thumbnail library or video source
     final String? _coverPath = await _generateCoverFile(
       quality: quality,
@@ -548,8 +560,8 @@ class VideoEditorController extends ChangeNotifier {
       print("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
       return null;
     }
-    if (name == null) name = path.basename(file.path).split('.')[0];
-    final String outputPath = tempPath + name + ".jpg";
+    if (name == null) name = path.basenameWithoutExtension(file.path);
+    final String outputPath = "$tempPath/$name.jpg";
 
     //-----------------//
     //CALCULATE FILTERS//
