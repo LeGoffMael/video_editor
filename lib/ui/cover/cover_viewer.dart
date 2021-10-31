@@ -85,9 +85,9 @@ class _CoverViewerState extends State<CoverViewer> {
             builder: (context, CoverData? selectedCover, __) => selectedCover
                         ?.thumbData ==
                     null
-                ? Text('No selection')
+                ? Center(child: Text('No selection'))
                 : CropTransform(
-                    transform: _transform.value,
+                    transform: transform,
                     child: Center(
                         child: Stack(children: [
                       AspectRatio(
