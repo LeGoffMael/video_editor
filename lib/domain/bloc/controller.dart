@@ -585,8 +585,7 @@ class VideoEditorController extends ChangeNotifier {
     filters.removeWhere((item) => item.isEmpty);
     final String filter =
         filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
-    final String execute =
-        "-i $_coverPath $filter -y $outputPath"; // TODO : cover file is not overwritten even while using -y param
+    final String execute = "-i $_coverPath $filter -y $outputPath";
 
     //------------------//
     //PROGRESS CALLBACKS//

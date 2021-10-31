@@ -137,9 +137,15 @@ class _VideoEditorState extends State<VideoEditor> {
     setState(() => _exported = false);
     final File? cover = await _controller.extractCover();
 
-    if (cover != null)
+    if (cover != null) {
       _exportText = "Cover exported! ${cover.path}";
-    else
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.black54,
+        builder: (BuildContext context) =>
+            Image.memory(cover.readAsBytesSync()),
+      );
+    } else
       _exportText = "Error on cover exportation :(";
 
     setState(() => _exported = true);
