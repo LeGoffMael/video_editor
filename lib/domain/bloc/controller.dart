@@ -69,7 +69,6 @@ class VideoEditorController extends ChangeNotifier {
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
-  FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
   bool _isTrimming = false;
