@@ -10,10 +10,14 @@ class CoverViewer extends StatefulWidget {
   CoverViewer({
     Key? key,
     required this.controller,
+    this.noCoverText = 'No selection',
   }) : super(key: key);
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
+
+  ///Text to display instead of the cover if selected cover data is `null`
+  final String noCoverText;
 
   @override
   _CoverViewerState createState() => _CoverViewerState();
@@ -85,9 +89,9 @@ class _CoverViewerState extends State<CoverViewer> {
             builder: (context, CoverData? selectedCover, __) => selectedCover
                         ?.thumbData ==
                     null
-                ? Text('No selection')
+                ? Center(child: Text(widget.noCoverText))
                 : CropTransform(
-                    transform: _transform.value,
+                    transform: transform,
                     child: Center(
                         child: Stack(children: [
                       AspectRatio(

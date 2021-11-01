@@ -69,7 +69,6 @@ class VideoEditorController extends ChangeNotifier {
         this.trimStyle = trimStyle ?? TrimSliderStyle();
 
   FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
-  FlutterFFprobe _ffprobe = FlutterFFprobe();
 
   int _rotation = 0;
   bool _isTrimming = false;
@@ -97,8 +96,8 @@ class VideoEditorController extends ChangeNotifier {
   //Cover parameters
   ValueNotifier<CoverData?> _selectedCover = ValueNotifier<CoverData?>(null);
 
-  int _videoWidth = 0;
-  int _videoHeight = 0;
+  double _videoWidth = 0;
+  double _videoHeight = 0;
 
   ///Get the `VideoPlayerController`
   VideoPlayerController get video => _video;
@@ -201,8 +200,10 @@ class VideoEditorController extends ChangeNotifier {
   //----------------//
   ///Attempts to open the given [File] and load metadata about the video.
   Future<void> initialize() async {
-    await _video.initialize();
-    await _getVideoDimensions();
+    await _video.initialize().then((_) {
+      _videoWidth = _video.value.size.width;
+      _videoHeight = _video.value.size.height;
+    });
     _video.addListener(_videoListener);
     _video.setLooping(true);
 
@@ -240,14 +241,13 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO CROP//
   //----------//
   Future<String> _getCrop() async {
-    await _getVideoDimensions();
     int enddx = (_videoWidth * maxCrop.dx).floor();
     int enddy = (_videoHeight * maxCrop.dy).floor();
     int startdx = (_videoWidth * minCrop.dx).floor();
     int startdy = (_videoHeight * minCrop.dy).floor();
 
-    if (enddx > _videoWidth) enddx = _videoWidth;
-    if (enddy > _videoHeight) enddy = _videoHeight;
+    if (enddx > _videoWidth) enddx = _videoWidth.floor();
+    if (enddy > _videoHeight) enddy = _videoHeight.floor();
     if (startdx < 0) startdx = 0;
     if (startdy < 0) startdy = 0;
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
@@ -368,41 +368,6 @@ class VideoEditorController extends ChangeNotifier {
   //------------//
   //VIDEO EXPORT//
   //------------//
-  Future<void> _getVideoDimensions() async {
-    if (!(_videoHeight > 0 && _videoWidth > 0)) {
-      final info = await _ffprobe.getMediaInformation(file.path);
-      final streams = info.getStreams();
-      int _height = 0;
-      int _width = 0;
-
-      if (streams != null && streams.length > 0) {
-        for (var stream in streams) {
-          if (stream.getAllProperties()['codec_type'] == 'video') {
-            _width = stream.getAllProperties()['width'];
-            _height = stream.getAllProperties()['height'];
-
-            //If video is portrait mode use the rotate to adjust
-            final metadataMap = stream.getAllProperties()['side_data_list'];
-            if (metadataMap != null) {
-              for (var metadata in metadataMap) {
-                if (metadata.containsKey('rotation')) {
-                  int rotate = metadata['rotation'];
-                  var rotateTimes = rotate / 90;
-                  if (rotateTimes % 2 != 0) {
-                    _width = stream.getAllProperties()['height'];
-                    _height = stream.getAllProperties()['width'];
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      _videoHeight = _height;
-      _videoWidth = _width;
-    }
-  }
 
   ///Export the video using this edition parameters and return a `File`.
   ///
