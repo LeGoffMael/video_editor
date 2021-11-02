@@ -328,7 +328,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.2.0"
+    version: "1.2.1"
   video_player:
     dependency: "direct main"
     description:

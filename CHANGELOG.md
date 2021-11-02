@@ -1,3 +1,16 @@
+## [1.2.1]
+
+MAËL LE GOFF changes
+
+- Added icons customization in trimmer style [#45](https://github.com/seel-channel/video_editor/pull/45)
+- Improved cover exportation + apply cover quality in thumbnail [#46](https://github.com/seel-channel/video_editor/pull/46)
+- Fix exportation directory issues + add exportation parameters (cover format and exportation directory) [#47](https://github.com/seel-channel/video_editor/pull/47)
+- Change how video dimensions are computed + update example and libraries [#48](https://github.com/seel-channel/video_editor/pull/48)
+
+FELIPE MURGUIA changes
+
+- Migrated to FFMPEG KIT xd
+
 ## [1.2.0]
 
 MAËL LE GOFF changes
