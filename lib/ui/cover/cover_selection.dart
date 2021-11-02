@@ -7,25 +7,25 @@ import 'package:video_editor/domain/bloc/controller.dart';
 
 class CoverSelection extends StatefulWidget {
   ///Slider that trim video length.
-  CoverSelection(
-      {Key? key,
-      required this.controller,
-      this.height = 60,
-      this.quality = 10,
-      this.nbSelection = 5})
-      : super(key: key);
-
-  ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
-  final int quality;
-
-  ///It is the height of the thumbnails
-  final double height;
+  CoverSelection({
+    Key? key,
+    required this.controller,
+    this.height = 60,
+    this.quality = 10,
+    this.nbSelection = 5,
+  }) : super(key: key);
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
 
+  ///It is the height of the thumbnails
+  final double height;
+
   ///Number of cover selectable
   final int nbSelection;
+
+  ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
+  final int quality;
 
   @override
   _CoverSelectionState createState() => _CoverSelectionState();
@@ -33,17 +33,22 @@ class CoverSelection extends StatefulWidget {
 
 class _CoverSelectionState extends State<CoverSelection>
     with AutomaticKeepAliveClientMixin {
+  double _aspect = 1.0, _width = 1.0;
+  Duration? _startTrim, _endTrim;
+  Size _layout = Size.zero;
   ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  Stream<List<CoverData>>? _stream;
   ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
     TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
   );
 
-  double _aspect = 1.0, _width = 1.0;
-
-  Size _layout = Size.zero;
-  Stream<List<CoverData>>? _stream;
-
-  Duration? _startTrim, _endTrim;
+  @override
+  void dispose() {
+    widget.controller.removeListener(_scaleRect);
+    _transform.dispose();
+    _rect.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -62,14 +67,6 @@ class _CoverSelectionState extends State<CoverSelection>
 
   @override
   bool get wantKeepAlive => true;
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_scaleRect);
-    _transform.dispose();
-    _rect.dispose();
-    super.dispose();
-  }
 
   void _scaleRect() {
     _rect.value = _calculateCoverRect();

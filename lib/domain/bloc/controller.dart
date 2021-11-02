@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:ffmpeg_kit_flutter/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import 'package:flutter_ffmpeg/statistics.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 
 import 'package:video_editor/domain/entities/crop_style.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
@@ -67,8 +67,6 @@ class VideoEditorController extends ChangeNotifier {
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.coverStyle = coverStyle ?? CoverSelectionStyle(),
         this.trimStyle = trimStyle ?? TrimSliderStyle();
-
-  FlutterFFmpeg _ffmpeg = FlutterFFmpeg();
 
   int _rotation = 0;
   bool _isTrimming = false;
@@ -225,8 +223,8 @@ class VideoEditorController extends ChangeNotifier {
   Future<void> dispose() async {
     if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
-    final executions = await _ffmpeg.listExecutions();
-    if (executions.length > 0) await _ffmpeg.cancel();
+    final executions = await FFmpegKit.listSessions();
+    if (executions.length > 0) await FFmpegKit.cancel();
     _video.dispose();
     super.dispose();
   }
@@ -384,7 +382,8 @@ class VideoEditorController extends ChangeNotifier {
   ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
   ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
-  Future<File?> exportVideo({
+  Future<void> exportVideo({
+    required void Function(File? file) onCompleted,
     String? name,
     String? outDir,
     String format = "mp4",
@@ -393,7 +392,6 @@ class VideoEditorController extends ChangeNotifier {
     void Function(Statistics)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
   }) async {
-    final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
     if (name == null) name = path.basenameWithoutExtension(videoPath);
@@ -426,27 +424,19 @@ class VideoEditorController extends ChangeNotifier {
     //------------------//
     //PROGRESS CALLBACKS//
     //------------------//
-    if (onProgress != null) _config.enableStatisticsCallback(onProgress);
-    final int code = await _ffmpeg.execute(execute);
-    _config.enableStatisticsCallback(null);
-
-    //------//
-    //RESULT//
-    //------//
-    if (code == 0) {
-      print("SUCCESS EXPORT AT $outputPath");
-      return File(outputPath);
-    } else if (code == 255) {
-      print("USER CANCEL EXPORT");
-      return null;
-    } else {
-      print("ERROR ON EXPORT VIDEO (CODE $code)");
-      return null;
-    }
+    await FFmpegKit.executeAsync(
+      execute,
+      (session) async {
+        final code = await session.getReturnCode();
+        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
+      },
+      null,
+      onProgress != null ? onProgress : null,
+    );
   }
 
   String _getPreset(VideoExportPreset preset) {
-    String newPreset = "medium";
+    String? newPreset = "";
 
     switch (preset) {
       case VideoExportPreset.ultrafast:
@@ -477,10 +467,11 @@ class VideoEditorController extends ChangeNotifier {
         newPreset = "veryslow";
         break;
       case VideoExportPreset.none:
+        newPreset = "";
         break;
     }
 
-    return preset == VideoExportPreset.none ? "" : "-preset $newPreset";
+    return newPreset.isEmpty ? "" : "-preset $newPreset";
   }
 
   //------------//
@@ -490,9 +481,7 @@ class VideoEditorController extends ChangeNotifier {
   ///Generate this selected cover image as a JPEG [File]
   ///
   ///If this [selectedCoverVal] is `null`, then it return the first frame of this video.
-  Future<String?> _generateCoverFile({
-    int quality = 100,
-  }) async {
+  Future<String?> _generateCoverFile({int quality = 100}) async {
     return await VideoThumbnail.thumbnailFile(
       imageFormat: ImageFormat.JPEG,
       video: file.path,
@@ -512,7 +501,8 @@ class VideoEditorController extends ChangeNotifier {
   ///The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
   ///
   ///The [quality] of the exported image (from 0 to 100)
-  Future<File?> extractCover({
+  Future<void> extractCover({
+    required void Function(File? file) onCompleted,
     String? name,
     String? outDir,
     String format = "jpg",
@@ -520,7 +510,7 @@ class VideoEditorController extends ChangeNotifier {
     int quality = 100,
     void Function(Statistics)? onProgress,
   }) async {
-    final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
+    // final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     // file generated from the thumbnail library or video source
     final String? _coverPath = await _generateCoverFile(
@@ -555,22 +545,14 @@ class VideoEditorController extends ChangeNotifier {
     //------------------//
     //PROGRESS CALLBACKS//
     //------------------//
-    if (onProgress != null) _config.enableStatisticsCallback(onProgress);
-    final int code = await _ffmpeg.execute(execute);
-    _config.enableStatisticsCallback(null);
-
-    //------//
-    //RESULT//s
-    //------//
-    if (code == 0) {
-      print("SUCCESS COVER EXTRACTION AT $outputPath");
-      return File(outputPath);
-    } else if (code == 255) {
-      print("USER CANCEL COVER EXTRACTION");
-      return null;
-    } else {
-      print("ERROR ON COVER EXTRACTION (CODE $code)");
-      return null;
-    }
+    await FFmpegKit.executeAsync(
+      execute,
+      (session) async {
+        final code = await session.getReturnCode();
+        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
+      },
+      null,
+      onProgress != null ? onProgress : null,
+    );
   }
 }

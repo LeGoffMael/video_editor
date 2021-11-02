@@ -115,62 +115,72 @@ class _VideoEditorState extends State<VideoEditor> {
     _isExporting.value = true;
     bool _firstStat = true;
     //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
-    final File? file = await _controller.exportVideo(
-      preset: VideoExportPreset.medium,
-      customInstruction: "-crf 17",
+    await _controller.exportVideo(
+      name: DateTime.now().millisecondsSinceEpoch.toString(),
+      // preset: VideoExportPreset.medium,
+      // customInstruction: "-crf 17",
       onProgress: (statics) {
         // First statistics is always wrong so if first one skip it
-        if (_firstStat)
+        if (_firstStat) {
           _firstStat = false;
-        else
-          _exportingProgress.value =
-              statics.time / _controller.video.value.duration.inMilliseconds;
+        } else {
+          _exportingProgress.value = statics.getTime() /
+              _controller.video.value.duration.inMilliseconds;
+        }
+      },
+      onCompleted: (file) {
+        _isExporting.value = false;
+        if (!mounted) return;
+        if (file != null) {
+          final VideoPlayerController _videoController =
+              VideoPlayerController.file(file);
+          _videoController.initialize().then((value) async {
+            setState(() {});
+            _videoController.play();
+            _videoController.setLooping(true);
+            await showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.black54,
+              builder: (_) => AspectRatio(
+                aspectRatio: _videoController.value.aspectRatio,
+                child: VideoPlayer(_videoController),
+              ),
+            );
+            await _videoController.pause();
+            _videoController.dispose();
+          });
+          _exportText = "Video success export!";
+        } else {
+          _exportText = "Error on export video :(";
+        }
+
+        setState(() => _exported = true);
+        Misc.delayed(2000, () => setState(() => _exported = false));
       },
     );
-    if (!mounted) return;
-    _isExporting.value = false;
-
-    if (file != null) {
-      final VideoPlayerController _videoController =
-          VideoPlayerController.file(file);
-      _videoController.initialize().then((value) async {
-        setState(() {});
-        _videoController.play();
-        _videoController.setLooping(true);
-        await showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.black54,
-          builder: (BuildContext context) => VideoPlayer(_videoController),
-        );
-        _videoController.pause();
-        _videoController.dispose();
-      });
-      _exportText = "Video success export!";
-    } else
-      _exportText = "Error on export video :(";
-
-    setState(() => _exported = true);
-    Misc.delayed(2000, () => setState(() => _exported = false));
   }
 
   void _exportCover() async {
     setState(() => _exported = false);
-    final File? cover = await _controller.extractCover();
-    if (!mounted) return;
+    await _controller.extractCover(
+      onCompleted: (cover) {
+        if (!mounted) return;
 
-    if (cover != null) {
-      _exportText = "Cover exported! ${cover.path}";
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.black54,
-        builder: (BuildContext context) =>
-            Image.memory(cover.readAsBytesSync()),
-      );
-    } else
-      _exportText = "Error on cover exportation :(";
+        if (cover != null) {
+          _exportText = "Cover exported! ${cover.path}";
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.black54,
+            builder: (BuildContext context) =>
+                Image.memory(cover.readAsBytesSync()),
+          );
+        } else
+          _exportText = "Error on cover exportation :(";
 
-    setState(() => _exported = true);
-    Misc.delayed(2000, () => setState(() => _exported = false));
+        setState(() => _exported = true);
+        Misc.delayed(2000, () => setState(() => _exported = false));
+      },
+    );
   }
 
   @override
