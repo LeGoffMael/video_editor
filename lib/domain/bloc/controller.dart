@@ -484,6 +484,7 @@ class VideoEditorController extends ChangeNotifier {
   Future<String?> _generateCoverFile({int quality = 100}) async {
     return await VideoThumbnail.thumbnailFile(
       imageFormat: ImageFormat.JPEG,
+      thumbnailPath: (await getTemporaryDirectory()).path,
       video: file.path,
       timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
       quality: quality,
