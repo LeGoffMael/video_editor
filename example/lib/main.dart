@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_player/video_player.dart';
 
 void main() => runApp(MyApp());
 
@@ -41,8 +42,7 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
   final ImagePicker _picker = ImagePicker();
 
   void _pickVideo() async {
-    final PickedFile? file =
-        await _picker.getVideo(source: ImageSource.gallery);
+    final XFile? file = await _picker.pickVideo(source: ImageSource.gallery);
     if (file != null) context.to(VideoEditor(file: File(file.path)));
   }
 
@@ -112,21 +112,41 @@ class _VideoEditorState extends State<VideoEditor> {
   void _openCropScreen() => context.to(CropScreen(controller: _controller));
 
   void _exportVideo() async {
-    Misc.delayed(1000, () => _isExporting.value = true);
+    _isExporting.value = true;
+    bool _firstStat = true;
     //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
     final File? file = await _controller.exportVideo(
       preset: VideoExportPreset.medium,
       customInstruction: "-crf 17",
       onProgress: (statics) {
-        _exportingProgress.value =
-            statics.time / _controller.video.value.duration.inMilliseconds;
+        // First statistics is always wrong so if first one skip it
+        if (_firstStat)
+          _firstStat = false;
+        else
+          _exportingProgress.value =
+              statics.time / _controller.video.value.duration.inMilliseconds;
       },
     );
+    if (!mounted) return;
     _isExporting.value = false;
 
-    if (file != null)
+    if (file != null) {
+      final VideoPlayerController _videoController =
+          VideoPlayerController.file(file);
+      _videoController.initialize().then((value) async {
+        setState(() {});
+        _videoController.play();
+        _videoController.setLooping(true);
+        await showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.black54,
+          builder: (BuildContext context) => VideoPlayer(_videoController),
+        );
+        _videoController.pause();
+        _videoController.dispose();
+      });
       _exportText = "Video success export!";
-    else
+    } else
       _exportText = "Error on export video :(";
 
     setState(() => _exported = true);
@@ -136,10 +156,17 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportCover() async {
     setState(() => _exported = false);
     final File? cover = await _controller.extractCover();
+    if (!mounted) return;
 
-    if (cover != null)
+    if (cover != null) {
       _exportText = "Cover exported! ${cover.path}";
-    else
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.black54,
+        builder: (BuildContext context) =>
+            Image.memory(cover.readAsBytesSync()),
+      );
+    } else
       _exportText = "Error on cover exportation :(";
 
     setState(() => _exported = true);
