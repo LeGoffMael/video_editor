@@ -495,6 +495,7 @@ class VideoEditorController extends ChangeNotifier {
   }) async {
     return await VideoThumbnail.thumbnailFile(
       imageFormat: ImageFormat.JPEG,
+      thumbnailPath: (await getTemporaryDirectory()).path,
       video: file.path,
       timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
       quality: quality,
