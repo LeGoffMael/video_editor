@@ -1,3 +1,10 @@
+## [1.2.2]
+
+MAËL LE GOFF changes
+
+- Error MissingPluginException with video_thumbnail fixed [#49](https://github.com/seel-channel/video_editor/pull/49)
+- Add epoch to exportation names by default [#50](https://github.com/seel-channel/video_editor/pull/50)
+
 ## [1.2.1]
 
 MAËL LE GOFF changes
