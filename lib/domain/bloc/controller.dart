@@ -395,7 +395,8 @@ class VideoEditorController extends ChangeNotifier {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
     if (name == null) name = path.basenameWithoutExtension(videoPath);
-    final String outputPath = "$tempPath/$name.$format";
+    final int epoch = DateTime.now().millisecondsSinceEpoch;
+    final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     //-----------------//
     //CALCULATE FILTERS//
@@ -484,6 +485,7 @@ class VideoEditorController extends ChangeNotifier {
   Future<String?> _generateCoverFile({int quality = 100}) async {
     return await VideoThumbnail.thumbnailFile(
       imageFormat: ImageFormat.JPEG,
+      thumbnailPath: (await getTemporaryDirectory()).path,
       video: file.path,
       timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
       quality: quality,
@@ -521,7 +523,8 @@ class VideoEditorController extends ChangeNotifier {
       return null;
     }
     if (name == null) name = path.basenameWithoutExtension(file.path);
-    final String outputPath = "$tempPath/$name.$format";
+    final int epoch = DateTime.now().millisecondsSinceEpoch;
+    final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     //-----------------//
     //CALCULATE FILTERS//
