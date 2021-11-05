@@ -397,7 +397,8 @@ class VideoEditorController extends ChangeNotifier {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
     if (name == null) name = path.basenameWithoutExtension(videoPath);
-    final String outputPath = "$tempPath/$name.$format";
+    final int epoch = DateTime.now().millisecondsSinceEpoch;
+    final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     //-----------------//
     //CALCULATE FILTERS//
@@ -532,7 +533,8 @@ class VideoEditorController extends ChangeNotifier {
       return null;
     }
     if (name == null) name = path.basenameWithoutExtension(file.path);
-    final String outputPath = "$tempPath/$name.$format";
+    final int epoch = DateTime.now().millisecondsSinceEpoch;
+    final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     //-----------------//
     //CALCULATE FILTERS//
