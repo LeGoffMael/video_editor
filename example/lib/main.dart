@@ -116,7 +116,6 @@ class _VideoEditorState extends State<VideoEditor> {
     bool _firstStat = true;
     //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
     await _controller.exportVideo(
-      name: DateTime.now().millisecondsSinceEpoch.toString(),
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
       onProgress: (statics) {
