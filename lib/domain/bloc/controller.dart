@@ -520,6 +520,7 @@ class VideoEditorController extends ChangeNotifier {
     String format = "jpg",
     double scale = 1.0,
     int quality = 100,
+    String? customInstruction,
     void Function(Statistics)? onProgress,
   }) async {
     final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
@@ -553,7 +554,8 @@ class VideoEditorController extends ChangeNotifier {
     filters.removeWhere((item) => item.isEmpty);
     final String filter =
         filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
-    final String execute = "-i $_coverPath $filter -y $outputPath";
+    final String execute =
+        "-i $_coverPath ${customInstruction ?? ""} $filter -y $outputPath";
 
     //------------------//
     //PROGRESS CALLBACKS//
