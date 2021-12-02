@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter_ffmpeg/media_information.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -235,6 +236,14 @@ class VideoEditorController extends ChangeNotifier {
     final position = videoPosition;
     if (position < _trimStart || position >= _trimEnd)
       _video.seekTo(_trimStart);
+  }
+
+  /// Return metadata of the video file
+  Future<Map<dynamic, dynamic>?> getMetaData() async {
+    final FlutterFFprobe flutterFFprobe = FlutterFFprobe();
+    MediaInformation mediaInformation =
+        await flutterFFprobe.getMediaInformation(file.path);
+    return mediaInformation.getAllProperties();
   }
 
   //----------//
