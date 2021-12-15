@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/media_information_session.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
@@ -361,6 +363,21 @@ class VideoEditorController extends ChangeNotifier {
     List<String> transpose = [];
     for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
     return transpose.length > 0 ? "${transpose.join(',')}" : "";
+  }
+
+  //--------------//
+  //VIDEO METADATA//
+  //--------------//
+
+  /// Return metadata of the video file
+  Future<void> getMetaData(
+      {required void Function(Map<dynamic, dynamic>? metadata)
+          onCompleted}) async {
+    await FFprobeKit.getMediaInformationAsync(file.path, (session) async {
+      final information =
+          (session as MediaInformationSession).getMediaInformation();
+      onCompleted(information?.getAllProperties());
+    });
   }
 
   //------------//
