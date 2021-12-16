@@ -9,7 +9,11 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  ffmpeg_kit_flutter_min_gpl: 4.5.0-LTS
+  ffmpeg_kit_flutter:
+    git:
+      url: https://github.com/shilangyu/ffmpeg-kit
+      ref: development-flutter
+      path: prebuilt/bundle-flutter-lts/default
   flutter:
     sdk: flutter
   path: ^1.8.0
