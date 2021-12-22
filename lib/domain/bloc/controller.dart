@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter/media_information_session.dart';
 import 'package:ffmpeg_kit_flutter/statistics.dart';
@@ -445,7 +446,14 @@ class VideoEditorController extends ChangeNotifier {
     await FFmpegKit.executeAsync(
       execute,
       (session) async {
+        final state =
+            FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
+        final failStackTrace = await session.getFailStackTrace();
+
+        print(
+            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
+
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },
       null,
@@ -568,7 +576,14 @@ class VideoEditorController extends ChangeNotifier {
     await FFmpegKit.executeAsync(
       execute,
       (session) async {
+        final state =
+            FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
+        final failStackTrace = await session.getFailStackTrace();
+
+        print(
+            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
+
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },
       null,
