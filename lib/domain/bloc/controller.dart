@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/media_information_session.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
@@ -375,8 +374,7 @@ class VideoEditorController extends ChangeNotifier {
       {required void Function(Map<dynamic, dynamic>? metadata)
           onCompleted}) async {
     await FFprobeKit.getMediaInformationAsync(file.path, (session) async {
-      final information =
-          (session as MediaInformationSession).getMediaInformation();
+      final information = session.getMediaInformation();
       onCompleted(information?.getAllProperties());
     });
   }
