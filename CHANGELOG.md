@@ -3,6 +3,7 @@
 - Update `ffmpeg_kit_flutter` to latest 4.5.1 [#65](https://github.com/seel-channel/video_editor/pull/65)
 - Print ffmpeg session state, return code and fail stack trace if exists [#63](https://github.com/seel-channel/video_editor/pull/63)
 - New function to get metadata of video file [#57](https://github.com/seel-channel/video_editor/pull/57)
+- Update `README.md` about `ffmpeg_kit_flutter` configuration [#53](https://github.com/seel-channel/video_editor/pull/53) by (@qiongshusheng)[https://github.com/qiongshusheng]
 
 ## [1.2.2]
 
