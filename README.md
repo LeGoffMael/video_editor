@@ -74,26 +74,6 @@ import 'package:video_editor/video_editor.dart';
 
 <br><br>
 
-## FAQ
-
-1. Crash on release mode in android
-
-Add the following entries into your `proguard-rules.pro` file. fix: [tanersener/mobile-ffmpeg#616 (comment)](https://github.com/tanersener/mobile-ffmpeg/issues/616#issuecomment-740501984)
-
-```
--keep class com.arthenica.mobileffmpeg.Config {
-    native <methods>;
-    void log(long, int, byte[]);
-    void statistics(long, int, float, float, long , int, double, double);
-}
-
--keep class com.arthenica.mobileffmpeg.AbiDetect {
-    native <methods>;
-}
-```
-
-<br><br>
-
 ## Main Contributors
 
 <table>
