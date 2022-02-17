@@ -436,7 +436,7 @@ class VideoEditorController extends ChangeNotifier {
     final String filter =
         filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
     final String execute =
-        " -i $videoPath ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
+        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
     //------------------//
     //PROGRESS CALLBACKS//
