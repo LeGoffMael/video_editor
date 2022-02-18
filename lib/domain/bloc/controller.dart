@@ -566,7 +566,7 @@ class VideoEditorController extends ChangeNotifier {
     filters.removeWhere((item) => item.isEmpty);
     final String filter =
         filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
-    final String execute = "-i $_coverPath $filter -y $outputPath";
+    final String execute = "-i \'$_coverPath\' $filter -y $outputPath";
 
     //------------------//
     //PROGRESS CALLBACKS//
