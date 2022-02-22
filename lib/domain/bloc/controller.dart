@@ -407,7 +407,7 @@ class VideoEditorController extends ChangeNotifier {
     String? customInstruction,
     void Function(Statistics)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
-    isFiltersEnabled = true,
+    bool isFiltersEnabled = true,
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
