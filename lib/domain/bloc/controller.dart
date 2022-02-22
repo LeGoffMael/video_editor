@@ -407,6 +407,7 @@ class VideoEditorController extends ChangeNotifier {
     String? customInstruction,
     void Function(Statistics)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
+    isFiltersEnabled = true,
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
@@ -434,7 +435,7 @@ class VideoEditorController extends ChangeNotifier {
     final List<String> filters = [crop, scaleInstruction, rotation, gif];
     filters.removeWhere((item) => item.isEmpty);
     final String filter =
-        filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
+        filters.isNotEmpty && isFiltersEnabled ? "-filter:v " + filters.join(",") : "";
     final String execute =
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
