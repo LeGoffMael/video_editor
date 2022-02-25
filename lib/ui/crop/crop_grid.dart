@@ -20,12 +20,13 @@ enum _CropBoundaries {
 
 class CropGridViewer extends StatefulWidget {
   ///It is the viewer that allows you to crop the video
-  CropGridViewer(
-      {Key? key,
-      required this.controller,
-      this.showGrid = true,
-      this.horizontalMargin = 0.0})
-      : super(key: key);
+  CropGridViewer({
+    Key? key,
+    required this.controller,
+    this.showGrid = true,
+    this.horizontalMargin = 0.0,
+    this.enableGestureResizeCrop = true,
+  }) : super(key: key);
 
   /// If it is true, it shows the grid and allows cropping the video, if it is false
   /// does not show the grid and cannot be cropped
@@ -36,6 +37,9 @@ class CropGridViewer extends StatefulWidget {
 
   ///Space to put around the grid to compute when the video is rotated
   final double horizontalMargin;
+
+  ///enabled crop resize, default true
+  final bool enableGestureResizeCrop;
 
   @override
   _CropGridViewerState createState() => _CropGridViewerState();
@@ -138,25 +142,29 @@ class _CropGridViewerState extends State<CropGridViewer> {
       );
 
       //CORNERS
-      if (pos >= topLeft.topLeft && pos <= topLeft.bottomRight) {
-        _boundary = _CropBoundaries.topLeft;
-      } else if (pos >= topRight.topLeft && pos <= topRight.bottomRight) {
-        _boundary = _CropBoundaries.topRight;
-      } else if (pos >= bottomRight.topLeft && pos <= bottomRight.bottomRight) {
-        _boundary = _CropBoundaries.bottomRight;
-      } else if (pos >= bottomLeft.topLeft && pos <= bottomLeft.bottomRight) {
-        _boundary = _CropBoundaries.bottomLeft;
-      } else if (_controller.preferredCropAspectRatio == null) {
-        //CENTERS
-        if (pos >= topLeft.topRight && pos <= topRight.bottomLeft) {
-          _boundary = _CropBoundaries.topCenter;
-        } else if (pos >= bottomLeft.topRight &&
-            pos <= bottomRight.bottomLeft) {
-          _boundary = _CropBoundaries.bottomCenter;
-        } else if (pos >= topLeft.bottomLeft && pos <= bottomLeft.topRight) {
-          _boundary = _CropBoundaries.centerLeft;
-        } else if (pos >= topRight.bottomLeft && pos <= bottomRight.topRight) {
-          _boundary = _CropBoundaries.centerRight;
+      if (widget.enableGestureResizeCrop) {
+        if (pos >= topLeft.topLeft && pos <= topLeft.bottomRight) {
+          _boundary = _CropBoundaries.topLeft;
+        } else if (pos >= topRight.topLeft && pos <= topRight.bottomRight) {
+          _boundary = _CropBoundaries.topRight;
+        } else if (pos >= bottomRight.topLeft &&
+            pos <= bottomRight.bottomRight) {
+          _boundary = _CropBoundaries.bottomRight;
+        } else if (pos >= bottomLeft.topLeft && pos <= bottomLeft.bottomRight) {
+          _boundary = _CropBoundaries.bottomLeft;
+        } else if (_controller.preferredCropAspectRatio == null) {
+          //CENTERS
+          if (pos >= topLeft.topRight && pos <= topRight.bottomLeft) {
+            _boundary = _CropBoundaries.topCenter;
+          } else if (pos >= bottomLeft.topRight &&
+              pos <= bottomRight.bottomLeft) {
+            _boundary = _CropBoundaries.bottomCenter;
+          } else if (pos >= topLeft.bottomLeft && pos <= bottomLeft.topRight) {
+            _boundary = _CropBoundaries.centerLeft;
+          } else if (pos >= topRight.bottomLeft &&
+              pos <= bottomRight.topRight) {
+            _boundary = _CropBoundaries.centerRight;
+          }
         }
         //OTHERS
         else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
@@ -186,6 +194,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
           break;
         //CORNERS
         case _CropBoundaries.topLeft:
+          if (!widget.enableGestureResizeCrop) break;
+
           final Offset pos = _rect.value.topLeft + delta;
           _changeRect(
             top: _preferredCropAspectRatio == null ? pos.dy : pos.dy,
@@ -199,6 +209,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
           );
           break;
         case _CropBoundaries.topRight:
+          if (!widget.enableGestureResizeCrop) break;
+
           _changeRect(
             top: _preferredCropAspectRatio == null
                 ? _rect.value.topRight.dy + delta.dy
@@ -211,12 +223,16 @@ class _CropGridViewerState extends State<CropGridViewer> {
           );
           break;
         case _CropBoundaries.bottomRight:
+          if (!widget.enableGestureResizeCrop) break;
+
           _changeRect(
             width: _rect.value.width + delta.dx,
             height: _rect.value.height + delta.dy,
           );
           break;
         case _CropBoundaries.bottomLeft:
+          if (!widget.enableGestureResizeCrop) break;
+
           _changeRect(
             left: _rect.value.bottomLeft.dx + delta.dx,
             width: _rect.value.width - delta.dx,
@@ -273,9 +289,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
     height = height ?? _rect.value.height;
 
     if (_preferredCropAspectRatio != null) {
-      if (height > width) {
+      if (_preferredCropAspectRatio! >= 1) {
         height = width / _preferredCropAspectRatio!;
-      } else if (height < width) {
+      } else if (_preferredCropAspectRatio! < 1) {
         width = height / _preferredCropAspectRatio!;
       }
     }

@@ -97,7 +97,9 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     _controller = VideoEditorController.file(widget.file,
         maxDuration: Duration(seconds: 30))
-      ..initialize().then((_) => setState(() {}));
+      ..initialize().then((_) => setState(() {
+            _controller.preferredCropAspectRatio = 4 / 3;
+          }));
     super.initState();
   }
 
@@ -453,7 +455,10 @@ class CropScreen extends StatelessWidget {
               child: AnimatedInteractiveViewer(
                 maxScale: 2.4,
                 child: CropGridViewer(
-                    controller: controller, horizontalMargin: 60),
+                  controller: controller,
+                  horizontalMargin: 60,
+                  fixCrop: true,
+                ),
               ),
             ),
             SizedBox(height: 15),
@@ -471,7 +476,7 @@ class CropScreen extends StatelessWidget {
               ),
               buildSplashTap("16:9", 16 / 9, padding: Margin.horizontal(10)),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("4:5", 4 / 5, padding: Margin.horizontal(10)),
+              buildSplashTap("4:5", 3 / 2, padding: Margin.horizontal(10)),
               buildSplashTap("NO", null, padding: Margin.right(10)),
               Expanded(
                 child: SplashTap(
