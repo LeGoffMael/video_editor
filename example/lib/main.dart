@@ -97,9 +97,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     _controller = VideoEditorController.file(widget.file,
         maxDuration: Duration(seconds: 30))
-      ..initialize().then((_) => setState(() {
-            _controller.preferredCropAspectRatio = 4 / 3;
-          }));
+      ..initialize().then((_) => setState(() {}));
     super.initState();
   }
 
@@ -457,7 +455,7 @@ class CropScreen extends StatelessWidget {
                 child: CropGridViewer(
                   controller: controller,
                   horizontalMargin: 60,
-                  fixCrop: true,
+                  enableGestureResizeCrop: true,
                 ),
               ),
             ),
