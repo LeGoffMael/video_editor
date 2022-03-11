@@ -283,6 +283,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     final double right = left + width;
     final double bottom = top + height;
 
+    // TODO : sometimes cannot move the crop because considered as out of bound, but is actually in the middle
     if (height > _margin.dx && width > _margin.dx) {
       if (right > _layout.width) width = _rect.value.width;
 

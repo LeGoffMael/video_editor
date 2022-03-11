@@ -169,6 +169,8 @@ class VideoEditorController extends ChangeNotifier {
       _preferredCropAspectRatio = value;
       notifyListeners();
     } else if (value >= 0) {
+      // TODO : when switching from a preferred aspect ratio to another it keep reducing the crop size
+
       final length = cropStyle.boundariesLength * 4;
       final videoWidth = videoDimension.width;
       final videoHeight = videoDimension.height;
@@ -434,8 +436,9 @@ class VideoEditorController extends ChangeNotifier {
     //----------------//
     final List<String> filters = [crop, scaleInstruction, rotation, gif];
     filters.removeWhere((item) => item.isEmpty);
-    final String filter =
-        filters.isNotEmpty && isFiltersEnabled ? "-filter:v " + filters.join(",") : "";
+    final String filter = filters.isNotEmpty && isFiltersEnabled
+        ? "-filter:v " + filters.join(",")
+        : "";
     final String execute =
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
