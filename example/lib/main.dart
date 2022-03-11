@@ -43,7 +43,10 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
 
   void _pickVideo() async {
     final XFile? file = await _picker.pickVideo(source: ImageSource.gallery);
-    if (file != null) context.to(VideoEditor(file: File(file.path)));
+    if (file != null)
+      context.navigator.push(MaterialPageRoute<void>(
+          builder: (BuildContext context) =>
+              VideoEditor(file: File(file.path))));
   }
 
   @override
@@ -56,10 +59,12 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextDesigned(
+            Text(
               "Click on Pick Video to select video",
-              color: Colors.black,
-              size: 18.0,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18.0,
+              ),
             ),
             ElevatedButton(
               onPressed: _pickVideo,
@@ -109,12 +114,13 @@ class _VideoEditorState extends State<VideoEditor> {
     super.dispose();
   }
 
-  void _openCropScreen() => context.to(CropScreen(controller: _controller));
+  void _openCropScreen() => context.navigator.push(MaterialPageRoute<void>(
+      builder: (BuildContext context) => CropScreen(controller: _controller)));
 
   void _exportVideo() async {
     _isExporting.value = true;
     bool _firstStat = true;
-    //NOTE: To use [-crf 17] and [VideoExportPreset] you need ["min-gpl-lts"] package
+    //NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
     await _controller.exportVideo(
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
@@ -281,11 +287,12 @@ class _VideoEditorState extends State<VideoEditor> {
                                 backgroundColor: Colors.white,
                                 title: ValueListenableBuilder(
                                   valueListenable: _exportingProgress,
-                                  builder: (_, double value, __) =>
-                                      TextDesigned(
+                                  builder: (_, double value, __) => Text(
                                     "Exporting video ${(value * 100).ceil()}%",
-                                    color: Colors.black,
-                                    bold: true,
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -358,14 +365,14 @@ class _VideoEditorState extends State<VideoEditor> {
           return Padding(
             padding: Margin.horizontal(height / 4),
             child: Row(children: [
-              TextDesigned(formatter(Duration(seconds: pos.toInt()))),
+              Text(formatter(Duration(seconds: pos.toInt()))),
               Expanded(child: SizedBox()),
               OpacityTransition(
                 visible: _controller.isTrimming,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  TextDesigned(formatter(Duration(seconds: start.toInt()))),
+                  Text(formatter(Duration(seconds: start.toInt()))),
                   SizedBox(width: 10),
-                  TextDesigned(formatter(Duration(seconds: end.toInt()))),
+                  Text(formatter(Duration(seconds: end.toInt()))),
                 ]),
               )
             ]),
@@ -400,16 +407,14 @@ class _VideoEditorState extends State<VideoEditor> {
       alignment: Alignment.bottomCenter,
       child: SwipeTransition(
         visible: _exported,
-        direction: SwipeDirection.fromBottom,
+        axisAlignment: 1.0,
         child: Container(
           height: height,
           width: double.infinity,
           color: Colors.black.withOpacity(0.8),
           child: Center(
-            child: TextDesigned(
-              _exportText,
-              bold: true,
-            ),
+            child: Text(_exportText,
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
       ),
@@ -460,11 +465,11 @@ class CropScreen extends StatelessWidget {
             Row(children: [
               Expanded(
                 child: SplashTap(
-                  onTap: context.goBack,
+                  onTap: context.navigator.pop,
                   child: Center(
-                    child: TextDesigned(
+                    child: Text(
                       "CANCEL",
-                      bold: true,
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -483,10 +488,13 @@ class CropScreen extends StatelessWidget {
                     controller.minCrop = controller.cacheMinCrop;
                     controller.maxCrop = controller.cacheMaxCrop;
                     */
-                    context.goBack();
+                    context.navigator.pop();
                   },
                   child: Center(
-                    child: TextDesigned("OK", bold: true),
+                    child: Text(
+                      "OK",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
@@ -510,7 +518,10 @@ class CropScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.aspect_ratio, color: Colors.white),
-            TextDesigned(title, bold: true),
+            Text(
+              title,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
