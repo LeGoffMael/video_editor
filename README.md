@@ -36,21 +36,13 @@ import 'package:video_editor/video_editor.dart';
 
 ## **Screenshots** (The UI Design is fully customizable on the [example](https://pub.dev/packages/video_editor/example))
 
-| Crop Video                          | Rotate Video                          |
-| ----------------------------------- | ------------------------------------- |
-| ![](./assets/readme/crop_video.gif) | ![](./assets/readme/rotate_video.gif) |
+| Crop Video                          | Rotate Video                          | Video cover (selection, viewer)       |
+| ----------------------------------- | ------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/crop_video.gif) | ![](./assets/readme/rotate_video.gif) | ![](./assets/readme/cover_viewer.gif) |
 
-| Trim Video                          | Export Video                          |
-| ----------------------------------- | ------------------------------------- |
-| ![](./assets/readme/trim_video.gif) | ![](./assets/readme/export_video.gif) |
-
-| Trimmer if maxDuration < videoDuration  | Trim timeline                           | Trim icons customization                    |
-| --------------------------------------- |  -------------------------------------- |  ------------------------------------------ |
-| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/trim_timeline.gif)  | ![](./assets/readme/new_trimmer_icons.gif)  |
-
-| Video cover (selection, viewer)       | Export cover                          |
-| ------------------------------------- | ------------------------------------- |
-| ![](./assets/readme/cover_viewer.gif) | ![](./assets/readme/export_cover.gif) |
+| Trim video                              | Trimmer customization                       |
+| --------------------------------------- |  ------------------------------------------ |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/new_trimmer_icons.gif)  |
 
 ## Main Contributors
 
