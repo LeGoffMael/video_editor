@@ -1,3 +1,9 @@
+## [1.2.4]
+
+- Updated dependencies
+- Add `isFiltersEnabled` param to disable all changes at extraction [#76](https://github.com/seel-channel/video_editor/pull/76)
+- Fix an error at extraction if the destination path contains a space [#74](https://github.com/seel-channel/video_editor/pull/74)
+
 ## [1.2.3]
 
 - Update `ffmpeg_kit_flutter` to latest 4.5.1 [#65](https://github.com/seel-channel/video_editor/pull/65)
