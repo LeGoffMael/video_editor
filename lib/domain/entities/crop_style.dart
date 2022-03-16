@@ -15,7 +15,7 @@ class CropGridStyle {
             croppingBackground ?? Colors.black.withOpacity(0.48);
 
   /// The [croppingBackground] param specifies the color of the paint area outside the crop area when copping
-  /// default value is `Colors.black.withOpacity(0.48)`
+  /// The default value of this property is `Colors.black.withOpacity(0.48)`
   final Color croppingBackground;
 
   /// The [background] param specifies the color of the paint area outside the crop area when not copping
@@ -27,7 +27,7 @@ class CropGridStyle {
   /// The [gridLineColor] param specifies the color of the crop lines
   final Color gridLineColor;
 
-  /// The [gridSize] param specifies the amount of columns and rows in the crop view
+  /// The [gridSize] param specifies the quantity of columns and rows in the crop view
   final int gridSize;
 
   /// The [boundariesColor] param specifies the color of the crop area's corner

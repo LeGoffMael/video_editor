@@ -26,7 +26,8 @@ class TrimSlider extends StatefulWidget {
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
 
-  /// The [horizontalMargin] param specifies the horizontal space to set around the slider. It is important when the trim can be dragged (maxDuration < videoDuration)
+  /// The [horizontalMargin] param specifies the horizontal space to set around the slider.
+  /// It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`)
   final double horizontalMargin;
 
   /// The [child] param can be specify to display a widget below this one (e.g: [TrimTimeline])

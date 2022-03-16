@@ -30,10 +30,12 @@ class CropGridViewer extends StatefulWidget {
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
   final VideoEditorController controller;
 
-  /// The [showGrid] param specifies whether the crop action can be triggered and if the crop grid is shown, set this param to `false` to display the preview of the cropped video
+  /// The [showGrid] param specifies whether the crop action can be triggered and if the crop grid is shown.
+  /// Set this param to `false` to display the preview of the cropped video
   final bool showGrid;
 
-  /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly (i.e after a rotation)
+  /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view,
+  /// so in case of a change the new layout can be computed properly (i.e after a rotation)
   final double horizontalMargin;
 
   @override

@@ -14,7 +14,7 @@ class TrimTimeline extends StatefulWidget {
   final VideoEditorController controller;
 
   /// The [secondGap] param specifies time gap in second between every points of the timeline
-  /// By default 5 seconds
+  /// The default value of this property is 5 seconds
   final double secondGap;
 
   /// The [margin] param specifies the space surrounding the timeline

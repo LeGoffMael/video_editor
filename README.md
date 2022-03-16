@@ -66,7 +66,7 @@ This widget is used to enable the crop actions on top of the video, or only to p
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the trim slider view |
 | double height = 0.0 | The `height` param specifies the height of the generated thumbnails |
 | double quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
-| double horizontalMargin = 0.0 | The `horizontalMargin` param specifies the horizontal space to set around the slider. It is important when the trim can be dragged (maxDuration < videoDuration) |
+| double horizontalMargin = 0.0 | The `horizontalMargin` param specifies the horizontal space to set around the slider. It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`) |
 | Widget? child | The `child` param can be specify to display a widget below this one (e.g: TrimTimeline) |
 
 #### 2. TrimTimeline
@@ -107,7 +107,7 @@ You can create your own CropStyle class to customize the CropGridViewer apparean
 | Color background = Colors.black | The `background` param specifies the color of the paint area outside the crop area when not copping |
 | double gridLineWidth = 1 | The `gridLineWidth` param specifies the width of the crop lines |
 | Color gridLineColor = Colors.white | The `gridLineColor` param specifies the color of the crop lines |
-| int gridSize = 3 | The `gridSize` param specifies the amount of columns and rows in the crop view |
+| int gridSize = 3 | The `gridSize` param specifies the quantity of columns and rows in the crop view |
 | Color boundariesColor = Colors.white | The `boundariesColor` param specifies the color of the crop area's corner |
 | double boundariesLength = 20 | The `boundariesLength` param specifies the length of the crop area's corner |
 | double boundariesWidth = 5 | The `boundariesWidth` param specifies the width of the crop area's corner |
@@ -122,10 +122,10 @@ You can create your own TrimStyle class to customize the TrimSlider appareance.
 | Color positionLineColor = Colors.red | The `positionLineColor` param specifies the color of the line showing the video position |
 | double positionLineWidth = 2 | The `positionLineWidth` param specifies the width  of the line showing the video position |
 | Color lineColor = Colors.white | The `lineColor` param specifies the color of the borders around the trimmed area |
-| double lineWidth = 2 | The `lineWidth` param specifies the color of the borders around the trimmed area |
-| Color iconColor = Colors.black | The `iconColor` param specifies the color of the icons on the trimmed area' edges |
-| double circleSize = 8 | The `circleSize` param specifies the size of the circle behind the icons on the trimmed area' edges |
-| double iconSize = 25 | The `iconSize` param specifies the size of the icon on the trimmed area' edges |
+| double lineWidth = 2 | The `lineWidth` param specifies the width of the borders around the trimmed area |
+| Color iconColor = Colors.black | The `iconColor` param specifies the color of the icons on the trimmed area's edges |
+| double circleSize = 8 | The `circleSize` param specifies the size of the circle behind the icons on the trimmed area's edges |
+| double iconSize = 25 | The `iconSize` param specifies the size of the icon on the trimmed area's edges |
 | IconData? leftIcon = Icons.arrow_left | The `leftIcon` param specifies the icon to show on the left edge of the trimmed area |
 | IconData? rightIcon = Icons.arrow_right | The `rightIcon` param specifies the icon to show on the right edge of the trimmed area |
 
