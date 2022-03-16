@@ -120,7 +120,7 @@ Display the selected cover with rotation and crop parameters.
 ### Style
 
 <details>
-  <summary>Click to style documentation</summary>
+  <summary>Click to expand style documentation</summary>
 
 #### 1. CropStyle
 
