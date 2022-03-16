@@ -120,7 +120,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportVideo() async {
     _isExporting.value = true;
     bool _firstStat = true;
-    //NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
+    // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
     await _controller.exportVideo(
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
