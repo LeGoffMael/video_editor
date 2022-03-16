@@ -44,7 +44,14 @@ import 'package:video_editor/video_editor.dart';
 ### VideoEditorController
 
 | Function                         | Description                       |
-| -------------------------------- |  -------------------------------- |
+| -------------------------------- | --------------------------------- |
+| initialize()                     | Init the `controller` parameters, the video, the trim and the cover |
+| rotate90Degrees(RotateDirection) | Rotate the video by 90 degrees in the direction provided            |
+| preferredCropAspectRatio         | Update the aspect ratio of the crop area                            |
+| updateCrop                       | Update the controller crop min and max values                       |
+| getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
+| exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
+| extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  |
 
 ###  Crop
 #### 1. CropGridViewer
@@ -61,6 +68,8 @@ This widget is used to enable the crop actions on top of the video, or only to p
 
 #### 1. TrimSlider
 
+Display the trimmer containing video thumbnails with rotation and crop parameters.
+
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the trim slider view |
@@ -71,14 +80,18 @@ This widget is used to enable the crop actions on top of the video, or only to p
 
 #### 2. TrimTimeline
 
+Display the video timeline.
+
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so depending on the `controller.maxDuration`, the generated timeline will be different |
 | double secondGap = 5 | The `secondGap` param specifies time gap in second between every points of the timeline |
 | EdgeInsets margin = EdgeInsets.zero | The `margin` param specifies the space surrounding the timeline |
 
-#### Cover
+### Cover
 #### 1. CoverSelection
+
+Display a couple of generated covers with rotation and crop parameters to updated the selected cover.
 
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
@@ -89,6 +102,8 @@ This widget is used to enable the crop actions on top of the video, or only to p
 | int quantity = 5 | The `quantity` param specifies the quantity of thumbnails to generate |
 
 #### 2. CoverViewer
+
+Display the selected cover with rotation and crop parameters.
 
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
@@ -131,7 +146,7 @@ You can create your own TrimStyle class to customize the TrimSlider appareance.
 
 #### 3. CoverStyle
 
-You can create your own TrimStyle class to customize the CoverSelection appareance.
+You can create your own CoverStyle class to customize the CoverSelection appareance.
 
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |

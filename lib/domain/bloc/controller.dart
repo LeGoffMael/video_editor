@@ -394,7 +394,7 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO ROTATE//
   //------------//
 
-  /// Rotate the video by 90 degrees in the [direction] providede
+  /// Rotate the video by 90 degrees in the [direction] provided
   void rotate90Degrees([RotateDirection direction = RotateDirection.right]) {
     switch (direction) {
       case RotateDirection.left:
