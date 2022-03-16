@@ -53,8 +53,13 @@ import 'package:video_editor/video_editor.dart';
 | exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
 | extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  |
 
-###  Crop
-#### 1. CropGridViewer
+### Widgets
+
+<details>
+  <summary>Click to expand widgets documentation</summary>
+
+####  Crop
+##### 1. CropGridViewer
 
 This widget is used to enable the crop actions on top of the video, or only to preview the cropped result.
 
@@ -64,9 +69,9 @@ This widget is used to enable the crop actions on top of the video, or only to p
 | bool showGrid = true | The `showGrid` param specifies whether the crop action can be triggered and if the crop grid is shown, set this param to `false` to display the preview of the cropped video |
 | double horizontalMargin = 0.0 | The `horizontalMargin` param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly (i.e after a rotation) |
 
-### Trimmer
+#### Trimmer
 
-#### 1. TrimSlider
+##### 1. TrimSlider
 
 Display the trimmer containing video thumbnails with rotation and crop parameters.
 
@@ -78,7 +83,7 @@ Display the trimmer containing video thumbnails with rotation and crop parameter
 | double horizontalMargin = 0.0 | The `horizontalMargin` param specifies the horizontal space to set around the slider. It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`) |
 | Widget? child | The `child` param can be specify to display a widget below this one (e.g: TrimTimeline) |
 
-#### 2. TrimTimeline
+##### 2. TrimTimeline
 
 Display the video timeline.
 
@@ -88,8 +93,8 @@ Display the video timeline.
 | double secondGap = 5 | The `secondGap` param specifies time gap in second between every points of the timeline |
 | EdgeInsets margin = EdgeInsets.zero | The `margin` param specifies the space surrounding the timeline |
 
-### Cover
-#### 1. CoverSelection
+#### Cover
+##### 1. CoverSelection
 
 Display a couple of generated covers with rotation and crop parameters to updated the selected cover.
 
@@ -101,7 +106,7 @@ Display a couple of generated covers with rotation and crop parameters to update
 | double horizontalMargin = 0.0 | The `horizontalMargin` param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly. |
 | int quantity = 5 | The `quantity` param specifies the quantity of thumbnails to generate |
 
-#### 2. CoverViewer
+##### 2. CoverViewer
 
 Display the selected cover with rotation and crop parameters.
 
@@ -110,7 +115,12 @@ Display the selected cover with rotation and crop parameters.
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate the crop parameters in the cover view |
 | String noCoverText = 'No selection' | The `noCoverText` param specifies the text to display when selectedCover is `null` |
 
+</details>
+
 ### Style
+
+<details>
+  <summary>Click to style documentation</summary>
 
 #### 1. CropStyle
 
@@ -152,6 +162,9 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 | -------------------------------- | --------------------------------- |
 | Color selectedBorderColor = Colors.white | The `selectedBorderColor` param specifies the color of the border around the selected cover thumbnail |
 | double selectedBorderWidth = 2 | The `selectedBorderWidth` param specifies the width of the border around the selected cover thumbnail |
+
+</details>
+
 ## Main contributors
 
 <table>
