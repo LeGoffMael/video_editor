@@ -165,7 +165,7 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 
 </details>
 
-## Main contributors
+## ✨ Main contributors
 
 <table>
   <tr>
