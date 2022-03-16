@@ -2,21 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 
 class TrimTimeline extends StatefulWidget {
-  ///Slider that trim video length.
-  TrimTimeline(
-      {Key? key,
-      required this.controller,
-      this.secondGap,
-      this.margin = EdgeInsets.zero})
-      : super(key: key);
+  /// Show the timeline corresponding to the [TrimSlider]
+  TrimTimeline({
+    Key? key,
+    required this.controller,
+    this.secondGap = 5,
+    this.margin = EdgeInsets.zero,
+  }) : super(key: key);
 
-  ///Essential argument for the functioning of the Widget
+  /// The [controller] param is mandatory so depending on the [controller.maxDuration], the generated timeline will be different
   final VideoEditorController controller;
 
-  ///The time in seconds between every point of the timeline (5 sec by default)
-  final double? secondGap;
+  /// The [secondGap] param specifies time gap in second between every points of the timeline
+  /// By default 5 seconds
+  final double secondGap;
 
-  /// Empty space to surround the widget
+  /// The [margin] param specifies the space surrounding the timeline
   final EdgeInsets margin;
 
   @override
@@ -28,12 +29,11 @@ class _TrimTimelineState extends State<TrimTimeline> {
 
   @override
   void initState() {
-    final double _secondGap = widget.secondGap ?? 5;
     final Duration _duration =
         widget.controller.maxDuration < widget.controller.videoDuration
             ? widget.controller.maxDuration
             : widget.controller.videoDuration;
-    _timeGap = (_duration.inSeconds / (_secondGap + 1)).ceil();
+    _timeGap = (_duration.inSeconds / (widget.secondGap + 1)).ceil();
     super.initState();
   }
 

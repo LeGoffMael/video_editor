@@ -7,8 +7,10 @@ class CoverSelectionStyle {
     this.selectedBorderWidth = 2,
   }) : this.selectedBorderColor = selectedBorderColor ?? Colors.white;
 
-  ///The border color displayed around the selected frame. Default `Colors.white`
+  /// The [selectedBorderColor] param specifies the color of the border around the selected cover thumbnail
+  /// Default `Colors.white`
   final Color selectedBorderColor;
 
+  /// The [selectedBorderWidth] param specifies the width of the border around the selected cover thumbnail
   final double selectedBorderWidth;
 }

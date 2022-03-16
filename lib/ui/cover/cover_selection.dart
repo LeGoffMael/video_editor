@@ -6,26 +6,26 @@ import 'package:video_editor/ui/transform.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 
 class CoverSelection extends StatefulWidget {
-  ///Slider that trim video length.
+  /// Slider that allow to select a generated cover
   CoverSelection({
     Key? key,
     required this.controller,
     this.height = 60,
     this.quality = 10,
-    this.nbSelection = 5,
+    this.quantity = 5,
   }) : super(key: key);
 
-  ///Essential argument for the functioning of the Widget
+  /// The [controller] param is mandatory so every change in the controller settings will propagate in the cover selection view
   final VideoEditorController controller;
 
-  ///It is the height of the thumbnails
+  /// The [height] param specifies the height of the generated thumbnails
   final double height;
 
-  ///Number of cover selectable
-  final int nbSelection;
-
-  ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
+  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail))
   final int quality;
+
+  /// The [quantity] param specifies the quantity of thumbnails to generate
+  final int quantity;
 
   @override
   _CoverSelectionState createState() => _CoverSelectionState();
@@ -99,9 +99,9 @@ class _CoverSelectionState extends State<CoverSelection>
         ? (widget.controller.endTrim - widget.controller.startTrim)
             .inMilliseconds
         : widget.controller.videoDuration.inMilliseconds;
-    final double eachPart = duration / widget.nbSelection;
+    final double eachPart = duration / widget.quantity;
     List<CoverData> _byteList = [];
-    for (int i = 0; i < widget.nbSelection; i++) {
+    for (int i = 0; i < widget.quantity; i++) {
       CoverData _bytes = await widget.controller.generateCoverThumbnail(
           timeMs: (widget.controller.isTrimmmed
                   ? (eachPart * i) + widget.controller.startTrim.inMilliseconds

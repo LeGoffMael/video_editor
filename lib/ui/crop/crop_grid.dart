@@ -19,22 +19,21 @@ enum _CropBoundaries {
 }
 
 class CropGridViewer extends StatefulWidget {
-  ///It is the viewer that allows you to crop the video
-  CropGridViewer(
-      {Key? key,
-      required this.controller,
-      this.showGrid = true,
-      this.horizontalMargin = 0.0})
-      : super(key: key);
+  /// It is the viewer that allows you to crop the video
+  CropGridViewer({
+    Key? key,
+    required this.controller,
+    this.showGrid = true,
+    this.horizontalMargin = 0.0,
+  }) : super(key: key);
 
-  /// If it is true, it shows the grid and allows cropping the video, if it is false
-  /// does not show the grid and cannot be cropped
-  final bool showGrid;
-
-  ///Essential argument for the functioning of the Widget
+  /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
   final VideoEditorController controller;
 
-  ///Space to put around the grid to compute when the video is rotated
+  /// The [showGrid] param specifies whether the crop action can be triggered and if the crop grid is shown, set this param to `false` to display the preview of the cropped video
+  final bool showGrid;
+
+  /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly (i.e after a rotation)
   final double horizontalMargin;
 
   @override

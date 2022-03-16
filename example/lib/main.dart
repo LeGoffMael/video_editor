@@ -398,7 +398,7 @@ class _VideoEditorState extends State<VideoEditor> {
         child: CoverSelection(
           controller: _controller,
           height: height,
-          nbSelection: 8,
+          quantity: 8,
         ));
   }
 

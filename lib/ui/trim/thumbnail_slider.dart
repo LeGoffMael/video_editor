@@ -14,10 +14,10 @@ class ThumbnailSlider extends StatefulWidget {
     this.quality = 10,
   });
 
-  ///MAX QUALITY IS 100 - MIN QUALITY IS 0
+  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
 
-  ///THUMBNAIL HEIGHT
+  /// The [height] param specifies the height of the generated thumbnails
   final double height;
 
   final VideoEditorController controller;
