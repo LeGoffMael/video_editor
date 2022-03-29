@@ -1,3 +1,8 @@
+## [1.2.5]
+
+- Upgraded `video_thumbnail` dependency
+- Fix dependency conflict with `path 1.8.1` [#79](https://github.com/seel-channel/video_editor/issues/79)
+
 ## [1.2.4]
 
 - Updated dependencies
