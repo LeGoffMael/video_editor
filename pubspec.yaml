@@ -4,8 +4,8 @@ description: A video editor that allows to trim, crop, rotate and scale video wi
 homepage: https://github.com/seel-channel/video_editor
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
-  flutter: '>=1.17.0'
+  sdk: ">=2.12.0 <3.0.0"
+  flutter: ">=1.17.0"
 
 dependencies:
   flutter:
