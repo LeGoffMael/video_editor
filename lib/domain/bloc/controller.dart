@@ -449,9 +449,12 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
   ///
+  /// The [customInstruction] param can be set to add custom commands to the FFmpeg eexecution
+  /// (i.e. `-an` to mute the generated video), some commands require the GPL package
+  ///
   /// The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
   ///
-  /// The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
+  /// The [preset] is the `compress quality` **(Only available on GPL package)**.
   /// A slower preset will provide better compression (compression is quality per filesize).
   /// [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
   ///
