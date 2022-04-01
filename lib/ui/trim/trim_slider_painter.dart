@@ -13,7 +13,7 @@ class TrimSliderPainter extends CustomPainter {
     final Paint background = Paint()..color = style.background;
     final progress = Paint()
       ..color = style.positionLineColor
-      ..strokeWidth = style.positionlineWidth;
+      ..strokeWidth = style.positionLineWidth;
     final line = Paint()
       ..color = style.lineColor
       ..strokeWidth = style.lineWidth
