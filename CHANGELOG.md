@@ -1,3 +1,12 @@
+## [1.3.0]
+
+- [BREAKING CHANGE]
+    - In TrimTimeline, `secondGap` param is no more nullable
+    - In TrimSliderStyle, positionlineWidth param is renamed `positionLineWidth`
+    - In CoverSelection, nbSelection param is renamed `quantity`
+- Improve package documentation [#84](https://github.com/seel-channel/video_editor/issues/84)
+- Switch from LTS FFmpeg package to Main release [#81](https://github.com/seel-channel/video_editor/issues/81)
+
 ## [1.2.5]
 
 - Upgraded `video_thumbnail` dependency
