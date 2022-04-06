@@ -69,10 +69,10 @@ class VideoEditorController extends ChangeNotifier {
     CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
   })  : _video = VideoPlayerController.file(file),
-        this._maxDuration = maxDuration ?? Duration.zero,
-        this.cropStyle = cropStyle ?? CropGridStyle(),
-        this.coverStyle = coverStyle ?? CoverSelectionStyle(),
-        this.trimStyle = trimStyle ?? TrimSliderStyle();
+        _maxDuration = maxDuration ?? Duration.zero,
+        cropStyle = cropStyle ?? CropGridStyle(),
+        coverStyle = coverStyle ?? CoverSelectionStyle(),
+        trimStyle = trimStyle ?? TrimSliderStyle();
 
   int _rotation = 0;
   bool _isTrimming = false;
@@ -92,13 +92,14 @@ class VideoEditorController extends ChangeNotifier {
 
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
-  VideoPlayerController _video;
+  final VideoPlayerController _video;
 
   /// The max duration to trim the [file] video
   Duration _maxDuration;
 
   // Selected cover value
-  ValueNotifier<CoverData?> _selectedCover = ValueNotifier<CoverData?>(null);
+  final ValueNotifier<CoverData?> _selectedCover =
+      ValueNotifier<CoverData?>(null);
 
   /// This is the width of the [file] video
   double _videoWidth = 0;
@@ -236,11 +237,12 @@ class VideoEditorController extends ChangeNotifier {
     _maxDuration = _maxDuration == Duration.zero ? videoDuration : _maxDuration;
 
     // Trim straight away when maxDuration is lower than video duration
-    if (_maxDuration < videoDuration)
+    if (_maxDuration < videoDuration) {
       updateTrim(
           0.0, _maxDuration.inMilliseconds / videoDuration.inMilliseconds);
-    else
+    } else {
       _updateTrimRange();
+    }
 
     generateDefaultCoverThumnail();
 
@@ -252,15 +254,16 @@ class VideoEditorController extends ChangeNotifier {
     if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
     final executions = await FFmpegKit.listSessions();
-    if (executions.length > 0) await FFmpegKit.cancel();
+    if (executions.isNotEmpty) await FFmpegKit.cancel();
     _video.dispose();
     super.dispose();
   }
 
   void _videoListener() {
     final position = videoPosition;
-    if (position < _trimStart || position >= _trimEnd)
+    if (position < _trimStart || position >= _trimEnd) {
       _video.seekTo(_trimStart);
+    }
   }
 
   //----------//
@@ -309,10 +312,11 @@ class VideoEditorController extends ChangeNotifier {
     _trimStart = duration * minTrim;
     _trimEnd = duration * maxTrim;
 
-    if (_trimStart != Duration.zero || _trimEnd != videoDuration)
+    if (_trimStart != Duration.zero || _trimEnd != videoDuration) {
       _isTrimmed = true;
-    else
+    } else {
       _isTrimmed = false;
+    }
 
     _checkUpdateDefaultCover();
 
@@ -358,8 +362,9 @@ class VideoEditorController extends ChangeNotifier {
   /// If [isTrimming] is `false` or  [_selectedCover] is `null`, update _selectedCover
   /// Update only milliseconds time for performance reason
   void _checkUpdateDefaultCover() {
-    if (!_isTrimming || _selectedCover.value == null)
+    if (!_isTrimming || _selectedCover.value == null) {
       updateSelectedCover(CoverData(timeMs: startTrim.inMilliseconds));
+    }
   }
 
   /// Generate cover at [startTrim] time in milliseconds
@@ -381,7 +386,7 @@ class VideoEditorController extends ChangeNotifier {
       quality: quality,
     );
 
-    return new CoverData(thumbData: _thumbData, timeMs: timeMs);
+    return CoverData(thumbData: _thumbData, timeMs: timeMs);
   }
 
   /// Get the [selectedCover] notifier
@@ -415,8 +420,10 @@ class VideoEditorController extends ChangeNotifier {
   /// The result is in the format `transpose=2` (repeated for every 90 degrees rotations)
   String _getRotation() {
     List<String> transpose = [];
-    for (int i = 0; i < _rotation / 90; i++) transpose.add("transpose=2");
-    return transpose.length > 0 ? "${transpose.join(',')}" : "";
+    for (int i = 0; i < _rotation / 90; i++) {
+      transpose.add("transpose=2");
+    }
+    return transpose.isNotEmpty ? transpose.join(',') : "";
   }
 
   //--------------//
@@ -472,7 +479,7 @@ class VideoEditorController extends ChangeNotifier {
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
-    if (name == null) name = path.basenameWithoutExtension(videoPath);
+    name ??= path.basenameWithoutExtension(videoPath);
     final int epoch = DateTime.now().millisecondsSinceEpoch;
     final String outputPath = "$tempPath/${name}_$epoch.$format";
 
@@ -495,6 +502,7 @@ class VideoEditorController extends ChangeNotifier {
         ? "-filter:v " + filters.join(",")
         : "";
     final String execute =
+        // ignore: unnecessary_string_escapes
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
     // PROGRESS CALLBACKS
@@ -506,13 +514,13 @@ class VideoEditorController extends ChangeNotifier {
         final code = await session.getReturnCode();
         final failStackTrace = await session.getFailStackTrace();
 
-        print(
+        debugPrint(
             "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
 
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },
       null,
-      onProgress != null ? onProgress : null,
+      onProgress,
     );
   }
 
@@ -608,10 +616,10 @@ class VideoEditorController extends ChangeNotifier {
       quality: quality,
     );
     if (_coverPath == null) {
-      print("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
-      return null;
+      debugPrint("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
+      return;
     }
-    if (name == null) name = path.basenameWithoutExtension(file.path);
+    name ??= path.basenameWithoutExtension(file.path);
     final int epoch = DateTime.now().millisecondsSinceEpoch;
     final String outputPath = "$tempPath/${name}_$epoch.$format";
 
@@ -629,6 +637,7 @@ class VideoEditorController extends ChangeNotifier {
     final String filter = filters.isNotEmpty && isFiltersEnabled
         ? "-filter:v " + filters.join(",")
         : "";
+    // ignore: unnecessary_string_escapes
     final String execute = "-i \'$_coverPath\' $filter -y $outputPath";
 
     // PROGRESS CALLBACKS
@@ -640,13 +649,13 @@ class VideoEditorController extends ChangeNotifier {
         final code = await session.getReturnCode();
         final failStackTrace = await session.getFailStackTrace();
 
-        print(
+        debugPrint(
             "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
 
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },
       null,
-      onProgress != null ? onProgress : null,
+      onProgress,
     );
   }
 }

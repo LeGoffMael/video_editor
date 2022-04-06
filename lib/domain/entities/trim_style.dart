@@ -13,7 +13,7 @@ class TrimSliderStyle {
     this.iconSize = 25,
     this.leftIcon = Icons.arrow_left,
     this.rightIcon = Icons.arrow_right,
-  }) : this.background = background ?? Colors.black.withOpacity(0.6);
+  }) : background = background ?? Colors.black.withOpacity(0.6);
 
   /// The [background] param specifies the color of the paint area outside the trimmed area
   /// The default value of this property `Colors.black.withOpacity(0.6)

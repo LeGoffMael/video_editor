@@ -5,7 +5,7 @@ class CoverSelectionStyle {
   CoverSelectionStyle({
     Color? selectedBorderColor,
     this.selectedBorderWidth = 2,
-  }) : this.selectedBorderColor = selectedBorderColor ?? Colors.white;
+  }) : selectedBorderColor = selectedBorderColor ?? Colors.white;
 
   /// The [selectedBorderColor] param specifies the color of the border around the selected cover thumbnail
   /// The default value of this property is `Colors.white`

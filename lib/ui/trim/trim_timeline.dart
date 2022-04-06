@@ -3,7 +3,7 @@ import 'package:video_editor/domain/bloc/controller.dart';
 
 class TrimTimeline extends StatefulWidget {
   /// Show the timeline corresponding to the [TrimSlider]
-  TrimTimeline({
+  const TrimTimeline({
     Key? key,
     required this.controller,
     this.secondGap = 5,
