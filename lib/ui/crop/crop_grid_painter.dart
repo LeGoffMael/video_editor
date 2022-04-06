@@ -26,27 +26,40 @@ class CropGridPainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = showGrid ? style!.croppingBackground : style!.background;
 
+    double _width = size.width;
+    double _height = size.height;
+    double _bottom = rect.bottom;
+    double _top = rect.top;
+    double _left = rect.left;
+    double _right = rect.right;
+
+    // when scaling, the positions might not be accurates
+    // so add an extra margin to avoid spaces between overlay
+    final _margin = showGrid ? 0.0 : 1.0;
+
     //TOP
     canvas.drawRect(
-      Rect.fromLTWH(0.0, -5.0, size.width, rect.top + 5.0),
+      Rect.fromLTWH(-_margin, -_margin, _width + _margin * 2, _top),
       paint,
     );
     //BOTTOM
     canvas.drawRect(
       Rect.fromPoints(
-        Offset(0.0, rect.bottom),
-        Offset(size.width, size.height + 5.0),
+        Offset(-_margin, _bottom),
+        Offset(_width + _margin, _height + _margin),
       ),
       paint,
     );
     //LEFT
     canvas.drawRect(
-      Rect.fromPoints(Offset(-5.0, rect.topLeft.dy), rect.bottomLeft),
+      Rect.fromPoints(Offset(-_margin, _top - _margin * 2),
+          Offset(_left, _bottom + _margin)),
       paint,
     );
     //RIGHT
     canvas.drawRect(
-      Rect.fromPoints(rect.topRight, Offset(size.width + 5.0, rect.bottom)),
+      Rect.fromPoints(Offset(_right, _top - _margin * 2),
+          Offset(_width + _margin * 2, _bottom + _margin)),
       paint,
     );
   }
