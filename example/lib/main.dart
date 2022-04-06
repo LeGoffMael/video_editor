@@ -130,21 +130,13 @@ class _VideoEditorState extends State<VideoEditor> {
               CropScreen(controller: _controller)));
 
   void _exportVideo() async {
+    _exportingProgress.value = 0;
     _isExporting.value = true;
-    bool _firstStat = true;
     // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
     await _controller.exportVideo(
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
-      onProgress: (statics) {
-        // First statistics is always wrong so if first one skip it
-        if (_firstStat) {
-          _firstStat = false;
-        } else {
-          _exportingProgress.value = statics.getTime() /
-              _controller.video.value.duration.inMilliseconds;
-        }
-      },
+      onProgress: (stats, value) => _exportingProgress.value = value,
       onCompleted: (file) {
         _isExporting.value = false;
         if (!mounted) return;

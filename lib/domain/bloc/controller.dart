@@ -459,7 +459,9 @@ class VideoEditorController extends ChangeNotifier {
   /// The [customInstruction] param can be set to add custom commands to the FFmpeg eexecution
   /// (i.e. `-an` to mute the generated video), some commands require the GPL package
   ///
-  /// The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
+  /// The [onProgress] is called while the video is exporting.
+  /// This argument is usually used to update the export progress percentage.
+  /// This function return [Statistics] from FFmpeg session and the [double] progress value between 0.0 and 1.0.
   ///
   /// The [preset] is the `compress quality` **(Only available on GPL package)**.
   /// A slower preset will provide better compression (compression is quality per filesize).
@@ -473,7 +475,7 @@ class VideoEditorController extends ChangeNotifier {
     String format = "mp4",
     double scale = 1.0,
     String? customInstruction,
-    void Function(Statistics)? onProgress,
+    void Function(Statistics, double)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
     bool isFiltersEnabled = true,
   }) async {
@@ -520,7 +522,14 @@ class VideoEditorController extends ChangeNotifier {
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },
       null,
-      onProgress,
+      onProgress != null
+          ? (stats) {
+              // Progress value of encoded video
+              double progressValue =
+                  stats.getTime() / (_trimEnd - _trimStart).inMilliseconds;
+              onProgress(stats, progressValue.clamp(0.0, 1.0));
+            }
+          : null,
     );
   }
 
@@ -598,6 +607,10 @@ class VideoEditorController extends ChangeNotifier {
   /// The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
   ///
   /// The [quality] of the exported image (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
+  ///
+  /// The [onProgress] is called while the video is exporting.
+  /// This argument is usually used to update the export progress percentage.
+  /// This function return [Statistics] from FFmpeg session.
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> extractCover({
