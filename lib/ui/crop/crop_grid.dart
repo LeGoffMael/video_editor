@@ -86,24 +86,80 @@ class _CropGridViewerState extends State<CropGridViewer> {
     super.dispose();
   }
 
+  /// Update crop [Rect] after change in [_controller] such as change of aspect ratio
   void _updateRect() {
     _transform.value = TransformData.fromController(_controller);
-    if (_preferredCropAspectRatio == null ||
-        _controller.preferredCropAspectRatio != _preferredCropAspectRatio) {
-      _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-      _calculatePreferedCrop();
-    } else {
-      _onPanEnd(force: true);
-    }
+    _calculatePreferedCrop();
   }
 
+  /// Compute new [Rect] crop area depending of [_controller] data and layout size
   void _calculatePreferedCrop() {
-    setState(() {
-      _rect.value = _calculateCropRect(
-        _controller.cacheMinCrop,
-        _controller.cacheMaxCrop,
+    final _oldRatio = _controller.preferredCropAspectRatio;
+    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
+
+    // set cached crop values to adjust it later
+    _rect.value = _calculateCropRect(
+      _controller.cacheMinCrop,
+      _controller.cacheMaxCrop,
+    );
+    final double _rectHeight = _rect.value.height;
+    final double _rectWidth = _rect.value.width;
+    Rect _newCrop = _rect.value;
+
+    if (_preferredCropAspectRatio != null) {
+      // if current crop ratio is bigger than new aspect ratio
+      // or if previous ratio smaller than new aspect ratio (so when switching of aspect ratio the crop area is not always getting smaller)
+      // resize on width
+      if (_rectWidth / _rectHeight > _preferredCropAspectRatio! &&
+          (_oldRatio != null && _oldRatio < _preferredCropAspectRatio!)) {
+        final w = _rectHeight * _preferredCropAspectRatio!;
+        _newCrop = Rect.fromLTWH(_rect.value.center.dx - w / 2, _rect.value.top,
+            w, _rect.value.height);
+      } else {
+        // otherwise, resize on height
+        final h = _rectWidth / _preferredCropAspectRatio!;
+        _newCrop = Rect.fromLTWH(_rect.value.left,
+            _rect.value.center.dy - h / 2, _rect.value.width, h);
+      }
+    }
+
+    // if new crop is bigger than available space, block to maximum size and avoid out of bounds
+    if (_newCrop.width > _layout.width) {
+      final _h = _layout.width /
+          (_preferredCropAspectRatio ?? (_rectWidth / _rectHeight));
+      _newCrop = Rect.fromLTWH(
+        0.0,
+        _newCrop.top.clamp(0, _layout.height - _h),
+        _layout.width,
+        _h,
       );
-      _changeRect();
+    } else if (_newCrop.height > _layout.height) {
+      final _w = _layout.height /
+          (_preferredCropAspectRatio ?? (_rectWidth / _rectHeight));
+      _newCrop = Rect.fromLTWH(
+        _newCrop.left.clamp(0, _layout.width - _w),
+        0.0,
+        _w,
+        _layout.height,
+      );
+    } else {
+      // if new crop is out of bounds, translate inside layout
+      if (_newCrop.bottom > _layout.height) {
+        _newCrop = _newCrop.translate(0, _layout.height - _newCrop.bottom);
+      }
+      if (_newCrop.top < 0.0) {
+        _newCrop = _newCrop.translate(0, _newCrop.top.abs());
+      }
+      if (_newCrop.left < 0.0) {
+        _newCrop = _newCrop.translate(_newCrop.left.abs(), 0);
+      }
+      if (_newCrop.right > _layout.width) {
+        _newCrop = _newCrop.translate(_layout.width - _newCrop.right, 0);
+      }
+    }
+
+    setState(() {
+      _rect.value = _newCrop;
       _onPanEnd(force: true);
     });
   }
@@ -122,6 +178,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     final Offset max = _rect.value.bottomRight;
     final Offset min = _rect.value.topLeft;
 
+    // Use margins to increase grabbable areas
     final List<Offset> minMargin = [min - _margin, min + _margin];
     final List<Offset> maxMargin = [max - _margin, max + _margin];
 
@@ -157,17 +214,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _boundary = _CropBoundaries.centerLeft;
         } else if (pos >= topRight.bottomLeft && pos <= bottomRight.topRight) {
           _boundary = _CropBoundaries.centerRight;
-        }
-        //OTHERS
-        else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
-          _boundary = _CropBoundaries.inside;
         } else {
-          _boundary = _CropBoundaries.none;
+          //OTHERS
+          _boundary = _CropBoundaries.inside;
         }
-      } else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
-        _boundary = _CropBoundaries.inside;
       } else {
-        _boundary = _CropBoundaries.none;
+        _boundary = _CropBoundaries.inside;
       }
     } else {
       _boundary = _CropBoundaries.none;
@@ -182,65 +234,41 @@ class _CropGridViewerState extends State<CropGridViewer> {
       switch (_boundary) {
         case _CropBoundaries.inside:
           final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(left: pos.dx, top: pos.dy);
+          _rect.value = Rect.fromLTWH(
+              pos.dx.clamp(0, _layout.width - _rect.value.width),
+              pos.dy.clamp(0, _layout.height - _rect.value.height),
+              _rect.value.width,
+              _rect.value.height);
           break;
         //CORNERS
         case _CropBoundaries.topLeft:
           final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(
-            top: _preferredCropAspectRatio == null ? pos.dy : pos.dy,
-            left: _preferredCropAspectRatio == null
-                ? pos.dx
-                : pos.dx / _preferredCropAspectRatio!,
-            width: _rect.value.width - delta.dx,
-            height: _preferredCropAspectRatio == null
-                ? _rect.value.height - delta.dy
-                : null,
-          );
+          _changeRect(left: pos.dx, top: pos.dy);
           break;
         case _CropBoundaries.topRight:
-          _changeRect(
-            top: _preferredCropAspectRatio == null
-                ? _rect.value.topRight.dy + delta.dy
-                : (_rect.value.topRight.dy +
-                    (delta.dy * _preferredCropAspectRatio!)),
-            width: _rect.value.width + delta.dx,
-            height: _preferredCropAspectRatio == null
-                ? _rect.value.height - delta.dy
-                : null,
-          );
+          final Offset pos = _rect.value.topRight + delta;
+          _changeRect(right: pos.dx, top: pos.dy);
           break;
         case _CropBoundaries.bottomRight:
-          _changeRect(
-            width: _rect.value.width + delta.dx,
-            height: _rect.value.height + delta.dy,
-          );
+          final Offset pos = _rect.value.bottomRight + delta;
+          _changeRect(right: pos.dx, bottom: pos.dy);
           break;
         case _CropBoundaries.bottomLeft:
-          _changeRect(
-            left: _rect.value.bottomLeft.dx + delta.dx,
-            width: _rect.value.width - delta.dx,
-            height: _rect.value.height + delta.dy,
-          );
+          final Offset pos = _rect.value.bottomLeft + delta;
+          _changeRect(left: pos.dx, bottom: pos.dy);
           break;
         //CENTERS
         case _CropBoundaries.topCenter:
-          _changeRect(
-            top: _rect.value.top + delta.dy,
-            height: _rect.value.height - delta.dy,
-          );
+          _changeRect(top: _rect.value.top + delta.dy);
           break;
         case _CropBoundaries.bottomCenter:
-          _changeRect(height: _rect.value.height + delta.dy);
+          _changeRect(bottom: _rect.value.bottom + delta.dy);
           break;
         case _CropBoundaries.centerLeft:
-          _changeRect(
-            left: _rect.value.left + delta.dx,
-            width: _rect.value.width - delta.dx,
-          );
+          _changeRect(left: _rect.value.left + delta.dx);
           break;
         case _CropBoundaries.centerRight:
-          _changeRect(width: _rect.value.width + delta.dx);
+          _changeRect(right: _rect.value.right + delta.dx);
           break;
         case _CropBoundaries.none:
           break;
@@ -266,44 +294,60 @@ class _CropGridViewerState extends State<CropGridViewer> {
   //-----------//
   //RECT CHANGE//
   //-----------//
-  void _changeRect({double? left, double? top, double? width, double? height}) {
-    top = top ?? _rect.value.top;
-    left = left ?? _rect.value.left;
-    width = width ?? _rect.value.width;
-    height = height ?? _rect.value.height;
 
+  /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
+  void _changeRect({
+    double? left,
+    double? top,
+    double? right,
+    double? bottom,
+  }) {
+    top = (top ?? _rect.value.top).clamp(0, _rect.value.bottom - _margin.dy);
+    left = (left ?? _rect.value.left).clamp(0, _rect.value.right - _margin.dx);
+    right = (right ?? _rect.value.right)
+        .clamp(_rect.value.left + _margin.dx, _layout.width);
+    bottom = (bottom ?? _rect.value.bottom)
+        .clamp(_rect.value.top + _margin.dy, _layout.height);
+
+    // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {
-      if (height > width) {
-        height = width / _preferredCropAspectRatio!;
-      } else if (height < width) {
-        width = height / _preferredCropAspectRatio!;
+      final width = right - left;
+      final height = bottom - top;
+
+      if (width / height > _preferredCropAspectRatio!) {
+        switch (_boundary) {
+          case _CropBoundaries.topLeft:
+          case _CropBoundaries.bottomLeft:
+            left = right - height * _preferredCropAspectRatio!;
+            break;
+          case _CropBoundaries.topRight:
+          case _CropBoundaries.bottomRight:
+            right = left + height * _preferredCropAspectRatio!;
+            break;
+          default:
+            assert(false);
+        }
+      } else {
+        switch (_boundary) {
+          case _CropBoundaries.topLeft:
+          case _CropBoundaries.topRight:
+            top = bottom - width / _preferredCropAspectRatio!;
+            break;
+          case _CropBoundaries.bottomLeft:
+          case _CropBoundaries.bottomRight:
+            bottom = top + width / _preferredCropAspectRatio!;
+            break;
+          default:
+            assert(false);
+        }
       }
     }
 
-    final double right = left + width;
-    final double bottom = top + height;
-
-    // TODO : sometimes cannot move the crop because considered as out of bound, but is actually in the middle
-    if (height > _margin.dx && width > _margin.dx) {
-      if (right > _layout.width) width = _rect.value.width;
-
-      _rect.value = Rect.fromLTWH(
-        left >= 0.0
-            ? right <= _layout.width
-                ? left
-                : _rect.value.left
-            : 0.0,
-        top >= 0.0
-            ? bottom <= _layout.height
-                ? top
-                : _rect.value.top
-            : 0.0,
-        width,
-        bottom <= _layout.height ? height : _rect.value.height,
-      );
-    }
+    _rect.value = Rect.fromLTRB(left, top, right, bottom);
   }
 
+  /// Calculate crop [Rect] area
+  /// depending of [_controller] min and max crop values and the size of the layout
   Rect _calculateCropRect([Offset? min, Offset? max]) {
     final Offset minCrop = min ?? _controller.minCrop;
     final Offset maxCrop = max ?? _controller.maxCrop;
@@ -320,12 +364,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
       valueListenable: _transform,
       builder: (_, TransformData transform, __) => Center(
           child: Container(
+              // when widget.showGrid is true, the layout size should never be bigger than the screen size
               constraints: BoxConstraints(
                   maxHeight: ((_controller.rotation == 90 ||
-                          _controller.rotation == 270))
+                              _controller.rotation == 270)) &&
+                          widget.showGrid
                       ? MediaQuery.of(context).size.width -
                           widget.horizontalMargin
                       : Size.infinite.height),
+              // TODO: on rotation 90 or 270 the scale to big so some of the crop area is hidden [#78]
               child: CropTransform(
                   transform: transform,
                   child: VideoViewer(
@@ -336,6 +383,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
                       if (_layout != size) {
                         _layout = size;
                         if (widget.showGrid) {
+                          // need to recompute crop if layout size changed, (i.e after rotation)
                           WidgetsBinding.instance!.addPostFrameCallback((_) {
                             _calculatePreferedCrop();
                           });
@@ -374,6 +422,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
     );
   }
 
+  /// Build [Widget] that hides the cropped area and show the crop grid if widget.showGris is true
   Widget _paint() {
     return ValueListenableBuilder(
       valueListenable: _rect,

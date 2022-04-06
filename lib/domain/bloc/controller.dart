@@ -186,36 +186,9 @@ class VideoEditorController extends ChangeNotifier {
   /// The [preferredCropAspectRatio] param is the selected aspect ratio (9:16, 3:4, 1:1, ...)
   double? get preferredCropAspectRatio => _preferredCropAspectRatio;
   set preferredCropAspectRatio(double? value) {
-    if (value == null) {
-      _preferredCropAspectRatio = value;
-      notifyListeners();
-    } else if (value >= 0) {
-      // TODO : when switching from a preferred aspect ratio to another it keep reducing the crop size
-
-      final length = cropStyle.boundariesLength * 4;
-      final videoWidth = videoDimension.width;
-      final videoHeight = videoDimension.height;
-      final cropHeight = (cacheMaxCrop.dy - cacheMinCrop.dy) * videoHeight;
-      final cropWidth = (cacheMaxCrop.dx - cacheMinCrop.dx) * videoWidth;
-      Offset newMax = Offset(
-        cropWidth / videoWidth,
-        (cropWidth / value) / videoWidth,
-      );
-
-      if (newMax.dy > _max.dy || newMax.dx > _max.dx) {
-        newMax = Offset(
-          (cropHeight * value) / cropHeight,
-          cropHeight / videoHeight,
-        );
-      }
-
-      if ((newMax.dx - cacheMinCrop.dx) * videoWidth > length &&
-          (newMax.dy - cacheMinCrop.dy) * videoHeight > length) {
-        cacheMaxCrop = newMax;
-        _preferredCropAspectRatio = value;
-        notifyListeners();
-      }
-    }
+    if (preferredCropAspectRatio == value) return;
+    _preferredCropAspectRatio = value;
+    notifyListeners();
   }
 
   //----------------//
