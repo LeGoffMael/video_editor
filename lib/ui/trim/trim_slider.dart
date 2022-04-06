@@ -8,7 +8,7 @@ enum _TrimBoundaries { left, right, inside, progress, none }
 
 class TrimSlider extends StatefulWidget {
   /// Slider that trim video length.
-  TrimSlider({
+  const TrimSlider({
     Key? key,
     required this.controller,
     this.height = 60,
@@ -78,16 +78,17 @@ class _TrimSliderState extends State<TrimSlider>
     //IS TOUCHING THE GRID
     if (pos >= minMargin[0] && pos <= maxMargin[1]) {
       //TOUCH BOUNDARIES
-      if (pos >= minMargin[0] && pos <= minMargin[1])
+      if (pos >= minMargin[0] && pos <= minMargin[1]) {
         _boundary.value = _TrimBoundaries.left;
-      else if (pos >= maxMargin[0] && pos <= maxMargin[1])
+      } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
         _boundary.value = _TrimBoundaries.right;
-      else if (pos >= progressTrim - margin && pos <= progressTrim + margin)
+      } else if (pos >= progressTrim - margin && pos <= progressTrim + margin) {
         _boundary.value = _TrimBoundaries.progress;
-      else if (pos >= minMargin[1] && pos <= maxMargin[0])
+      } else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
         _boundary.value = _TrimBoundaries.inside;
-      else
+      } else {
         _boundary.value = _TrimBoundaries.none;
+      }
       _updateControllerIsTrimming(true);
     } else {
       _boundary.value = _TrimBoundaries.none;
@@ -101,15 +102,17 @@ class _TrimSliderState extends State<TrimSlider>
         final pos = _rect.topLeft + delta;
         // avoid minTrim to be bigger than maxTrim
         if (pos.dx > widget.horizontalMargin &&
-            pos.dx < _rect.right - _trimWidth * 2)
+            pos.dx < _rect.right - _trimWidth * 2) {
           _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
+        }
         break;
       case _TrimBoundaries.right:
         final pos = _rect.topRight + delta;
         // avoid maxTrim to be smaller than minTrim
         if (pos.dx < _trimLayout.width + widget.horizontalMargin &&
-            pos.dx > _rect.left + _trimWidth * 2)
+            pos.dx > _rect.left + _trimWidth * 2) {
           _changeTrimRect(width: _rect.width + delta.dx);
+        }
         break;
       case _TrimBoundaries.inside:
         final pos = _rect.topLeft + delta;
@@ -120,8 +123,9 @@ class _TrimSliderState extends State<TrimSlider>
             _scrollController.offset + delta.dx,
           );
         }
-        if (pos.dx > widget.horizontalMargin && pos.dx < _rect.right)
+        if (pos.dx > widget.horizontalMargin && pos.dx < _rect.right) {
           _changeTrimRect(left: pos.dx);
+        }
         break;
       case _TrimBoundaries.progress:
         final double pos = details.localPosition.dx;
@@ -135,12 +139,14 @@ class _TrimSliderState extends State<TrimSlider>
   void _onHorizontalDragEnd(_) {
     if (_boundary.value != _TrimBoundaries.none) {
       final double _progressTrim = _getTrimPosition();
-      if (_progressTrim >= _rect.right || _progressTrim < _rect.left)
+      if (_progressTrim >= _rect.right || _progressTrim < _rect.left) {
         _controllerSeekTo(_progressTrim);
+      }
       _updateControllerIsTrimming(false);
       if (_boundary.value != _TrimBoundaries.progress) {
-        if (_boundary.value != _TrimBoundaries.right)
+        if (_boundary.value != _TrimBoundaries.right) {
           _controllerSeekTo(_rect.left);
+        }
         _updateControllerTrim();
       }
     }
@@ -194,8 +200,9 @@ class _TrimSliderState extends State<TrimSlider>
 
   void _updateControllerIsTrimming(bool value) {
     if (_boundary.value != _TrimBoundaries.none &&
-        _boundary.value != _TrimBoundaries.progress)
+        _boundary.value != _TrimBoundaries.progress) {
       widget.controller.isTrimming = value;
+    }
   }
 
   double _getTrimPosition() {
@@ -232,7 +239,7 @@ class _TrimSliderState extends State<TrimSlider>
         _createTrimRect();
       }
 
-      return Container(
+      return SizedBox(
           width: _fullLayout.width,
           child: Stack(children: [
             NotificationListener<ScrollNotification>(
@@ -251,7 +258,7 @@ class _TrimSliderState extends State<TrimSlider>
                                 height: widget.height,
                                 quality: widget.quality)),
                         if (widget.child != null)
-                          Container(
+                          SizedBox(
                               width: _fullLayout.width, child: widget.child)
                       ]))),
               onNotification: (notification) {

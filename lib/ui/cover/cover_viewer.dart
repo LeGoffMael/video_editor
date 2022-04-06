@@ -7,7 +7,7 @@ import 'package:video_editor/ui/transform.dart';
 
 class CoverViewer extends StatefulWidget {
   /// It is the viewer that show the selected cover
-  CoverViewer({
+  const CoverViewer({
     Key? key,
     required this.controller,
     this.noCoverText = 'No selection',
@@ -25,9 +25,8 @@ class CoverViewer extends StatefulWidget {
 
 class _CoverViewerState extends State<CoverViewer> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  final ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   Size _layout = Size.zero;
 
@@ -63,8 +62,9 @@ class _CoverViewerState extends State<CoverViewer> {
   }
 
   void _checkIfCoverIsNull() {
-    if (widget.controller.selectedCoverVal!.thumbData == null)
+    if (widget.controller.selectedCoverVal!.thumbData == null) {
       widget.controller.generateDefaultCoverThumnail();
+    }
   }
 
   //-----------//

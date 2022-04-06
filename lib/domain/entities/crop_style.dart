@@ -11,7 +11,7 @@ class CropGridStyle {
     this.boundariesColor = Colors.white,
     this.boundariesLength = 20,
     this.boundariesWidth = 5,
-  }) : this.croppingBackground =
+  }) : croppingBackground =
             croppingBackground ?? Colors.black.withOpacity(0.48);
 
   /// The [croppingBackground] param specifies the color of the paint area outside the crop area when copping

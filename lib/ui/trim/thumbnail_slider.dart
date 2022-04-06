@@ -8,11 +8,12 @@ import 'package:video_editor/ui/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class ThumbnailSlider extends StatefulWidget {
-  ThumbnailSlider({
+  const ThumbnailSlider({
+    Key? key,
     required this.controller,
     this.height = 60,
     this.quality = 10,
-  });
+  }) : super(key: key);
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
@@ -27,10 +28,9 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;
@@ -126,7 +126,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
               ? ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
-                  physics: NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: data!.length,
                   itemBuilder: (_, int index) {
                     return ValueListenableBuilder(
@@ -160,7 +160,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                     );
                   },
                 )
-              : SizedBox();
+              : const SizedBox();
         },
       );
     });

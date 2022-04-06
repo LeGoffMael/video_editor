@@ -7,7 +7,7 @@ import 'package:video_editor/domain/bloc/controller.dart';
 
 class CoverSelection extends StatefulWidget {
   /// Slider that allow to select a generated cover
-  CoverSelection({
+  const CoverSelection({
     Key? key,
     required this.controller,
     this.height = 60,
@@ -36,11 +36,10 @@ class _CoverSelectionState extends State<CoverSelection>
   double _aspect = 1.0, _width = 1.0;
   Duration? _startTrim, _endTrim;
   Size _layout = Size.zero;
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   Stream<List<CoverData>>? _stream;
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   @override
   void dispose() {
@@ -213,7 +212,7 @@ class _CoverSelectionState extends State<CoverSelection>
                         .toList()
                         .cast<Widget>(),
                   )
-                : SizedBox();
+                : const SizedBox();
           });
     });
   }
