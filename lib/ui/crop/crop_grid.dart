@@ -182,6 +182,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
     final List<Offset> minMargin = [min - _margin, min + _margin];
     final List<Offset> maxMargin = [max - _margin, max + _margin];
 
+    // TODO : difficult to resize crop area when is on the edges
+
     if (pos >= minMargin[0] && pos <= maxMargin[1]) {
       final Rect topLeft = Rect.fromPoints(minMargin[0], minMargin[1]);
       final Rect bottomRight = Rect.fromPoints(maxMargin[0], maxMargin[1]);
@@ -391,52 +393,42 @@ class _CropGridViewerState extends State<CropGridViewer> {
                           _rect.value = _calculateCropRect();
                         }
                       }
-                      return widget.showGrid
-                          ? Stack(children: [
-                              _paint(),
-                              GestureDetector(
-                                onPanEnd: (_) => _onPanEnd(),
-                                onPanStart: _onPanStart,
-                                onPanUpdate: _onPanUpdate,
-                                child: ValueListenableBuilder(
-                                  valueListenable: _rect,
-                                  builder: (_, Rect value, __) {
-                                    final left = value.left - _margin.dx;
-                                    final top = value.top - _margin.dy;
-                                    return Container(
+                      return ValueListenableBuilder(
+                        valueListenable: _rect,
+                        builder: (_, Rect value, __) => widget.showGrid
+                            ? Stack(children: [
+                                _paint(value),
+                                GestureDetector(
+                                    onPanEnd: (_) => _onPanEnd(),
+                                    onPanStart: _onPanStart,
+                                    onPanUpdate: _onPanUpdate,
+                                    child: Container(
                                       margin: EdgeInsets.only(
-                                        left: left < 0.0 ? 0.0 : left,
-                                        top: top < 0.0 ? 0.0 : top,
+                                        left: (value.left - _margin.dx).abs(),
+                                        top: (value.top - _margin.dy).abs(),
                                       ),
                                       color: Colors.transparent,
                                       width: value.width + _margin.dx * 2,
                                       height: value.height + _margin.dy * 2,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ])
-                          : _paint();
+                                    )),
+                              ])
+                            : _paint(value),
+                      );
                     }),
                   )))),
     );
   }
 
   /// Build [Widget] that hides the cropped area and show the crop grid if widget.showGris is true
-  Widget _paint() {
-    return ValueListenableBuilder(
-      valueListenable: _rect,
-      builder: (_, Rect value, __) {
-        return CustomPaint(
-          size: Size.infinite,
-          painter: CropGridPainter(
-            value,
-            style: _controller.cropStyle,
-            showGrid: widget.showGrid,
-            showCenterRects: _controller.preferredCropAspectRatio == null,
-          ),
-        );
-      },
+  Widget _paint(Rect value) {
+    return CustomPaint(
+      size: Size.infinite,
+      painter: CropGridPainter(
+        value,
+        style: _controller.cropStyle,
+        showGrid: widget.showGrid,
+        showCenterRects: _controller.preferredCropAspectRatio == null,
+      ),
     );
   }
 }
