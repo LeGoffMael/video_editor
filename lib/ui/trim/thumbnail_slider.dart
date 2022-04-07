@@ -36,7 +36,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   int _thumbnails = 8;
 
   Size _layout = Size.zero;
-  Stream<List<Uint8List>>? _stream;
+  late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
   @override
   void initState() {
@@ -114,7 +114,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
         _thumbnails = (_width ~/ _layout.width) + 1;
-        _stream = _generateThumbnails();
         _rect.value = _calculateTrimRect();
       }
 
