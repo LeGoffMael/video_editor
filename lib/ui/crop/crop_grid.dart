@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
@@ -181,8 +183,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
     // Use margins to increase grabbable areas
     final List<Offset> minMargin = [min - _margin, min + _margin];
     final List<Offset> maxMargin = [max - _margin, max + _margin];
-
-    // TODO : difficult to resize crop area when is on the edges
 
     if (pos >= minMargin[0] && pos <= maxMargin[1]) {
       final Rect topLeft = Rect.fromPoints(minMargin[0], minMargin[1]);
@@ -404,8 +404,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
                                     onPanUpdate: _onPanUpdate,
                                     child: Container(
                                       margin: EdgeInsets.only(
-                                        left: (value.left - _margin.dx).abs(),
-                                        top: (value.top - _margin.dy).abs(),
+                                        left: max(0.0, value.left - _margin.dx),
+                                        top: max(0.0, value.top - _margin.dy),
                                       ),
                                       color: Colors.transparent,
                                       width: value.width + _margin.dx * 2,
