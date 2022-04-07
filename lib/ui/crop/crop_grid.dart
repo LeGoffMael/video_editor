@@ -55,6 +55,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
   double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
 
+  /// Minimum size of the cropped area
+  late final double minRectSize = _controller.cropStyle.boundariesLength * 2;
+
   @override
   void initState() {
     _controller = widget.controller;
@@ -293,14 +296,14 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
   void _changeRect({double? left, double? top, double? right, double? bottom}) {
-    final Rect expandedRect = _expandedRect();
-
-    top = (top ?? _rect.value.top).clamp(0, expandedRect.bottom);
-    left = (left ?? _rect.value.left).clamp(0, expandedRect.right);
-    right =
-        (right ?? _rect.value.right).clamp(expandedRect.left, _layout.width);
-    bottom =
-        (bottom ?? _rect.value.bottom).clamp(expandedRect.top, _layout.height);
+    top = (top ?? _rect.value.top)
+        .clamp(0, max(0.0, _rect.value.bottom - minRectSize));
+    left = (left ?? _rect.value.left)
+        .clamp(0, max(0.0, _rect.value.right - minRectSize));
+    right = (right ?? _rect.value.right)
+        .clamp(_rect.value.left + minRectSize, _layout.width);
+    bottom = (bottom ?? _rect.value.bottom)
+        .clamp(_rect.value.top + minRectSize, _layout.height);
 
     // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {
