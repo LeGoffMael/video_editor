@@ -50,7 +50,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
       ValueNotifier<TransformData>(TransformData());
 
   Size _layout = Size.zero;
-  Offset _margin = Offset.zero;
   _CropBoundaries _boundary = _CropBoundaries.none;
 
   double? _preferredCropAspectRatio;
@@ -59,9 +58,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   void initState() {
     _controller = widget.controller;
-    final length = _controller.cropStyle.boundariesLength;
     _controller.addListener(!widget.showGrid ? _scaleRect : _updateRect);
-    _margin = Offset(length, length) * 2;
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
@@ -175,56 +172,53 @@ class _CropGridViewerState extends State<CropGridViewer> {
     );
   }
 
+  /// Return [Rect] expanded position to improve grab facility, the size will be equal to a single grid square
+  Rect _expandedPosition(Offset position) => Rect.fromCenter(
+        center: position,
+        // the width of one grid square
+        width: (_rect.value.width / _controller.cropStyle.gridSize),
+        // the height of one grid square
+        height: (_rect.value.height / _controller.cropStyle.gridSize),
+      );
+
+  /// Return expanded [Rect] to includes all corners [_expandedPosition]
+  Rect _expandedRect() {
+    Rect expandedPosition = _expandedPosition(_rect.value.center);
+    return Rect.fromCenter(
+        center: _rect.value.center,
+        width: _rect.value.width + expandedPosition.width,
+        height: _rect.value.height + expandedPosition.height);
+  }
+
   void _onPanStart(DragStartDetails details) {
     final Offset pos = details.localPosition;
-    final Offset max = _rect.value.bottomRight;
-    final Offset min = _rect.value.topLeft;
 
-    // Use margins to increase grabbable areas
-    final List<Offset> minMargin = [min - _margin, min + _margin];
-    final List<Offset> maxMargin = [max - _margin, max + _margin];
+    _boundary = _CropBoundaries.none;
 
-    if (pos >= minMargin[0] && pos <= maxMargin[1]) {
-      final Rect topLeft = Rect.fromPoints(minMargin[0], minMargin[1]);
-      final Rect bottomRight = Rect.fromPoints(maxMargin[0], maxMargin[1]);
-      final Rect topRight = Rect.fromPoints(
-        Offset(maxMargin[0].dx, minMargin[0].dy),
-        Offset(maxMargin[1].dx, minMargin[1].dy),
-      );
-      final Rect bottomLeft = Rect.fromPoints(
-        Offset(minMargin[0].dx, maxMargin[0].dy),
-        Offset(minMargin[1].dx, maxMargin[1].dy),
-      );
+    if (_expandedRect().contains(pos)) {
+      _boundary = _CropBoundaries.inside;
 
-      //CORNERS
-      if (pos >= topLeft.topLeft && pos <= topLeft.bottomRight) {
+      // CORNERS
+      if (_expandedPosition(_rect.value.topLeft).contains(pos)) {
         _boundary = _CropBoundaries.topLeft;
-      } else if (pos >= topRight.topLeft && pos <= topRight.bottomRight) {
+      } else if (_expandedPosition(_rect.value.topRight).contains(pos)) {
         _boundary = _CropBoundaries.topRight;
-      } else if (pos >= bottomRight.topLeft && pos <= bottomRight.bottomRight) {
+      } else if (_expandedPosition(_rect.value.bottomRight).contains(pos)) {
         _boundary = _CropBoundaries.bottomRight;
-      } else if (pos >= bottomLeft.topLeft && pos <= bottomLeft.bottomRight) {
+      } else if (_expandedPosition(_rect.value.bottomLeft).contains(pos)) {
         _boundary = _CropBoundaries.bottomLeft;
       } else if (_controller.preferredCropAspectRatio == null) {
-        //CENTERS
-        if (pos >= topLeft.topRight && pos <= topRight.bottomLeft) {
-          _boundary = _CropBoundaries.topCenter;
-        } else if (pos >= bottomLeft.topRight &&
-            pos <= bottomRight.bottomLeft) {
-          _boundary = _CropBoundaries.bottomCenter;
-        } else if (pos >= topLeft.bottomLeft && pos <= bottomLeft.topRight) {
+        // CENTERS
+        if (_expandedPosition(_rect.value.centerLeft).contains(pos)) {
           _boundary = _CropBoundaries.centerLeft;
-        } else if (pos >= topRight.bottomLeft && pos <= bottomRight.topRight) {
+        } else if (_expandedPosition(_rect.value.topCenter).contains(pos)) {
+          _boundary = _CropBoundaries.topCenter;
+        } else if (_expandedPosition(_rect.value.centerRight).contains(pos)) {
           _boundary = _CropBoundaries.centerRight;
-        } else {
-          //OTHERS
-          _boundary = _CropBoundaries.inside;
+        } else if (_expandedPosition(_rect.value.bottomCenter).contains(pos)) {
+          _boundary = _CropBoundaries.bottomCenter;
         }
-      } else {
-        _boundary = _CropBoundaries.inside;
       }
-    } else {
-      _boundary = _CropBoundaries.none;
     }
     _controller.isCropping = true;
   }
@@ -298,18 +292,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
   //-----------//
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
-  void _changeRect({
-    double? left,
-    double? top,
-    double? right,
-    double? bottom,
-  }) {
-    top = (top ?? _rect.value.top).clamp(0, _rect.value.bottom - _margin.dy);
-    left = (left ?? _rect.value.left).clamp(0, _rect.value.right - _margin.dx);
-    right = (right ?? _rect.value.right)
-        .clamp(_rect.value.left + _margin.dx, _layout.width);
-    bottom = (bottom ?? _rect.value.bottom)
-        .clamp(_rect.value.top + _margin.dy, _layout.height);
+  void _changeRect({double? left, double? top, double? right, double? bottom}) {
+    final Rect expandedRect = _expandedRect();
+
+    top = (top ?? _rect.value.top).clamp(0, expandedRect.bottom);
+    left = (left ?? _rect.value.left).clamp(0, expandedRect.right);
+    right =
+        (right ?? _rect.value.right).clamp(expandedRect.left, _layout.width);
+    bottom =
+        (bottom ?? _rect.value.bottom).clamp(expandedRect.top, _layout.height);
 
     // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {
@@ -394,26 +385,28 @@ class _CropGridViewerState extends State<CropGridViewer> {
                         }
                       }
                       return ValueListenableBuilder(
-                        valueListenable: _rect,
-                        builder: (_, Rect value, __) => widget.showGrid
-                            ? Stack(children: [
-                                _paint(value),
-                                GestureDetector(
-                                    onPanEnd: (_) => _onPanEnd(),
-                                    onPanStart: _onPanStart,
-                                    onPanUpdate: _onPanUpdate,
-                                    child: Container(
-                                      margin: EdgeInsets.only(
-                                        left: max(0.0, value.left - _margin.dx),
-                                        top: max(0.0, value.top - _margin.dy),
-                                      ),
-                                      color: Colors.transparent,
-                                      width: value.width + _margin.dx * 2,
-                                      height: value.height + _margin.dy * 2,
-                                    )),
-                              ])
-                            : _paint(value),
-                      );
+                          valueListenable: _rect,
+                          builder: (_, Rect value, __) {
+                            final Rect _gestureArea = _expandedRect();
+                            return widget.showGrid
+                                ? Stack(children: [
+                                    _paint(value),
+                                    GestureDetector(
+                                        onPanEnd: (_) => _onPanEnd(),
+                                        onPanStart: _onPanStart,
+                                        onPanUpdate: _onPanUpdate,
+                                        child: Container(
+                                          margin: EdgeInsets.only(
+                                            left: max(0.0, _gestureArea.left),
+                                            top: max(0.0, _gestureArea.top),
+                                          ),
+                                          color: Colors.transparent,
+                                          width: _gestureArea.width,
+                                          height: _gestureArea.height,
+                                        )),
+                                  ])
+                                : _paint(value);
+                          });
                     }),
                   )))),
     );
