@@ -199,7 +199,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _boundary = _CropBoundaries.none;
 
     if (_expandedRect().contains(pos)) {
-      _boundary = _CropBoundaries.inside;
+      if (_rect.value.contains(pos)) {
+        _boundary = _CropBoundaries.inside;
+      }
 
       // CORNERS
       if (_expandedPosition(_rect.value.topLeft).contains(pos)) {
