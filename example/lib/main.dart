@@ -451,6 +451,7 @@ class CropScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(30),
           child: Column(children: [
+            // TODO : rotation buttons should be on top of [CropGridViewer]
             Row(children: [
               Expanded(
                 child: IconButton(
@@ -469,11 +470,8 @@ class CropScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 15),
             Expanded(
-              child: AnimatedInteractiveViewer(
-                maxScale: 2.4,
-                child: CropGridViewer(
-                    controller: controller, horizontalMargin: 60),
-              ),
+              child:
+                  CropGridViewer(controller: controller, horizontalMargin: 60),
             ),
             const SizedBox(height: 15),
             Row(children: [
