@@ -1,3 +1,8 @@
+## [1.3.1]
+
+- Implements flutter_lints configuration [#86](https://github.com/seel-channel/video_editor/issues/86)
+- [NEW] Exportation progress value is returned in `onProgress` function of exportVideo [#85](https://github.com/seel-channel/video_editor/issues/85)
+
 ## [1.3.0]
 
 - [BREAKING CHANGE]
@@ -5,7 +10,7 @@
     - In TrimSliderStyle, positionlineWidth param is renamed `positionLineWidth`
     - In CoverSelection, nbSelection param is renamed `quantity`
 - Improve package documentation [#84](https://github.com/seel-channel/video_editor/issues/84)
-- Switch from LTS FFmpeg package to Main release [#81](https://github.com/seel-channel/video_editor/issues/81)
+- Switch from LTS FFmpeg package to Main release [#81](https://github.com/seel-channel/video_editor/issues/81) by [@adigladi](https://github.com/adigladi)
 
 ## [1.2.5]
 
@@ -15,8 +20,8 @@
 ## [1.2.4]
 
 - Updated dependencies
-- Add `isFiltersEnabled` param to disable all changes at extraction [#76](https://github.com/seel-channel/video_editor/pull/76)
-- Fix an error at extraction if the destination path contains a space [#74](https://github.com/seel-channel/video_editor/pull/74)
+- Add `isFiltersEnabled` param to disable all changes at extraction [#76](https://github.com/seel-channel/video_editor/pull/76) by [@AlexSmirnov9107](https://github.com/AlexSmirnov9107)
+- Fix an error at extraction if the destination path contains a space [#74](https://github.com/seel-channel/video_editor/pull/74) by [@rgplvr](https://github.com/rgplvr)
 
 ## [1.2.3]
 
