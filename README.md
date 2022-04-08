@@ -29,7 +29,7 @@ $ flutter packages get
 import 'package:video_editor/video_editor.dart';
 ```
 
-Since `1.3.0` video_editor uses ffmpeg_kit_flutter main release which supports the latest features. (More info on [flutter FFmepeg kit](https://github.com/tanersener/ffmpeg-kit/tree/main/flutter/flutter))
+Since `1.3.0` version, video_editor uses ffmpeg_kit_flutter main release which supports the latest features. (More info on [flutter FFmepeg kit](https://github.com/tanersener/ffmpeg-kit/tree/main/flutter/flutter))
 
 Those Android API level and iOS deployment target are required to uses this package. If you're planing to target older devices, check about the [LTS release](#1-how-to-use-ffmpeg-lts-release).
 
@@ -189,7 +189,7 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 
 ### 1. How to use FFmpeg LTS release
 
-Since `1.3.0` video_editor uses ffmpeg_kit_flutter main release which supports the latest features. If you want to support a wider range of devices you should use the LTS release. [more info](https://github.com/tanersener/ffmpeg-kit#10-lts-releases)
+Since `1.3.0` version, video_editor uses ffmpeg_kit_flutter main release which supports the latest features. If you want to support a wider range of devices you should use the LTS release. [more info](https://github.com/tanersener/ffmpeg-kit#10-lts-releases)
 
 
 To do this, add this to your `pubspec.yaml`:
