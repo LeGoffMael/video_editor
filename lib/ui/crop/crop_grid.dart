@@ -28,6 +28,7 @@ class CropGridViewer extends StatefulWidget {
     required this.controller,
     this.showGrid = true,
     this.horizontalMargin = 0.0,
+    this.scaleAfter = false,
   }) : super(key: key);
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
@@ -40,6 +41,10 @@ class CropGridViewer extends StatefulWidget {
   /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view,
   /// so in case of a change the new layout can be computed properly (i.e after a rotation)
   final double horizontalMargin;
+
+  /// TODO
+  /// Only useful when [showGrid] is `true`
+  final bool scaleAfter;
 
   @override
   _CropGridViewerState createState() => _CropGridViewerState();
@@ -299,8 +304,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
   void _changeRect({double? left, double? top, double? right, double? bottom}) {
-    // TODO : crop area can go out of edges on the right
-
     top = (top ?? _rect.value.top)
         .clamp(0, max(0.0, _rect.value.bottom - minRectSize));
     left = (left ?? _rect.value.left)
@@ -389,8 +392,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
               return ValueListenableBuilder(
                 valueListenable: _rect,
                 builder: (_, Rect value, __) => AnimatedCropViewer(
+                  controller: _controller,
                   rect: _rect.value,
                   layout: _layout,
+                  scaleAfter: widget.scaleAfter,
                   child: _buildTransformContainer(transform, value),
                 ),
               );
@@ -411,8 +416,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
     );
   }
 
+  /// Build [InteractiveViewer] scaling automatically depending on [rect] size and position
   Widget _buildTransformContainer(TransformData transform, Rect rect) {
     final Rect _gestureArea = _expandedRect();
+    // TODO : CropTransform and VideoViewer must be parents of [LayoutBuilder] to apply rotation and compute size properly
     return CropTransform(
       transform: transform,
       child: VideoViewer(

@@ -1,18 +1,24 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/domain/entities/transform_data.dart';
 
 class AnimatedCropViewer extends StatefulWidget {
   final Widget child;
   final Rect rect;
   final Size layout;
   final Duration duration;
+  final VideoEditorController controller;
+  final bool scaleAfter;
 
   const AnimatedCropViewer({
     Key? key,
     required this.child,
     required this.rect,
     required this.layout,
+    required this.controller,
+    this.scaleAfter = false,
     this.duration = const Duration(milliseconds: 200),
   }) : super(key: key);
 
@@ -22,23 +28,31 @@ class AnimatedCropViewer extends StatefulWidget {
 
 class _AnimatedCropViewerState extends State<AnimatedCropViewer>
     with TickerProviderStateMixin {
-  final TransformationController _controller = TransformationController();
-  late AnimationController _animationController;
+  late final TransformationController _controller =
+      TransformationController(getMatrixToFitRect());
+  late final AnimationController _animationController = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
   Animation<Matrix4>? _animationMatrix4;
 
   @override
   void initState() {
-    _animationController = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
     super.initState();
   }
 
   @override
   void didUpdateWidget(covariant AnimatedCropViewer oldWidget) {
-    // TODO : position error after rotation
-    updateMatrixToFitRect();
+    if (widget.scaleAfter) {
+      // to update interactive view only at the end of cropping action (to improve performances ?), similar behavior as iOS photo
+      if (!widget.controller.isCropping) {
+        animateMatrix4(
+            getMatrixToFitRect()); // TODO : position error after rotation
+      }
+    } else {
+      animateMatrix4(
+          getMatrixToFitRect()); // TODO : position error after rotation
+    }
     super.didUpdateWidget(oldWidget);
   }
 
@@ -49,28 +63,32 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
     }
   }
 
+  /// inspired from https://stackoverflow.com/a/68917749/7943785
+  Matrix4 getMatrixToFitRect() {
+    // Offset center of layout
+    final _layoutRect = Rect.fromPoints(
+        Offset.zero, Offset(widget.layout.width, widget.layout.height));
+
+    Rect _rect = widget.rect;
+    if (widget.rect == Rect.zero) {
+      _rect = _layoutRect;
+    }
+
+    // scale from layout and rect
+    FittedSizes fs = applyBoxFit(BoxFit.contain, _rect.size, widget.layout);
+    double scaleX = fs.destination.width / fs.source.width;
+    double scaleY = fs.destination.height / fs.source.height;
+
+    return pointToPoint(min(scaleX, scaleY), _rect.center, _layoutRect.center);
+  }
+
   Matrix4 pointToPoint(
       double scale, Offset srcFocalPoint, Offset dstFocalPoint) {
     return Matrix4.identity()
       ..translate(dstFocalPoint.dx, dstFocalPoint.dy)
       ..scale(scale)
+      //..rotateZ(TransformData.fromController(widget.controller).rotation)
       ..translate(-srcFocalPoint.dx, -srcFocalPoint.dy);
-  }
-
-  /// inspired from https://stackoverflow.com/a/68917749/7943785
-  void updateMatrixToFitRect() {
-    // scale from layout and rect
-    FittedSizes fs =
-        applyBoxFit(BoxFit.contain, widget.rect.size, widget.layout);
-    double scaleX = fs.destination.width / fs.source.width;
-    double scaleY = fs.destination.height / fs.source.height;
-
-    // Offset center of layout
-    final _layoutCenter = Rect.fromPoints(
-            Offset.zero, Offset(widget.layout.width, widget.layout.height))
-        .center;
-    animateMatrix4(
-        pointToPoint(min(scaleX, scaleY), widget.rect.center, _layoutCenter));
   }
 
   void _changeControllerMatrix4() {
