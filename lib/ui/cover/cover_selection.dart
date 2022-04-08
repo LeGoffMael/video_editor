@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
@@ -37,9 +39,10 @@ class _CoverSelectionState extends State<CoverSelection>
   Duration? _startTrim, _endTrim;
   Size _layout = Size.zero;
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  Stream<List<CoverData>>? _stream;
   final ValueNotifier<TransformData> _transform =
       ValueNotifier<TransformData>(TransformData());
+
+  late Stream<List<CoverData>> _stream = (() => _generateThumbnails())();
 
   @override
   void dispose() {
@@ -145,7 +148,6 @@ class _CoverSelectionState extends State<CoverSelection>
       if (_width != width) {
         _width = width;
         _layout = _calculateLayout();
-        _stream = _generateThumbnails();
         _rect.value = _calculateCoverRect();
       }
 

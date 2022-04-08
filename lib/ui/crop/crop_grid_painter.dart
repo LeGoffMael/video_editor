@@ -26,40 +26,21 @@ class CropGridPainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = showGrid ? style!.croppingBackground : style!.background;
 
-    double _width = size.width;
-    double _height = size.height;
-    double _bottom = rect.bottom;
-    double _top = rect.top;
-    double _left = rect.left;
-    double _right = rect.right;
-
-    // when scaling, the positions might not be accurates
-    // so add an extra margin to avoid spaces between overlay
+    // when scaling, the positions might not be exactly accurates
+    // so add an extra margin to be sure to overlay all video
     final _margin = showGrid ? 0.0 : 1.0;
 
-    //TOP
-    canvas.drawRect(
-      Rect.fromLTWH(-_margin, -_margin, _width + _margin * 2, _top),
-      paint,
-    );
-    //BOTTOM
-    canvas.drawRect(
-      Rect.fromPoints(
-        Offset(-_margin, _bottom),
-        Offset(_width + _margin, _height + _margin),
+    // extract [rect] area from the canvas
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()
+          ..addRect(Rect.fromLTWH(-_margin, -_margin, size.width + _margin * 2,
+              size.height + _margin * 2)),
+        Path()
+          ..addRect(rect)
+          ..close(),
       ),
-      paint,
-    );
-    //LEFT
-    canvas.drawRect(
-      Rect.fromPoints(Offset(-_margin, _top - _margin * 2),
-          Offset(_left, _bottom + _margin)),
-      paint,
-    );
-    //RIGHT
-    canvas.drawRect(
-      Rect.fromPoints(Offset(_right, _top - _margin * 2),
-          Offset(_width + _margin * 2, _bottom + _margin)),
       paint,
     );
   }
@@ -88,72 +69,72 @@ class CropGridPainter extends CustomPainter {
 
   void _drawBoundaries(Canvas canvas, Size size) {
     final double width = style!.boundariesWidth;
-    final double lenght = style!.boundariesLength;
+    final double length = style!.boundariesLength;
     final Paint paint = Paint()..color = style!.boundariesColor;
 
     //----//
     //EDGE//
     //----//
-    //TOP LEFT |-
+    // TOP LEFT |-
     canvas.drawRect(
       Rect.fromPoints(
         rect.topLeft,
-        rect.topLeft + Offset(width, lenght),
+        rect.topLeft + Offset(width, length),
       ),
       paint,
     );
     canvas.drawRect(
       Rect.fromPoints(
-        rect.topLeft + Offset(width, 0.0),
-        rect.topLeft + Offset(lenght, width),
+        rect.topLeft,
+        rect.topLeft + Offset(length, width),
       ),
       paint,
     );
 
-    //TOP RIGHT -|
+    // TOP RIGHT -|
     canvas.drawRect(
       Rect.fromPoints(
-        rect.topRight - Offset(lenght, 0.0),
+        rect.topRight - Offset(length, 0.0),
         rect.topRight + Offset(0.0, width),
       ),
       paint,
     );
     canvas.drawRect(
       Rect.fromPoints(
-        rect.topRight + Offset(0.0, width),
-        rect.topRight - Offset(width, -lenght),
+        rect.topRight,
+        rect.topRight - Offset(width, -length),
       ),
       paint,
     );
 
-    //BOTTOM RIGHT _|
+    // BOTTOM RIGHT _|
     canvas.drawRect(
       Rect.fromPoints(
-        rect.bottomRight - Offset(width, lenght),
+        rect.bottomRight - Offset(width, length),
         rect.bottomRight,
       ),
       paint,
     );
     canvas.drawRect(
       Rect.fromPoints(
-        rect.bottomRight - Offset(width, 0.0),
-        rect.bottomRight - Offset(lenght, width),
+        rect.bottomRight,
+        rect.bottomRight - Offset(length, width),
       ),
       paint,
     );
 
-    //BOTOM LEFT |_
+    // BOTTOM LEFT |_
     canvas.drawRect(
       Rect.fromPoints(
-        rect.bottomLeft - Offset(-width, lenght),
+        rect.bottomLeft - Offset(-width, length),
         rect.bottomLeft,
       ),
       paint,
     );
     canvas.drawRect(
       Rect.fromPoints(
-        rect.bottomLeft - Offset(-width, 0.0),
-        rect.bottomLeft + Offset(lenght, -width),
+        rect.bottomLeft,
+        rect.bottomLeft + Offset(length, -width),
       ),
       paint,
     );
@@ -165,8 +146,8 @@ class CropGridPainter extends CustomPainter {
       //TOPCENTER
       canvas.drawRect(
         Rect.fromPoints(
-          rect.topCenter + Offset(-lenght / 2, 0.0),
-          rect.topCenter + Offset(lenght / 2, width),
+          rect.topCenter + Offset(-length / 2, 0.0),
+          rect.topCenter + Offset(length / 2, width),
         ),
         paint,
       );
@@ -174,8 +155,8 @@ class CropGridPainter extends CustomPainter {
       //BOTTOMCENTER
       canvas.drawRect(
         Rect.fromPoints(
-          rect.bottomCenter + Offset(-lenght / 2, 0.0),
-          rect.bottomCenter + Offset(lenght / 2, -width),
+          rect.bottomCenter + Offset(-length / 2, 0.0),
+          rect.bottomCenter + Offset(length / 2, -width),
         ),
         paint,
       );
@@ -183,8 +164,8 @@ class CropGridPainter extends CustomPainter {
       //CENTERLEFT
       canvas.drawRect(
         Rect.fromPoints(
-          rect.centerLeft + Offset(0.0, -lenght / 2),
-          rect.centerLeft + Offset(width, lenght / 2),
+          rect.centerLeft + Offset(0.0, -length / 2),
+          rect.centerLeft + Offset(width, length / 2),
         ),
         paint,
       );
@@ -192,8 +173,8 @@ class CropGridPainter extends CustomPainter {
       //CENTERRIGHT
       canvas.drawRect(
         Rect.fromPoints(
-          rect.centerRight + Offset(-width, -lenght / 2),
-          rect.centerRight + Offset(0.0, lenght / 2),
+          rect.centerRight + Offset(-width, -length / 2),
+          rect.centerRight + Offset(0.0, length / 2),
         ),
         paint,
       );
