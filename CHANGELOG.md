@@ -1,3 +1,12 @@
+## [1.4.0]
+
+- Fix crop grid : gesture, aspect ratio, and painting area [#87](https://github.com/seel-channel/video_editor/pull/87)
+- [MAJOR INTERNAL CROP CHANGES]
+  - The aspect ratio is resizing the crop area differently depending of the current crop ratio
+  - The crop rect is updated using `Rect.LTRB`
+  - The crop area gesture is detected differently
+  - The crop paint area is diplayed using `Path.combine`
+
 ## [1.3.1]
 
 - Implements flutter_lints configuration [#86](https://github.com/seel-channel/video_editor/issues/86)
