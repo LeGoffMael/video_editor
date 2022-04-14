@@ -75,14 +75,18 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final double eachPart = duration / _thumbnails;
     List<Uint8List> _byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
-      Uint8List? _bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.JPEG,
-        video: path,
-        timeMs: (eachPart * i).toInt(),
-        quality: widget.quality,
-      );
-      if (_bytes != null) {
-        _byteList.add(_bytes);
+      try {
+        final Uint8List? _bytes = await VideoThumbnail.thumbnailData(
+          imageFormat: ImageFormat.JPEG,
+          video: path,
+          timeMs: (eachPart * i).toInt(),
+          quality: widget.quality,
+        );
+        if (_bytes != null) {
+          _byteList.add(_bytes);
+        }
+      } catch (e) {
+        debugPrint(e.toString());
       }
 
       yield _byteList;
