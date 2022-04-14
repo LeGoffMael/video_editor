@@ -1,3 +1,7 @@
+## [1.4.1]
+
+- Generated thumbnails list is not cleared after an exception [#88](https://github.com/seel-channel/video_editor/pull/88)
+
 ## [1.4.0]
 
 - Fix crop grid : gesture, aspect ratio, and painting area [#87](https://github.com/seel-channel/video_editor/pull/87)
