@@ -45,7 +45,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     widget.controller.addListener(_scaleRect);
 
     // init the widget with controller values
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _scaleRect();
     });
 

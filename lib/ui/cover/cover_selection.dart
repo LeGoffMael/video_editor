@@ -30,7 +30,7 @@ class CoverSelection extends StatefulWidget {
   final int quantity;
 
   @override
-  _CoverSelectionState createState() => _CoverSelectionState();
+  State<CoverSelection> createState() => _CoverSelectionState();
 }
 
 class _CoverSelectionState extends State<CoverSelection>
@@ -62,7 +62,7 @@ class _CoverSelectionState extends State<CoverSelection>
     widget.controller.addListener(_scaleRect);
 
     // init the widget with controller values
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _scaleRect();
     });
   }
