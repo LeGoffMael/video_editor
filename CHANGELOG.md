@@ -1,3 +1,7 @@
+## [1.4.2]
+
+- Update to flutter 3 [#91](https://github.com/seel-channel/video_editor/pull/91)
+
 ## [1.4.1]
 
 - Generated thumbnails list is not cleared after an exception [#88](https://github.com/seel-channel/video_editor/pull/88)
