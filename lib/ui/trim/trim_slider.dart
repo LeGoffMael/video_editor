@@ -34,7 +34,7 @@ class TrimSlider extends StatefulWidget {
   final Widget? child;
 
   @override
-  _TrimSliderState createState() => _TrimSliderState();
+  State<TrimSlider> createState() => _TrimSliderState();
 }
 
 class _TrimSliderState extends State<TrimSlider>
@@ -138,9 +138,9 @@ class _TrimSliderState extends State<TrimSlider>
 
   void _onHorizontalDragEnd(_) {
     if (_boundary.value != _TrimBoundaries.none) {
-      final double _progressTrim = _getTrimPosition();
-      if (_progressTrim >= _rect.right || _progressTrim < _rect.left) {
-        _controllerSeekTo(_progressTrim);
+      final double progressTrim = _getTrimPosition();
+      if (progressTrim >= _rect.right || progressTrim < _rect.left) {
+        _controllerSeekTo(progressTrim);
       }
       _updateControllerIsTrimming(false);
       if (_boundary.value != _TrimBoundaries.progress) {

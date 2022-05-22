@@ -102,10 +102,10 @@ class _CoverSelectionState extends State<CoverSelection>
             .inMilliseconds
         : widget.controller.videoDuration.inMilliseconds;
     final double eachPart = duration / widget.quantity;
-    List<CoverData> _byteList = [];
+    List<CoverData> byteList = [];
     for (int i = 0; i < widget.quantity; i++) {
       try {
-        final CoverData _bytes = await widget.controller.generateCoverThumbnail(
+        final CoverData bytes = await widget.controller.generateCoverThumbnail(
             timeMs: (widget.controller.isTrimmmed
                     ? (eachPart * i) +
                         widget.controller.startTrim.inMilliseconds
@@ -113,14 +113,14 @@ class _CoverSelectionState extends State<CoverSelection>
                 .toInt(),
             quality: widget.quality);
 
-        if (_bytes.thumbData != null) {
-          _byteList.add(_bytes);
+        if (bytes.thumbData != null) {
+          byteList.add(bytes);
         }
       } catch (e) {
         debugPrint(e.toString());
       }
 
-      yield _byteList;
+      yield byteList;
     }
   }
 

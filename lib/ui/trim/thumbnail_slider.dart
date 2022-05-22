@@ -24,7 +24,7 @@ class ThumbnailSlider extends StatefulWidget {
   final VideoEditorController controller;
 
   @override
-  _ThumbnailSliderState createState() => _ThumbnailSliderState();
+  State<ThumbnailSlider> createState() => _ThumbnailSliderState();
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
@@ -73,23 +73,23 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final String path = widget.controller.file.path;
     final int duration = widget.controller.video.value.duration.inMilliseconds;
     final double eachPart = duration / _thumbnails;
-    List<Uint8List> _byteList = [];
+    List<Uint8List> byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
       try {
-        final Uint8List? _bytes = await VideoThumbnail.thumbnailData(
+        final Uint8List? bytes = await VideoThumbnail.thumbnailData(
           imageFormat: ImageFormat.JPEG,
           video: path,
           timeMs: (eachPart * i).toInt(),
           quality: widget.quality,
         );
-        if (_bytes != null) {
-          _byteList.add(_bytes);
+        if (bytes != null) {
+          byteList.add(bytes);
         }
       } catch (e) {
         debugPrint(e.toString());
       }
 
-      yield _byteList;
+      yield byteList;
     }
   }
 
