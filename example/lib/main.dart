@@ -110,7 +110,7 @@ class _VideoEditorState extends State<VideoEditor> {
   @override
   void initState() {
     _controller = VideoEditorController.file(widget.file,
-        maxDuration: const Duration(seconds: 60))
+        maxDuration: const Duration(seconds: 30))
       ..initialize().then((_) => setState(() {}));
     super.initState();
   }
