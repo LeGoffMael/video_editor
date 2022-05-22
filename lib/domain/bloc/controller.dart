@@ -352,14 +352,14 @@ class VideoEditorController extends ChangeNotifier {
   /// return [CoverData] depending on [timeMs] milliseconds
   Future<CoverData> generateCoverThumbnail(
       {int timeMs = 0, int quality = 10}) async {
-    final Uint8List? _thumbData = await VideoThumbnail.thumbnailData(
+    final Uint8List? thumbData = await VideoThumbnail.thumbnailData(
       imageFormat: ImageFormat.JPEG,
       video: file.path,
       timeMs: timeMs,
       quality: quality,
     );
 
-    return CoverData(thumbData: _thumbData, timeMs: timeMs);
+    return CoverData(thumbData: thumbData, timeMs: timeMs);
   }
 
   /// Get the [selectedCover] notifier
@@ -474,7 +474,7 @@ class VideoEditorController extends ChangeNotifier {
     final List<String> filters = [crop, scaleInstruction, rotation, gif];
     filters.removeWhere((item) => item.isEmpty);
     final String filter = filters.isNotEmpty && isFiltersEnabled
-        ? "-filter:v " + filters.join(",")
+        ? "-filter:v ${filters.join(",")}"
         : "";
     final String execute =
         // ignore: unnecessary_string_escapes
@@ -490,7 +490,7 @@ class VideoEditorController extends ChangeNotifier {
         final failStackTrace = await session.getFailStackTrace();
 
         debugPrint(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
+            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n$failStackTrace"}");
 
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },
@@ -598,10 +598,10 @@ class VideoEditorController extends ChangeNotifier {
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     // file generated from the thumbnail library or video source
-    final String? _coverPath = await _generateCoverFile(
+    final String? coverPath = await _generateCoverFile(
       quality: quality,
     );
-    if (_coverPath == null) {
+    if (coverPath == null) {
       debugPrint("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
       return;
     }
@@ -621,10 +621,10 @@ class VideoEditorController extends ChangeNotifier {
     final List<String> filters = [crop, scaleInstruction, rotation];
     filters.removeWhere((item) => item.isEmpty);
     final String filter = filters.isNotEmpty && isFiltersEnabled
-        ? "-filter:v " + filters.join(",")
+        ? "-filter:v ${filters.join(",")}"
         : "";
     // ignore: unnecessary_string_escapes
-    final String execute = "-i \'$_coverPath\' $filter -y $outputPath";
+    final String execute = "-i \'$coverPath\' $filter -y $outputPath";
 
     // PROGRESS CALLBACKS
     await FFmpegKit.executeAsync(
@@ -636,7 +636,7 @@ class VideoEditorController extends ChangeNotifier {
         final failStackTrace = await session.getFailStackTrace();
 
         debugPrint(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
+            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n$failStackTrace"}");
 
         onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
       },

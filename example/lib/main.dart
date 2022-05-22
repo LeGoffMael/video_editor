@@ -40,7 +40,7 @@ class VideoPickerPage extends StatefulWidget {
   const VideoPickerPage({Key? key}) : super(key: key);
 
   @override
-  _VideoPickerPageState createState() => _VideoPickerPageState();
+  State<VideoPickerPage> createState() => _VideoPickerPageState();
 }
 
 class _VideoPickerPageState extends State<VideoPickerPage> {
@@ -48,7 +48,7 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
 
   void _pickVideo() async {
     final XFile? file = await _picker.pickVideo(source: ImageSource.gallery);
-    if (file != null) {
+    if (mounted && file != null) {
       Navigator.push(
           context,
           MaterialPageRoute<void>(
@@ -95,7 +95,7 @@ class VideoEditor extends StatefulWidget {
   final File file;
 
   @override
-  _VideoEditorState createState() => _VideoEditorState();
+  State<VideoEditor> createState() => _VideoEditorState();
 }
 
 class _VideoEditorState extends State<VideoEditor> {
@@ -141,26 +141,26 @@ class _VideoEditorState extends State<VideoEditor> {
         _isExporting.value = false;
         if (!mounted) return;
         if (file != null) {
-          final VideoPlayerController _videoController =
+          final VideoPlayerController videoController =
               VideoPlayerController.file(file);
-          _videoController.initialize().then((value) async {
+          videoController.initialize().then((value) async {
             setState(() {});
-            _videoController.play();
-            _videoController.setLooping(true);
+            videoController.play();
+            videoController.setLooping(true);
             await showDialog(
               context: context,
               builder: (_) => Padding(
                 padding: const EdgeInsets.all(30),
                 child: Center(
                   child: AspectRatio(
-                    aspectRatio: _videoController.value.aspectRatio,
-                    child: VideoPlayer(_videoController),
+                    aspectRatio: videoController.value.aspectRatio,
+                    child: VideoPlayer(videoController),
                   ),
                 ),
               ),
             );
-            await _videoController.pause();
-            _videoController.dispose();
+            await videoController.pause();
+            videoController.dispose();
           });
           _exportText = "Video success export!";
         } else {
@@ -395,12 +395,12 @@ class _VideoEditorState extends State<VideoEditor> {
         width: MediaQuery.of(context).size.width,
         margin: EdgeInsets.symmetric(vertical: height / 4),
         child: TrimSlider(
-            child: TrimTimeline(
-                controller: _controller,
-                margin: const EdgeInsets.only(top: 10)),
             controller: _controller,
             height: height,
-            horizontalMargin: height / 4),
+            horizontalMargin: height / 4,
+            child: TrimTimeline(
+                controller: _controller,
+                margin: const EdgeInsets.only(top: 10))),
       )
     ];
   }

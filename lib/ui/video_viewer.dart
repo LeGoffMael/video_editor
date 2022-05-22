@@ -13,7 +13,7 @@ class VideoViewer extends StatefulWidget {
   final Widget? child;
 
   @override
-  _VideoViewerState createState() => _VideoViewerState();
+  State<VideoViewer> createState() => _VideoViewerState();
 }
 
 class _VideoViewerState extends State<VideoViewer> {
