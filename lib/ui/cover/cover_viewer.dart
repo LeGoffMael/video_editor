@@ -63,7 +63,7 @@ class _CoverViewerState extends State<CoverViewer> {
 
   void _checkIfCoverIsNull() {
     if (widget.controller.selectedCoverVal!.thumbData == null) {
-      widget.controller.generateDefaultCoverThumnail();
+      widget.controller.generateDefaultCoverThumbnail();
     }
   }
 
