@@ -182,6 +182,8 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 | -------------------------------- | --------------------------------- |
 | Color selectedBorderColor = Colors.white | The `selectedBorderColor` param specifies the color of the border around the selected cover thumbnail |
 | double selectedBorderWidth = 2 | The `selectedBorderWidth` param specifies the width of the border around the selected cover thumbnail |
+| Widget? selectedIndicator | The `selectedIndicator` param specifies the `Widget` to show on top of the selected cover |
+| AlignmentGeometry selectedIndicatorAlign = Alignment.bottomRight | The `selectedIndicatorAlign` param specifies where `selectedIndicator` should be shown in the `Stack` |
 
 </details>
 
