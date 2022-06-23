@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
+import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/transform.dart';
@@ -169,52 +170,18 @@ class _CoverSelectionState extends State<CoverSelection>
                             valueListenable: _transform,
                             builder: (_, TransformData transform, __) {
                               return ValueListenableBuilder(
-                                  valueListenable:
-                                      widget.controller.selectedCoverNotifier,
-                                  builder:
-                                      (context, CoverData? selectedCover, __) {
-                                    return InkWell(
-                                        onTap: () => widget.controller
-                                            .updateSelectedCover(coverData),
-                                        child: Container(
-                                            decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: coverData.sameTime(
-                                                            widget.controller
-                                                                .selectedCoverVal!)
-                                                        ? widget
-                                                            .controller
-                                                            .coverStyle
-                                                            .selectedBorderColor
-                                                        : Colors.transparent,
-                                                    width: widget
-                                                        .controller
-                                                        .coverStyle
-                                                        .selectedBorderWidth)),
-                                            child: CropTransform(
-                                              transform: transform,
-                                              child: Container(
-                                                alignment: Alignment.center,
-                                                height: _layout.height,
-                                                width: _layout.width,
-                                                child: Stack(children: [
-                                                  Image(
-                                                      image: MemoryImage(
-                                                          coverData.thumbData!),
-                                                      width: _layout.width,
-                                                      height: _layout.height),
-                                                  CustomPaint(
-                                                    size: _layout,
-                                                    painter: CropGridPainter(
-                                                        _rect.value,
-                                                        showGrid: false,
-                                                        style: widget.controller
-                                                            .cropStyle),
-                                                  )
-                                                ]),
-                                              ),
-                                            )));
-                                  });
+                                valueListenable:
+                                    widget.controller.selectedCoverNotifier,
+                                builder:
+                                    (context, CoverData? selectedCover, __) =>
+                                        _buildSingleCover(
+                                  coverData,
+                                  transform,
+                                  widget.controller.coverStyle,
+                                  isSelected: coverData.sameTime(
+                                      widget.controller.selectedCoverVal!),
+                                ),
+                              );
                             }))
                         .toList()
                         .cast<Widget>(),
@@ -222,5 +189,60 @@ class _CoverSelectionState extends State<CoverSelection>
                 : const SizedBox();
           });
     });
+  }
+
+  Widget _buildSingleCover(
+    CoverData cover,
+    TransformData transform,
+    CoverSelectionStyle coverStyle, {
+    required bool isSelected,
+  }) {
+    return InkWell(
+      onTap: () => widget.controller.updateSelectedCover(cover),
+      child: Stack(
+        alignment: coverStyle.selectedIndicatorAlign,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isSelected
+                    ? coverStyle.selectedBorderColor
+                    : Colors.transparent,
+                width: coverStyle.selectedBorderWidth,
+              ),
+            ),
+            child: CropTransform(
+              transform: transform,
+              child: Container(
+                alignment: Alignment.center,
+                height: _layout.height,
+                width: _layout.width,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image(
+                      image: MemoryImage(cover.thumbData!),
+                      width: _layout.width,
+                      height: _layout.height,
+                    ),
+                    CustomPaint(
+                      size: _layout,
+                      painter: CropGridPainter(
+                        _rect.value,
+                        showGrid: false,
+                        style: widget.controller.cropStyle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          isSelected && coverStyle.selectedIndicator != null
+              ? coverStyle.selectedIndicator!
+              : const SizedBox.shrink(),
+        ],
+      ),
+    );
   }
 }
