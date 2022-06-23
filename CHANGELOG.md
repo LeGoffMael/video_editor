@@ -1,3 +1,9 @@
+## [1.4.3]
+
+- New `onError` param in export functions [#98](https://github.com/seel-channel/video_editor/pull/98)
+- New selectedIndicator param in `CoverSelectionStyle` [#97](https://github.com/seel-channel/video_editor/pull/97)
+- Update dependencies
+
 ## [1.4.2]
 
 - Update to flutter 3 [#91](https://github.com/seel-channel/video_editor/pull/91)
