@@ -137,36 +137,34 @@ class _VideoEditorState extends State<VideoEditor> {
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
       onProgress: (stats, value) => _exportingProgress.value = value,
+      onError: (e, s) => _exportText = "Error on export video :(",
       onCompleted: (file) {
         _isExporting.value = false;
         if (!mounted) return;
-        if (file != null) {
-          final VideoPlayerController videoController =
-              VideoPlayerController.file(file);
-          videoController.initialize().then((value) async {
-            setState(() {});
-            videoController.play();
-            videoController.setLooping(true);
-            await showDialog(
-              context: context,
-              builder: (_) => Padding(
-                padding: const EdgeInsets.all(30),
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: videoController.value.aspectRatio,
-                    child: VideoPlayer(videoController),
-                  ),
+
+        final VideoPlayerController videoController =
+            VideoPlayerController.file(file);
+        videoController.initialize().then((value) async {
+          setState(() {});
+          videoController.play();
+          videoController.setLooping(true);
+          await showDialog(
+            context: context,
+            builder: (_) => Padding(
+              padding: const EdgeInsets.all(30),
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: videoController.value.aspectRatio,
+                  child: VideoPlayer(videoController),
                 ),
               ),
-            );
-            await videoController.pause();
-            videoController.dispose();
-          });
-          _exportText = "Video success export!";
-        } else {
-          _exportText = "Error on export video :(";
-        }
+            ),
+          );
+          await videoController.pause();
+          videoController.dispose();
+        });
 
+        _exportText = "Video success export!";
         setState(() => _exported = true);
         Future.delayed(const Duration(seconds: 2),
             () => setState(() => _exported = false));
@@ -177,21 +175,18 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportCover() async {
     setState(() => _exported = false);
     await _controller.extractCover(
+      onError: (e, s) => _exportText = "Error on cover exportation :(",
       onCompleted: (cover) {
         if (!mounted) return;
 
-        if (cover != null) {
-          _exportText = "Cover exported! ${cover.path}";
-          showDialog(
-            context: context,
-            builder: (_) => Padding(
-              padding: const EdgeInsets.all(30),
-              child: Center(child: Image.memory(cover.readAsBytesSync())),
-            ),
-          );
-        } else {
-          _exportText = "Error on cover exportation :(";
-        }
+        _exportText = "Cover exported! ${cover.path}";
+        showDialog(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(30),
+            child: Center(child: Image.memory(cover.readAsBytesSync())),
+          ),
+        );
 
         setState(() => _exported = true);
         Future.delayed(const Duration(seconds: 2),

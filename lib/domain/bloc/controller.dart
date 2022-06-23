@@ -217,7 +217,7 @@ class VideoEditorController extends ChangeNotifier {
       _updateTrimRange();
     }
 
-    generateDefaultCoverThumnail();
+    generateDefaultCoverThumbnail();
 
     notifyListeners();
   }
@@ -341,7 +341,7 @@ class VideoEditorController extends ChangeNotifier {
   }
 
   /// Generate cover at [startTrim] time in milliseconds
-  void generateDefaultCoverThumnail() async {
+  void generateDefaultCoverThumbnail() async {
     final defaultCover =
         await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);
     updateSelectedCover(defaultCover);
@@ -419,7 +419,9 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Export the video using this edition parameters and return a `File`.
   ///
-  /// The [onCompleted] param must be set to retun the exported [File] video
+  /// The [onCompleted] param must be set to return the exported [File] video.
+  ///
+  /// The [onError] function provides the [Exception] and [StackTrace] that causes the exportation error.
   ///
   /// If the [name] is `null`, then it uses this video filename.
   ///
@@ -442,7 +444,8 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> exportVideo({
-    required void Function(File? file) onCompleted,
+    required void Function(File file) onCompleted,
+    void Function(Object, StackTrace)? onError,
     String? name,
     String? outDir,
     String format = "mp4",
@@ -487,12 +490,19 @@ class VideoEditorController extends ChangeNotifier {
         final state =
             FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
-        final failStackTrace = await session.getFailStackTrace();
 
-        debugPrint(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n$failStackTrace"}");
-
-        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
+        if (code?.isValueSuccess() == true) {
+          onCompleted(File(outputPath));
+        } else {
+          if (onError != null) {
+            onError(
+              Exception(
+                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
+              StackTrace.current,
+            );
+          }
+          return;
+        }
       },
       null,
       onProgress != null
@@ -569,7 +579,9 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Export this selected cover, or by default the first one, return an image [File].
   ///
-  /// The [onCompleted] param must be set to retun the exported [File] cover
+  /// The [onCompleted] param must be set to return the exported [File] cover
+  ///
+  /// The [onError] function provides the [Exception] and [StackTrace] that causes the exportation error.
   ///
   /// If the [name] is `null`, then it uses this video filename.
   ///
@@ -587,7 +599,8 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> extractCover({
-    required void Function(File? file) onCompleted,
+    required void Function(File file) onCompleted,
+    void Function(Object, StackTrace)? onError,
     String? name,
     String? outDir,
     String format = "jpg",
@@ -598,11 +611,14 @@ class VideoEditorController extends ChangeNotifier {
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     // file generated from the thumbnail library or video source
-    final String? coverPath = await _generateCoverFile(
-      quality: quality,
-    );
+    final String? coverPath = await _generateCoverFile(quality: quality);
     if (coverPath == null) {
-      debugPrint("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
+      if (onError != null) {
+        onError(
+          Exception('VideoThumbnail library error while exporting the cover'),
+          StackTrace.current,
+        );
+      }
       return;
     }
     name ??= path.basenameWithoutExtension(file.path);
@@ -633,12 +649,19 @@ class VideoEditorController extends ChangeNotifier {
         final state =
             FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
-        final failStackTrace = await session.getFailStackTrace();
 
-        debugPrint(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n$failStackTrace"}");
-
-        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
+        if (code?.isValueSuccess() == true) {
+          onCompleted(File(outputPath));
+        } else {
+          if (onError != null) {
+            onError(
+              Exception(
+                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
+              StackTrace.current,
+            );
+          }
+          return;
+        }
       },
       null,
       onProgress,
