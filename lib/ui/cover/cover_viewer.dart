@@ -111,7 +111,7 @@ class _CoverViewerState extends State<CoverViewer> {
                               if (_layout != size) {
                                 _layout = size;
                                 // init the widget with controller values
-                                WidgetsBinding.instance!
+                                WidgetsBinding.instance
                                     .addPostFrameCallback((_) {
                                   _scaleRect();
                                 });

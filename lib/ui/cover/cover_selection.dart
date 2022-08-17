@@ -60,7 +60,7 @@ class _CoverSelectionState extends State<CoverSelection>
     widget.controller.addListener(_scaleRect);
 
     // init the widget with controller values
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _scaleRect();
     });
   }
