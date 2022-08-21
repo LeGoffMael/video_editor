@@ -70,8 +70,10 @@ Those Android API level and iOS deployment target are required to uses this pack
 | preferredCropAspectRatio         | Update the aspect ratio of the crop area                            |
 | updateCrop                       | Update the controller crop min and max values                       |
 | getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
-| exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
-| extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  |
+| exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function callback |
+| extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  callback |
+| exportVideoWithFuture            | Return the generated video with the controller parameters as a Future |
+| extractCoverWithFuture           | Return the selected cover with the controller parameters as a result of Future |
 
 ### Widgets
 
