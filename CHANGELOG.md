@@ -1,3 +1,40 @@
+## [1.4.4]
+
+- Massive upgrades without breaking changes.
+- 2 New functions extractCoverWithFuture and exportVideoWithFuture both functions will do same task as default export functions but they will behave like Future. Their return type is Future<File?> and they does not have onCompleted callback. To avoid nests of callback users who want to use future version they can use these functions as well.
+Updated example on how to use them.
+- New capDimension parameter in export functions in which user can limit the max dimension without losing video aspect ratio.
+
+- Now user will have more control over output video
+cappedVideoBitRate nullable parameter (pass 128000 for 128kbps)- will cap the max bitrate of output video
+cappedAudioBitRate nullable parameter (pass 1500000 for 1.5Mbps) - will cap the max bitrate of output audio
+cappedOutputVideoSize nullable parameter - Advanced feature when passed a size in bytes will limit the output file size.
+- cappedOutputVideoSize working
+    - case 1: If cappedOutputVideoSize is not passed _maxDuration parameter value will limit the trim.
+    - case 2: cappedOutputVideoSize is passed , for example 16MB like whatsapp
+      - Step 1: Now on-initialize ffprobe will get the metadata of video to fetch current bitrates.
+      - Step 2: updateMaxDuration function will calculate the max duration a user can select which falls below the cappedOutputVideoSize size.
+        - example 1: A low bitrate file of 16Mb can be of 2-3 minutes or more , trim slider will be adjusted to that max value.
+        - example 2: A high bitrate file whose maxduration was sepcified to be 60 seconds.
+          - case 1: cappedVideoBitRate and cappedAudioBitRate are present
+            - trimslider will be adjusted according to the cappedVideoBitRate and cappedAudioBitRate.
+          - case 2: cappedVideoBitRate and cappedAudioBitRate are absent
+            - trimslider will be adjusted accroding to the maximum duration that can be attained which falls below cappedOutputVideoSize.
+
+- Mute audio functionality given through a value notifier and ffmpeg command is adjusted according to that.
+
+- Output size prediction value notifier is introduced to predict the output size through bitrates and trimmed duration . variable name estimatedOutputSize.
+It can be used with Value listenable builder to show size like whatsapp does. Updated example that shows the filesize and the trimmed duration.
+
+- Introduced Trimmed duration (trimmedDuration) value notitifer to show the duration as user uses trim. Updated example to show that duration.
+
+- croppedDimensions variable will always have latest value which can be used by user to show or operate on. Initially those dimension will be of video size but then as video crop is applied it will have latest dimensions which will be applied on output.
+
+- Added screenshots for new updated exmaple
+
+
+
+
 ## [1.4.3]
 
 - New `onError` param in export functions [#98](https://github.com/seel-channel/video_editor/pull/98)

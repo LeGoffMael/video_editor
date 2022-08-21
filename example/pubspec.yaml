@@ -19,6 +19,7 @@ dependencies:
   image_picker: ^0.8.5+3
   cupertino_icons: ^1.0.4
   video_player: ^2.4.5
+  filesize: ^2.0.1
 
 flutter:
   uses-material-design: true

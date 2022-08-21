@@ -1,5 +1,7 @@
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart'
     show OpacityTransition, SwipeTransition, AnimatedInteractiveViewer;
@@ -109,9 +111,12 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
-    _controller = VideoEditorController.file(widget.file,
-        maxDuration: const Duration(seconds: 30))
-      ..initialize().then((_) => setState(() {}));
+    _controller = VideoEditorController.file(
+      widget.file,
+      maxDuration: const Duration(seconds: 30),
+      cappedOutputVideoSize: 8388608, // 16mb: 16777216,
+      cappedVideoBitRate: 1500000, // 1.5Mbps
+    )..initialize().then((_) => setState(() {}));
     super.initState();
   }
 
@@ -134,6 +139,7 @@ class _VideoEditorState extends State<VideoEditor> {
     _isExporting.value = true;
     // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
     await _controller.exportVideo(
+      capDimension: 720,
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
       onProgress: (stats, value) => _exportingProgress.value = value,
@@ -145,6 +151,7 @@ class _VideoEditorState extends State<VideoEditor> {
         final VideoPlayerController videoController =
             VideoPlayerController.file(file);
         videoController.initialize().then((value) async {
+          log("new Video height ${videoController.value.size.height} and width is ${videoController.value.size.width}");
           setState(() {});
           videoController.play();
           videoController.setLooping(true);
@@ -170,10 +177,50 @@ class _VideoEditorState extends State<VideoEditor> {
             () => setState(() => _exported = false));
       },
     );
+/*  // Example with future
+File? file = await _controller.exportVideoWithFuture(
+      capDimension: 720,
+      preset: VideoExportPreset.medium,
+      customInstruction: "-crf 17",
+      onProgress: (stats, value) => _exportingProgress.value = value,
+      onError: (e, s) => _exportText = "Error on export video :(",
+    );
+   if (file != null) {
+      _isExporting.value = false;
+      if (!mounted) return;
+
+      final VideoPlayerController videoController =
+          VideoPlayerController.file(file);
+      videoController.initialize().then((value) async {
+        setState(() {});
+        videoController.play();
+        videoController.setLooping(true);
+        await showDialog(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(30),
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: videoController.value.aspectRatio,
+                child: VideoPlayer(videoController),
+              ),
+            ),
+          ),
+        );
+        await videoController.pause();
+        videoController.dispose();
+      });
+
+      _exportText = "Video success export!";
+      setState(() => _exported = true);
+      Future.delayed(
+          const Duration(seconds: 2), () => setState(() => _exported = false));
+    } */
   }
 
   void _exportCover() async {
     setState(() => _exported = false);
+    /* // Callback version
     await _controller.extractCover(
       onError: (e, s) => _exportText = "Error on cover exportation :(",
       onCompleted: (cover) {
@@ -192,7 +239,26 @@ class _VideoEditorState extends State<VideoEditor> {
         Future.delayed(const Duration(seconds: 2),
             () => setState(() => _exported = false));
       },
+    ); */
+    // Async version for cover
+    File? cover = await _controller.extractCoverWithFuture(
+      onError: (e, s) => _exportText = "Error on cover exportation :(",
     );
+    if (!mounted) return;
+    if (cover != null) {
+      _exportText = "Cover exported! ${cover.path}";
+      showDialog(
+        context: context,
+        builder: (_) => Padding(
+          padding: const EdgeInsets.all(30),
+          child: Center(child: Image.memory(cover.readAsBytesSync())),
+        ),
+      );
+
+      setState(() => _exported = true);
+      Future.delayed(
+          const Duration(seconds: 2), () => setState(() => _exported = false));
+    }
   }
 
   @override
@@ -241,7 +307,7 @@ class _VideoEditorState extends State<VideoEditor> {
                             ],
                           )),
                           Container(
-                              height: 200,
+                              height: 220,
                               margin: const EdgeInsets.only(top: 10),
                               child: Column(children: [
                                 TabBar(
@@ -273,6 +339,8 @@ class _VideoEditorState extends State<VideoEditor> {
                                       Column(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: _trimSlider()),
                                       Column(
                                           mainAxisAlignment:
@@ -361,6 +429,63 @@ class _VideoEditorState extends State<VideoEditor> {
 
   List<Widget> _trimSlider() {
     return [
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ValueListenableBuilder(
+            valueListenable: _controller.muteAudio,
+            builder: (context, bool value, _) {
+              return InkWell(
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    child: Icon(
+                      value ? Icons.volume_off : Icons.volume_up,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  onTap: () {
+                    if (_controller.muteAudio.value == true) {
+                      _controller.toggleMuteAudio = false;
+                      _controller.video.setVolume(1);
+                    } else {
+                      _controller.toggleMuteAudio = true;
+                      _controller.video.setVolume(0);
+                    }
+                  });
+            },
+          ),
+          const SizedBox(width: 5),
+          ValueListenableBuilder(
+            valueListenable: _controller.estimatedOutputSize,
+            builder: (BuildContext context, int? value, _) {
+              String sizeText =
+                  "${_controller.trimmedDuration.value.inSeconds}s";
+              if (value != null) {
+                sizeText =
+                    "${_controller.trimmedDuration.value.inSeconds}s /~${filesize(value)}";
+              }
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  border: Border.all(color: Colors.white),
+                  borderRadius: const BorderRadius.all(Radius.circular(5)),
+                ),
+                child: Text(
+                  sizeText,
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       AnimatedBuilder(
         animation: _controller.video,
         builder: (_, __) {
