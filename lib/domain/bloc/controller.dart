@@ -772,18 +772,6 @@ class VideoEditorController extends ChangeNotifier {
     } else if (capDimension != null) {
       double tempWidth = croppedDimensions.width;
       double tempHeight = croppedDimensions.height;
-      // Not needed as rotation will be applied after the scale
-      // If rotated changed change dimensions
-/*       if (isRotated) {
-        if ((_rotation == 90) ||
-            (_rotation == 270) ||
-            (_rotation == -90) ||
-            (_rotation == -270)) {
-          log("==> rotated to change dimensions");
-          tempWidth = croppedDimensions.height;
-          tempHeight = croppedDimensions.width;
-        }
-      } */
       if (tempWidth > tempHeight) {
         if (tempWidth > capDimension) {
           // scale according to width
