@@ -1,6 +1,6 @@
 ## [1.4.4]
 
-- Massive upgrades without breaking changes.
+- Massive upgrades without breaking existing functionality.
 - 2 New functions extractCoverWithFuture and exportVideoWithFuture both functions will do same task as default export functions but they will behave like Future. Their return type is Future<File?> and they does not have onCompleted callback. To avoid nests of callback users who want to use future version they can use these functions as well.
 Updated example on how to use them.
 - New capDimension parameter in export functions in which user can limit the max dimension without losing video aspect ratio.
