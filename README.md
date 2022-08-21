@@ -4,6 +4,7 @@
 [![Pub](https://img.shields.io/pub/v/video_editor.svg?logo=flutter&color=blue&style=flat-square)](https://pub.dev/packages/video_editor)
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
+Contains advanced functions to control the video output according to the capped variables and predict output video size before processing of video.
 The changes are then exported with `ffmpeg`.
 
 ## 📖 Installation
@@ -14,7 +15,7 @@ Following steps will help you add this library as a dependency in your flutter p
 
 ```yaml
 dependencies:
-  video_editor: ^1.4.3
+  video_editor: ^1.4.4
 ```
 
 - Run the following command to install the package:
