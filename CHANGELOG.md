@@ -30,7 +30,7 @@ It can be used with Value listenable builder to show size like whatsapp does. Up
 
 - croppedDimensions variable will always have latest value which can be used by user to show or operate on. Initially those dimension will be of video size but then as video crop is applied it will have latest dimensions which will be applied on output.
 
-- Added screenshots for new updated exmaple
+- Added screenshot for new updated exmaple in assets/readme
 
 
 

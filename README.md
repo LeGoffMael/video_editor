@@ -55,9 +55,9 @@ Those Android API level and iOS deployment target are required to uses this pack
 | ----------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![](./assets/readme/crop_video.gif) | ![](./assets/readme/rotate_video.gif) | ![](./assets/readme/cover_viewer.gif) |
 
-| Trim video                              | Trimmer customization                       |
-| --------------------------------------- |  ------------------------------------------ |
-| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/new_trimmer_icons.gif)  |
+| Trim video                              | Trimmer customization                       | Automatic size prediction             |
+| --------------------------------------- |  ------------------------------------------ | ---------------------------           |
+| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/new_trimmer_icons.gif)  | ![](./assets/readme/video-editor.png) |
 
 ## 👀 Usage
 
