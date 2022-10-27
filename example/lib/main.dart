@@ -113,8 +113,8 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     _controller = VideoEditorController.file(
       widget.file,
-      maxDuration: const Duration(seconds: 30),
-      cappedOutputVideoSize: 8388608, // 16mb: 16777216,
+      maxDuration: const Duration(seconds: 50),
+      cappedOutputVideoSize: 8388608, // 8 MB,
       cappedVideoBitRate: 1500000, // 1.5Mbps
     )..initialize().then((_) => setState(() {}));
     super.initState();

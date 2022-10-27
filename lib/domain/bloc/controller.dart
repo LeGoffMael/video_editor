@@ -91,7 +91,7 @@ class VideoEditorController extends ChangeNotifier {
     /// 16777216 bytes ie. 16MB
     int? cappedOutputVideoSize,
   })  : _video = VideoPlayerController.file(file),
-        _maxDuration = maxDuration ?? Duration.zero,
+        maxDuration = ValueNotifier<Duration>(maxDuration ?? Duration.zero),
         cropStyle = cropStyle ?? CropGridStyle(),
         coverStyle = coverStyle ?? CoverSelectionStyle(),
         _cappedVideoBitRate = cappedVideoBitRate,
@@ -126,7 +126,7 @@ class VideoEditorController extends ChangeNotifier {
   final VideoPlayerController _video;
 
   /// The max duration to trim the [file] video
-  Duration _maxDuration;
+  ValueNotifier<Duration> maxDuration;
 
   // Selected cover value
   final ValueNotifier<CoverData?> _selectedCover =
@@ -249,99 +249,75 @@ class VideoEditorController extends ChangeNotifier {
     _video.addListener(_videoListener);
     _video.setLooping(true);
 
-    updateMaxDuration();
-  }
-
-  /// Update [_maxDuration] based on the trim range and the capped values
-  void updateMaxDuration() {
-    /// If max output video size is not null calculate max duration according to total bitrates, if total bitrate is not possible to calculate then fall back to maxDuration value
-    if (_cappedOutputVideoSize != null && (effectiveAudioBitRate != null) ||
-        (effectiveVideoBitRate != null)) {
-      int totalBitrate = effectiveVideoBitRate ?? 0;
-      if (muteAudio.value == false) {
-        totalBitrate += (effectiveAudioBitRate ?? 0);
-      }
-
-      /// max possible duration will be bitrate/8 we will get bytes in 1 second then divide max output video size by it
-      final maxPossibleDuration =
-          Duration(seconds: (_cappedOutputVideoSize! * 8) ~/ totalBitrate);
-
-      // maxDuration cannot be bigger than videoDuration
-      if (maxPossibleDuration >= videoDuration) {
-        _maxDuration = videoDuration;
-      } else {
-        _maxDuration = maxPossibleDuration;
-      }
-    } else {
-      // if no [maxDuration] param given, maxDuration is the videoDuration
-      _maxDuration =
-          _maxDuration == Duration.zero ? videoDuration : _maxDuration;
-    }
-
-    // Trim straight away when maxDuration is lower than video duration
-    if (_maxDuration < videoDuration) {
-      updateTrim(
-          0.0, _maxDuration.inMilliseconds / videoDuration.inMilliseconds);
-    } else {
-      _updateTrimRange();
-    }
-
+    _updateMaxDuration();
     generateDefaultCoverThumbnail();
-
-    notifyListeners();
   }
 
-  Future<void> _setCurrentBitRates() => getMetaData(
-        file.path,
-        onCompleted: (Map<dynamic, dynamic>? metadata) {
-          if (metadata == null) {
-            effectiveAudioBitRate = null;
-            effectiveVideoBitRate = null;
-            return;
-          }
+  Future<void> _setCurrentBitRates() async {
+    if (_cappedOutputVideoSize == null &&
+        _cappedVideoBitRate == null &&
+        _cappedOutputVideoSize == null) {
+      return;
+    }
 
-          int abr = 0;
-          int vbr = 0;
-          for (var item in metadata['streams']) {
-            // A video can have multiple
-            if (item['codec_type'] == 'audio' && item['bit_rate'] != null) {
-              abr = abr + int.parse(item['bit_rate']);
-            } else if (item['codec_type'] == 'video' &&
-                item['bit_rate'] != null) {
-              vbr = vbr + int.parse(item['bit_rate']);
-            }
+    Completer completer = Completer();
+    await getMetaData(
+      file.path,
+      onCompleted: (Map<dynamic, dynamic>? metadata) {
+        if (metadata == null) {
+          effectiveAudioBitRate = null;
+          effectiveVideoBitRate = null;
+          return;
+        }
+
+        int abr = 0;
+        int vbr = 0;
+        for (var item in metadata['streams']) {
+          // A video can have multiple
+          if (item['codec_type'] == 'audio' && item['bit_rate'] != null) {
+            abr = abr + int.parse(item['bit_rate']);
+          } else if (item['codec_type'] == 'video' &&
+              item['bit_rate'] != null) {
+            vbr = vbr + int.parse(item['bit_rate']);
           }
-          if (abr != 0) {
-            // Current bitrate of audio track
-            currentAudioBitRate = abr;
-            // If capped bitrate is not null then compare wheather the current bitrate is greater than capped.
-            // If current bitrate exceeds capped bitrate then set effective bitrate to be capped otherwise set it to current bitrate to avoid processing on that track.
-            if (_cappedAudioBitRate != null &&
-                currentAudioBitRate! > _cappedAudioBitRate!) {
-              // Downgrade bitrate on export
-              effectiveAudioBitRate = _cappedAudioBitRate;
-            } else {
-              effectiveAudioBitRate = currentAudioBitRate;
-            }
+        }
+        if (abr != 0) {
+          // Current bitrate of audio track
+          currentAudioBitRate = abr;
+          // If capped bitrate is not null then compare wheather the current bitrate is greater than capped.
+          // If current bitrate exceeds capped bitrate then set effective bitrate to be capped otherwise set it to current bitrate to avoid processing on that track.
+          if (_cappedAudioBitRate != null &&
+              currentAudioBitRate! > _cappedAudioBitRate!) {
+            // Downgrade bitrate on export
+            effectiveAudioBitRate = _cappedAudioBitRate;
           } else {
-            effectiveAudioBitRate = null;
+            effectiveAudioBitRate = currentAudioBitRate;
           }
-          if (vbr != 0) {
-            currentVideoBitRate = vbr;
-            // If capped bitrate is not null then compare wheather the current bitrate is greater than capped.
-            // If current bitrate exceeds capped bitrate then set effective bitrate to be capped otherwise set it to current bitrate to avoid processing on that track.
-            if (_cappedVideoBitRate != null &&
-                currentVideoBitRate! > _cappedVideoBitRate!) {
-              // Downgrade bitrate on export
-              effectiveVideoBitRate = _cappedVideoBitRate;
-            } else {
-              effectiveVideoBitRate = currentVideoBitRate;
-            }
+        } else {
+          effectiveAudioBitRate = null;
+        }
+        if (vbr != 0) {
+          currentVideoBitRate = vbr;
+          // If capped bitrate is not null then compare wheather the current bitrate is greater than capped.
+          // If current bitrate exceeds capped bitrate then set effective bitrate to be capped otherwise set it to current bitrate to avoid processing on that track.
+          if (_cappedVideoBitRate != null &&
+              currentVideoBitRate! > _cappedVideoBitRate!) {
+            // Downgrade bitrate on export
+            effectiveVideoBitRate = _cappedVideoBitRate;
           } else {
-            effectiveVideoBitRate = null;
+            effectiveVideoBitRate = currentVideoBitRate;
           }
-        },
-      );
+        } else {
+          effectiveVideoBitRate = null;
+        }
+
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+      },
+    );
+    return completer.future;
+  }
 
   @override
   Future<void> dispose() async {
@@ -426,7 +402,7 @@ class VideoEditorController extends ChangeNotifier {
       _isTrimmed = false;
     }
     trimmedDuration.value = _trimEnd - _trimStart;
-    updateEstimatedOutputFileSize();
+    _updateEstimatedOutputFileSize();
     _checkUpdateDefaultCover();
 
     notifyListeners();
@@ -435,12 +411,50 @@ class VideoEditorController extends ChangeNotifier {
   /// Toggle mute
   set toggleMuteAudio(bool mute) {
     muteAudio.value = mute;
-    updateMaxDuration();
-    updateEstimatedOutputFileSize();
+    _updateMaxDuration();
+    _updateEstimatedOutputFileSize();
+  }
+
+  /// Update [_maxDuration] based on the trim range and the capped values
+  void _updateMaxDuration() {
+    /// If max output video size is not null calculate max duration according to total bitrates, if total bitrate is not possible to calculate then fall back to maxDuration value
+    if (_cappedOutputVideoSize != null && (effectiveAudioBitRate != null) ||
+        (effectiveVideoBitRate != null)) {
+      int totalBitrate = effectiveVideoBitRate ?? 0;
+      if (muteAudio.value == false) {
+        totalBitrate += (effectiveAudioBitRate ?? 0);
+      }
+
+      /// max possible duration will be bitrate/8 we will get bytes in 1 second then divide max output video size by it
+      final maxPossibleDuration =
+          Duration(seconds: (_cappedOutputVideoSize! * 8) ~/ totalBitrate);
+
+      // maxDuration cannot be bigger than videoDuration
+      if (maxPossibleDuration >= videoDuration) {
+        maxDuration.value = videoDuration;
+      } else {
+        maxDuration.value = maxPossibleDuration;
+      }
+    } else {
+      // if no [maxDuration] param given, maxDuration is the videoDuration
+      maxDuration.value = maxDuration.value == Duration.zero
+          ? videoDuration
+          : maxDuration.value;
+    }
+
+    // TODO
+    // max trim is determined by max duration value
+    // if [trimmedDuration] is bigger than the new calculated maxDuration, max trim must be reduced
+    // if [trimmedDuration] is smaller than the new calculated maxDuration, no need to change the current trim values
+
+    updateTrim(
+        0, maxDuration.value.inMilliseconds / videoDuration.inMilliseconds);
+
+    notifyListeners();
   }
 
   /// Update estimated output file size to show value as widget, null means cannot be determined and non null value is in bytes.
-  void updateEstimatedOutputFileSize() {
+  void _updateEstimatedOutputFileSize() {
     if (effectiveAudioBitRate == null && effectiveVideoBitRate == null) {
       estimatedOutputSize.value = null;
       return;
@@ -467,11 +481,6 @@ class VideoEditorController extends ChangeNotifier {
     _isTrimming = value;
     notifyListeners();
   }
-
-  /// Get the [maxDuration] param
-  ///
-  /// if no [maxDuration] param given in VideoEditorController constructor, maxDuration is equal to the videoDuration
-  Duration get maxDuration => _maxDuration;
 
   /// Get the [trimPosition], which is the videoPosition in the trim slider
   ///
