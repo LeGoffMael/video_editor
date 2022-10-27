@@ -1,3 +1,7 @@
+## [1.4.4]
+
+- Fix export error when space in output path [#108](https://github.com/seel-channel/video_editor/pull/108)
+
 ## [1.4.3]
 
 - New `onError` param in export functions [#98](https://github.com/seel-channel/video_editor/pull/98)
