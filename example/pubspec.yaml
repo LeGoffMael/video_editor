@@ -16,9 +16,9 @@ dependencies:
     path: ../
 
   helpers: ^1.1.4
-  image_picker: ^0.8.5+3
-  cupertino_icons: ^1.0.4
-  video_player: ^2.4.5
+  image_picker: ^0.8.6
+  cupertino_icons: ^1.0.5
+  video_player: ^2.4.7
 
 flutter:
   uses-material-design: true
