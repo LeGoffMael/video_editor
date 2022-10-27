@@ -90,7 +90,10 @@ class VideoEditorController extends ChangeNotifier {
 
     /// 16777216 bytes ie. 16MB
     int? cappedOutputVideoSize,
-  })  : _video = VideoPlayerController.file(file),
+  })  : _video = VideoPlayerController.file(File(
+          /// https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
+          Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
+        )),
         maxDuration = ValueNotifier<Duration>(maxDuration ?? Duration.zero),
         cropStyle = cropStyle ?? CropGridStyle(),
         coverStyle = coverStyle ?? CoverSelectionStyle(),
@@ -923,7 +926,7 @@ class VideoEditorController extends ChangeNotifier {
     );
 
     // ignore: unnecessary_string_escapes
-    final command = "-i \'$coverPath\' $filters -y \'$outputPath\'";
+    final command = "-i \'$coverPath\' $filters -y \"$outputPath\"";
 
     // PROGRESS CALLBACKS
     await FFmpegKit.executeAsync(
