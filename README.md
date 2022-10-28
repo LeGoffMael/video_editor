@@ -201,6 +201,14 @@ dependency_overrides:
   ffmpeg_kit_flutter_min_gpl: ^5.1.0-LTS
 ```
 
+On Android, if it gives a `minSdkVersion` error, try adding the following in `/android/app/src/main/AndroidManifest.xml`.
+
+```xml
+<manifest xmlns:android=... package=... xmlns:tools="http://schemas.android.com/tools" >
+  <uses-sdk tools:overrideLibrary="com.arthenica.ffmpegkit.flutter"/>
+</manifest>
+```
+
 ## ✨ Main contributors
 
 <table>
