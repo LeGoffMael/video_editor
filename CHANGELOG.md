@@ -4,7 +4,7 @@
 
 ## [1.4.4]
 
-- Fix export error when space in output path [#108](https://github.com/seel-channel/video_editor/pull/108)
+- Fix export error when space in output path [#108](https://github.com/seel-channel/video_editor/pull/108) by [@martingeorgiu](https://github.com/martingeorgiu)
 - Bump `video_thumbnail` dependencies to 0.5.3 so upgrade android compileSdkVersion to 33
 
 ## [1.4.3]
@@ -64,38 +64,39 @@
 
 ## [1.2.2]
 
-MAËL LE GOFF changes
+[@legoffmael](https://github.com/LeGoffMael) changes
 
 - Error MissingPluginException with video_thumbnail fixed [#49](https://github.com/seel-channel/video_editor/pull/49)
 - Add epoch to exportation names by default [#50](https://github.com/seel-channel/video_editor/pull/50)
 
 ## [1.2.1]
 
-MAËL LE GOFF changes
+[@legoffmael](https://github.com/LeGoffMael) changes
 
 - Added icons customization in trimmer style [#45](https://github.com/seel-channel/video_editor/pull/45)
 - Improved cover exportation + apply cover quality in thumbnail [#46](https://github.com/seel-channel/video_editor/pull/46)
 - Fix exportation directory issues + add exportation parameters (cover format and exportation directory) [#47](https://github.com/seel-channel/video_editor/pull/47)
 - Change how video dimensions are computed + update example and libraries [#48](https://github.com/seel-channel/video_editor/pull/48)
 
-FELIPE MURGUIA changes
+[FELIPE MURGUIA](https://github.com/seel-channel) changes
 
 - Migrated to FFMPEG KIT xd
 
 ## [1.2.0]
 
-MAËL LE GOFF changes
+[@legoffmael](https://github.com/LeGoffMael) changes
 
-- Trim slider timeline
-- New smooth trimmer when video durarion > maxDuration
-- Export video cover
-- Crop's bugs fixed
-- Video export's bugs fixed
-- Portrait scale's bugs fixed
+- Portrait scale's bugs fixed [#32](https://github.com/seel-channel/video_editor/pull/32)
+- Video export's bugs fixed [#31](https://github.com/seel-channel/video_editor/pull/31)
+- Crop's bugs fixed [#30](https://github.com/seel-channel/video_editor/pull/30)
+- Export video cover [#29](https://github.com/seel-channel/video_editor/pull/29)
+- Trim slider timeline [#28](https://github.com/seel-channel/video_editor/pull/28)
+- New smooth trimmer when video durarion > maxDuration [#27](https://github.com/seel-channel/video_editor/pull/27)
+
 
 ## [1.1.0]
 
-- Sound Null Safety Migration
+- Sound Null Safety Migration [#21](https://github.com/seel-channel/video_editor/pull/21) by [@paricleu](https://github.com/paricleu)
 - Preffered Aspect Ratio on crop
 - Improved gesture on crop screen
 
