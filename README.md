@@ -1,7 +1,8 @@
 # Flutter video editor
 
-[![Platform](https://img.shields.io/badge/Platform-Flutter-yellow.svg)](https://flutter.io)
-[![Pub](https://img.shields.io/pub/v/video_editor.svg?logo=flutter&color=blue&style=flat-square)](https://pub.dev/packages/video_editor)
+[![Pub](https://img.shields.io/pub/v/video_editor.svg)](https://pub.dev/packages/video_editor)
+[![ffmpeg_kit_flutter](https://img.shields.io/badge/ffmpeg_kit_flutter-v5.1.0-green)](https://pub.dev/packages/ffmpeg_kit_flutter)
+[![GitHub stars](https://img.shields.io/github/stars/seel-channel/video_editor?style=social)](https://github.com/seel-channel/video_editor/stargazers)
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
 The changes are then exported with `ffmpeg`.
@@ -29,7 +30,7 @@ $ flutter packages get
 import 'package:video_editor/video_editor.dart';
 ```
 
-Since [v1.3.0](https://github.com/seel-channel/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. (More info on [flutter FFmepeg kit](https://github.com/tanersener/ffmpeg-kit/tree/main/flutter/flutter))
+Since [v1.3.0](https://github.com/seel-channel/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. (More info on [flutter FFmepeg kit](https://github.com/arthenica/ffmpeg-kit/tree/main/flutter/flutter))
 
 Those Android API level and iOS deployment target are required to uses this package. If you're planing to target older devices, check about the [LTS release](#1-how-to-use-ffmpeg-lts-release).
 
@@ -191,13 +192,13 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 
 ### 1. How to use FFmpeg LTS release
 
-Since [v1.3.0](https://github.com/seel-channel/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. If you want to support a wider range of devices you should use the LTS release. [more info](https://github.com/tanersener/ffmpeg-kit#10-lts-releases)
+Since [v1.3.0](https://github.com/seel-channel/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. If you want to support a wider range of devices you should use the LTS release. [more info](https://github.com/arthenica/ffmpeg-kit/tree/main/flutter/flutter#24-lts-releases)
 
 
 To do this, add this to your `pubspec.yaml`:
 ```yaml
 dependency_overrides:
-  ffmpeg_kit_flutter_min_gpl: ^4.5.1-LTS
+  ffmpeg_kit_flutter_min_gpl: ^5.1.0-LTS
 ```
 
 ## ✨ Main contributors
