@@ -1,6 +1,11 @@
+## [1.5.0]
+
+- Upgrade `flutter_ffmpeg_kit` to latest 5.1.0
+
 ## [1.4.4]
 
 - Fix export error when space in output path [#108](https://github.com/seel-channel/video_editor/pull/108)
+- Bump `video_thumbnail` dependencies to 0.5.3 so upgrade android compileSdkVersion to 33
 
 ## [1.4.3]
 
