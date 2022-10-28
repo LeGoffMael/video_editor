@@ -7,6 +7,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/helpers.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -193,6 +194,29 @@ class VideoEditorController extends ChangeNotifier {
     if (preferredCropAspectRatio == value) return;
     _preferredCropAspectRatio = value;
     notifyListeners();
+  }
+
+  /// Update the [preferredCropAspectRatio] param and init/reset crop parameters [minCrop] & [maxCrop] to match the desired ratio
+  /// The crop area will be at the center of the layout
+  void cropAspectRatio(double? value) {
+    preferredCropAspectRatio = value;
+
+    if (value != null) {
+      final newSize =
+          computeSizeWithRatio(Size(_videoWidth, _videoHeight), value);
+
+      Rect centerCrop = Rect.fromCenter(
+        center: Offset(_videoWidth / 2, _videoHeight / 2),
+        width: newSize.width,
+        height: newSize.height,
+      );
+
+      minCrop =
+          Offset(centerCrop.left / _videoWidth, centerCrop.top / _videoHeight);
+      maxCrop = Offset(
+          centerCrop.right / _videoWidth, centerCrop.bottom / _videoHeight);
+      notifyListeners();
+    }
   }
 
   //----------------//

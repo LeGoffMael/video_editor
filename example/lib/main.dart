@@ -111,7 +111,10 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     _controller = VideoEditorController.file(widget.file,
         maxDuration: const Duration(seconds: 30))
-      ..initialize().then((_) => setState(() {}));
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.cropAspectRatio(1);
+      });
     super.initState();
   }
 
