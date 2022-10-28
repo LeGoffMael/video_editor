@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
@@ -69,7 +70,7 @@ class VideoEditorController extends ChangeNotifier {
     CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
   })  : _video = VideoPlayerController.file(File(
-        /// https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
+          // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
           Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
         )),
         _maxDuration = maxDuration ?? Duration.zero,
@@ -250,7 +251,7 @@ class VideoEditorController extends ChangeNotifier {
   /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#crop))
   ///
   /// The result is in the format `crop=w:h:x,y`
-  Future<String> _getCrop() async {
+  String _getCrop() {
     int enddx = (_videoWidth * maxCrop.dx).floor();
     int enddy = (_videoHeight * maxCrop.dy).floor();
     int startdx = (_videoWidth * minCrop.dx).floor();
@@ -469,8 +470,7 @@ class VideoEditorController extends ChangeNotifier {
     final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
         ? "-ss $_trimStart -to $_trimEnd"
         : "";
-    final String crop =
-        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
@@ -487,14 +487,14 @@ class VideoEditorController extends ChangeNotifier {
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y \"$outputPath\"";
 
     // PROGRESS CALLBACKS
-    await FFmpegKit.executeAsync(
+    FFmpegKit.executeAsync(
       execute,
       (session) async {
         final state =
             FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
 
-        if (code?.isValueSuccess() == true) {
+        if (ReturnCode.isSuccess(code)) {
           onCompleted(File(outputPath));
         } else {
           if (onError != null) {
@@ -629,8 +629,7 @@ class VideoEditorController extends ChangeNotifier {
     final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     // CALCULATE FILTERS
-    final String crop =
-        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
@@ -646,14 +645,14 @@ class VideoEditorController extends ChangeNotifier {
     final String execute = "-i \'$coverPath\' $filter -y $outputPath";
 
     // PROGRESS CALLBACKS
-    await FFmpegKit.executeAsync(
+    FFmpegKit.executeAsync(
       execute,
       (session) async {
         final state =
             FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
 
-        if (code?.isValueSuccess() == true) {
+        if (ReturnCode.isSuccess(code)) {
           onCompleted(File(outputPath));
         } else {
           if (onError != null) {

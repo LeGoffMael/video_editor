@@ -1,9 +1,10 @@
 .fvm
 .vscode
 
+pubspec.lock
+
 # Miscellaneous
 *.class
-*.lock
 *.log
 *.pyc
 *.swp
