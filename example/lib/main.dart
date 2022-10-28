@@ -113,7 +113,7 @@ class _VideoEditorState extends State<VideoEditor> {
         maxDuration: const Duration(seconds: 30))
       ..initialize().then((_) {
         setState(() {});
-        _controller.cropAspectRatio(1);
+        _controller.cropAspectRatio(9 / 16);
       });
     super.initState();
   }

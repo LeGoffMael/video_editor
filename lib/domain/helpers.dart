@@ -6,14 +6,18 @@ Size computeSizeWithRatio(Size layout, double r) {
     return layout;
   }
 
-  if (layout.aspectRatio > r) {
-    return Size(layout.height / r, layout.height);
+  if (r == 1) {
+    return Size(layout.shortestSide, layout.shortestSide);
   }
 
-  if (layout.aspectRatio < r) {
-    return Size(layout.width, layout.width * r);
-  }
+  /// Resize on width when the layout ratio is greater than 1 (16:9, 4:3, ...)
+  /// or if layout ratio is equal to 1 (1:1) and desired ratio grater than 1 (16:9, 4:3, ...)
+  final resizeWidth =
+      layout.aspectRatio > 1 || (layout.aspectRatio == 1 && r > 1);
 
-  assert(false, 'An error occured while computing the aspectRatio');
-  return Size.zero;
+  if (resizeWidth) {
+    return Size(layout.height * r, layout.height);
+  } else {
+    return Size(layout.width, layout.width / r);
+  }
 }
