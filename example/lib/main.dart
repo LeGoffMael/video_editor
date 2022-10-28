@@ -134,6 +134,7 @@ class _VideoEditorState extends State<VideoEditor> {
           builder: (BuildContext context) =>
               CropScreen(controller: _controller)));
 
+  /// Example of exporting the video using the callback call
   void _exportVideo() async {
     _exportingProgress.value = 0;
     _isExporting.value = true;
@@ -181,27 +182,27 @@ class _VideoEditorState extends State<VideoEditor> {
     );
   }
 
+  /// Example to export the cover image using the future call
   void _exportCover() async {
     setState(() => _exported = false);
-    await _controller.extractCover(
+    final cover = await _controller.extractCoverWithFuture(
       onError: (e, s) => _exportText = "Error on cover exportation :(",
-      onCompleted: (cover) {
-        if (!mounted) return;
-
-        _exportText = "Cover exported! ${cover.path}";
-        showDialog(
-          context: context,
-          builder: (_) => Padding(
-            padding: const EdgeInsets.all(30),
-            child: Center(child: Image.memory(cover.readAsBytesSync())),
-          ),
-        );
-
-        setState(() => _exported = true);
-        Future.delayed(const Duration(seconds: 2),
-            () => setState(() => _exported = false));
-      },
     );
+    if (!mounted) return;
+    if (cover != null) {
+      _exportText = "Cover exported! ${cover.path}";
+      showDialog(
+        context: context,
+        builder: (_) => Padding(
+          padding: const EdgeInsets.all(30),
+          child: Center(child: Image.memory(cover.readAsBytesSync())),
+        ),
+      );
+
+      setState(() => _exported = true);
+      Future.delayed(
+          const Duration(seconds: 2), () => setState(() => _exported = false));
+    }
   }
 
   @override

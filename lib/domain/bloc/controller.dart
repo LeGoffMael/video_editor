@@ -840,6 +840,43 @@ class VideoEditorController extends ChangeNotifier {
     );
   }
 
+  /// For parameters documentation see [exportVideo].
+  Future<File?> exportVideoWithFuture({
+    void Function(Object, StackTrace)? onError,
+    String? name,
+    String? outDir,
+    String format = "mp4",
+    double? scale,
+    String? customInstruction,
+    void Function(Statistics, double)? onProgress,
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+    double? capDimension,
+    bool overwriteFile = true,
+    int dimensionDivisibleBy = 2,
+  }) async {
+    Completer<File?> completer = Completer<File?>();
+    await exportVideo(
+      name: name,
+      outDir: outDir,
+      format: format,
+      scale: scale,
+      customInstruction: customInstruction,
+      preset: preset,
+      isFiltersEnabled: isFiltersEnabled,
+      capDimension: capDimension,
+      overwriteFile: overwriteFile,
+      dimensionDivisibleBy: dimensionDivisibleBy,
+      onProgress: onProgress,
+      onCompleted: (file) => completer.complete(file),
+      onError: (e, s) {
+        if (onError != null) onError(e, s);
+        completer.complete(null);
+      },
+    );
+    return completer.future;
+  }
+
   //------------//
   //COVER EXPORT//
   //------------//
@@ -952,5 +989,38 @@ class VideoEditorController extends ChangeNotifier {
       null,
       onProgress,
     );
+  }
+
+  /// For parameters documentation see [extractCover].
+  Future<File?> extractCoverWithFuture({
+    void Function(Object, StackTrace)? onError,
+    String? name,
+    String? outDir,
+    String format = "jpg",
+    double? scale,
+    int quality = 100,
+    void Function(Statistics)? onProgress,
+    bool isFiltersEnabled = true,
+    double? capDimension,
+    bool overwriteFile = true,
+  }) async {
+    Completer<File?> completer = Completer<File?>();
+    await extractCover(
+      name: name,
+      outDir: outDir,
+      format: format,
+      scale: scale,
+      quality: quality,
+      isFiltersEnabled: isFiltersEnabled,
+      capDimension: capDimension,
+      overwriteFile: overwriteFile,
+      onProgress: onProgress,
+      onCompleted: (file) => completer.complete(file),
+      onError: (e, s) {
+        if (onError != null) onError(e, s);
+        completer.complete(null);
+      },
+    );
+    return completer.future;
   }
 }

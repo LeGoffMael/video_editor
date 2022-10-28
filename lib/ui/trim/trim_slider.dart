@@ -216,7 +216,6 @@ class _TrimSliderState extends State<TrimSlider>
   }
 
   void _updateControllerTrim() {
-    print('_updateControllerTrim');
     final double width = _fullLayout.width;
     widget.controller.updateTrim(
         (_rect.left + _thumbnailPosition - widget.horizontalMargin) / width,
@@ -253,8 +252,6 @@ class _TrimSliderState extends State<TrimSlider>
         builder: (_, maxDuration, __) {
           return LayoutBuilder(builder: (_, contrainst) {
             _initLayout(contrainst, maxDuration);
-
-            print(_rect);
 
             return SizedBox(
                 width: _fullLayout.width,
