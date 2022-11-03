@@ -489,7 +489,7 @@ class CropScreen extends StatelessWidget {
               buildSplashTap("16:9", 16 / 9,
                   padding: const EdgeInsets.symmetric(horizontal: 10)),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("4:5", 4 / 5,
+              buildSplashTap("9:16", 9 / 16,
                   padding: const EdgeInsets.symmetric(horizontal: 10)),
               buildSplashTap("NO", null,
                   padding: const EdgeInsets.only(right: 10)),

@@ -67,3 +67,7 @@ Rect translateRectIntoBounds(Size layout, Rect rect) {
 
   return rect;
 }
+
+/// Return the scale for [rect] to fit [layout]
+double scaleToSize(Size layout, Rect rect) =>
+    min(layout.width / rect.width, layout.height / rect.height);

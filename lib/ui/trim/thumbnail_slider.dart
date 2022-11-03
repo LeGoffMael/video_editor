@@ -35,6 +35,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;
 
+  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
   late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
@@ -65,6 +66,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
+      _viewerSize,
       widget.controller,
     );
   }
@@ -111,6 +113,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, box) {
+      _viewerSize = box.biggest;
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;

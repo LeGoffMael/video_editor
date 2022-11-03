@@ -131,5 +131,14 @@ void main() {
     test('right + top', () => expect(translateRectIntoBounds(layout, Rect.fromLTRB(layout.width, -side, layout.width + side, 0)), Rect.fromLTRB(layout.width - side, 0, layout.width, side)));
     test('left + bottom', () => expect(translateRectIntoBounds(layout, Rect.fromLTRB(-side, layout.height, 0, layout.height + side)), Rect.fromLTRB(0, layout.height - side, side, layout.height)));
     test('right + bottom', () => expect(translateRectIntoBounds(layout, Rect.fromLTRB(layout.width, layout.height, layout.width + side, layout.height + side)), Rect.fromLTRB(layout.width - side, layout.height - side, layout.width, layout.height)));
-});
+  });
+
+  group('scaleToSize', () {
+    const maxSize = Size(375.0, 464.0);
+
+    test('centered 16/9 rect (equals to layout)', () => expect(scaleToSize(maxSize, const Rect.fromLTRB(0.0, 0.0, 375.0, 210.9)), 1));
+    test('centered small 16/9 rect', () => expect(scaleToSize(maxSize, const Rect.fromLTRB(51.4, 28.6, 314.7, 176.7)), maxSize.width / 263.3));
+    test('centered 9/16 rect', () => expect(scaleToSize(maxSize, const Rect.fromLTRB(128.2, 0.0, 246.8, 210.9)), maxSize.height / 210.9));
+    test('centered 1/1 rect', () => expect(scaleToSize(maxSize, const Rect.fromLTRB(51.4, 28.6, 314.7, 176.7)), maxSize.width / 263.3));
+  });
 }

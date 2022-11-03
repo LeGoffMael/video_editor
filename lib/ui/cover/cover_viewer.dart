@@ -28,6 +28,7 @@ class _CoverViewerState extends State<CoverViewer> {
   final ValueNotifier<TransformData> _transform =
       ValueNotifier<TransformData>(TransformData());
 
+  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
 
   late VideoEditorController _controller;
@@ -55,6 +56,7 @@ class _CoverViewerState extends State<CoverViewer> {
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
+      _viewerSize,
       _controller,
     );
 
@@ -82,59 +84,62 @@ class _CoverViewerState extends State<CoverViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: _transform,
-        builder: (_, TransformData transform, __) => ValueListenableBuilder(
-            valueListenable: widget.controller.selectedCoverNotifier,
-            builder: (context, CoverData? selectedCover, __) => selectedCover
-                        ?.thumbData ==
-                    null
-                ? Center(child: Text(widget.noCoverText))
-                : CropTransform(
-                    transform: transform,
-                    child: Center(
-                        child: Stack(children: [
-                      AspectRatio(
-                        aspectRatio: widget.controller.video.value.aspectRatio,
-                        child: Image(
-                          image: MemoryImage(selectedCover!.thumbData!),
-                          alignment: Alignment.center,
-                        ),
-                      ),
-                      AspectRatio(
-                          aspectRatio:
-                              widget.controller.video.value.aspectRatio,
-                          child: LayoutBuilder(
-                            builder: (_, constraints) {
-                              Size size = Size(
-                                  constraints.maxWidth, constraints.maxHeight);
-                              if (_layout != size) {
-                                _layout = size;
-                                // init the widget with controller values
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  _scaleRect();
-                                });
-                              }
+    return LayoutBuilder(builder: (_, constraints) {
+      _viewerSize = constraints.biggest;
 
-                              return ValueListenableBuilder(
-                                valueListenable: _rect,
-                                builder: (_, Rect value, __) {
-                                  return CustomPaint(
-                                    size: Size.infinite,
-                                    painter: CropGridPainter(
-                                      value,
-                                      style: _controller.cropStyle,
-                                      showGrid: false,
-                                      showCenterRects: _controller
-                                              .preferredCropAspectRatio ==
-                                          null,
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ))
-                    ])))));
+      return ValueListenableBuilder(
+          valueListenable: _transform,
+          builder: (_, TransformData transform, __) => ValueListenableBuilder(
+              valueListenable: widget.controller.selectedCoverNotifier,
+              builder: (context, CoverData? selectedCover, __) =>
+                  selectedCover?.thumbData == null
+                      ? Center(child: Text(widget.noCoverText))
+                      : CropTransform(
+                          transform: transform,
+                          child: Center(
+                              child: Stack(children: [
+                            AspectRatio(
+                              aspectRatio:
+                                  widget.controller.video.value.aspectRatio,
+                              child: Image(
+                                image: MemoryImage(selectedCover!.thumbData!),
+                                alignment: Alignment.center,
+                              ),
+                            ),
+                            AspectRatio(
+                                aspectRatio:
+                                    widget.controller.video.value.aspectRatio,
+                                child: LayoutBuilder(
+                                  builder: (_, constraints) {
+                                    Size size = constraints.biggest;
+                                    if (_layout != size) {
+                                      _layout = size;
+                                      // init the widget with controller values
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        _scaleRect();
+                                      });
+                                    }
+
+                                    return ValueListenableBuilder(
+                                      valueListenable: _rect,
+                                      builder: (_, Rect value, __) {
+                                        return CustomPaint(
+                                          size: Size.infinite,
+                                          painter: CropGridPainter(
+                                            value,
+                                            style: _controller.cropStyle,
+                                            showGrid: false,
+                                            showCenterRects: _controller
+                                                    .preferredCropAspectRatio ==
+                                                null,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ))
+                          ])))));
+    });
   }
 }
