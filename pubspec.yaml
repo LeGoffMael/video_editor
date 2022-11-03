@@ -1,5 +1,5 @@
 name: video_editor
-version: 1.5.0
+version: 1.5.1
 description: A video editor that allows to trim, crop, rotate and scale video with a very flexible UI Design.
 repository: https://github.com/seel-channel/video_editor
 

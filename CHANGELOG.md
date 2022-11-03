@@ -1,3 +1,9 @@
+## [1.5.1]
+
+- New `aspectRatio` param in initialize function, to set up the crop param without opening the crop view
+- Fix some crop resize issue with ratio
+- Fix scale issue
+
 ## [1.5.0]
 
 - Upgrade `flutter_ffmpeg_kit` to latest 5.1.0
