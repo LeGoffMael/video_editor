@@ -226,7 +226,8 @@ class VideoEditorController extends ChangeNotifier {
   /// Attempts to open the given video [File] and load metadata about the video.
   /// Update the trim position depending on the [maxDuration] param
   /// Generate the default cover [_selectedCover]
-  Future<void> initialize() async {
+  /// Initialize [minCrop] & [maxCrop] values based on [aspectRatio]
+  Future<void> initialize({double? aspectRatio}) async {
     await _video.initialize().then((_) {
       _videoWidth = _video.value.size.width;
       _videoHeight = _video.value.size.height;
@@ -245,6 +246,7 @@ class VideoEditorController extends ChangeNotifier {
       _updateTrimRange();
     }
 
+    cropAspectRatio(aspectRatio);
     generateDefaultCoverThumbnail();
 
     notifyListeners();
