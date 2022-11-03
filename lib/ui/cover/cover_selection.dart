@@ -38,6 +38,8 @@ class _CoverSelectionState extends State<CoverSelection>
     with AutomaticKeepAliveClientMixin {
   double _aspect = 1.0, _width = 1.0;
   Duration? _startTrim, _endTrim;
+
+  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
@@ -76,6 +78,7 @@ class _CoverSelectionState extends State<CoverSelection>
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
+      _viewerSize,
       widget.controller,
     );
 
@@ -150,6 +153,7 @@ class _CoverSelectionState extends State<CoverSelection>
   Widget build(BuildContext context) {
     super.build(context);
     return LayoutBuilder(builder: (_, box) {
+      _viewerSize = box.biggest;
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;

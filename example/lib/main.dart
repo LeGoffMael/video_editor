@@ -111,7 +111,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     _controller = VideoEditorController.file(widget.file,
         maxDuration: const Duration(seconds: 30))
-      ..initialize().then((_) => setState(() {}));
+      ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
     super.initState();
   }
 
@@ -486,7 +486,7 @@ class CropScreen extends StatelessWidget {
               buildSplashTap("16:9", 16 / 9,
                   padding: const EdgeInsets.symmetric(horizontal: 10)),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("4:5", 4 / 5,
+              buildSplashTap("9:16", 9 / 16,
                   padding: const EdgeInsets.symmetric(horizontal: 10)),
               buildSplashTap("NO", null,
                   padding: const EdgeInsets.only(right: 10)),
