@@ -375,7 +375,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Build [InteractiveViewer] scaling automatically depending on [rect] size and position
   Widget _buildTransformContainer(TransformData transform, Rect rect) {
-    final Rect _gestureArea = _expandedRect();
+    final Rect gestureArea = _expandedRect();
     // TODO : CropTransform and VideoViewer must be parents of [LayoutBuilder] to apply rotation and compute size properly
     return CropTransform(
       transform: transform,
@@ -390,12 +390,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
                     onPanUpdate: _onPanUpdate,
                     child: Container(
                       margin: EdgeInsets.only(
-                        left: max(0.0, _gestureArea.left),
-                        top: max(0.0, _gestureArea.top),
+                        left: max(0.0, gestureArea.left),
+                        top: max(0.0, gestureArea.top),
                       ),
                       color: Colors.transparent,
-                      width: _gestureArea.width,
-                      height: _gestureArea.height,
+                      width: gestureArea.width,
+                      height: gestureArea.height,
                     )),
               ])
             : _buildPaint(rect),

@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
-import 'package:video_editor/domain/entities/transform_data.dart';
 
 class AnimatedCropViewer extends StatefulWidget {
   final Widget child;
@@ -66,20 +65,20 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
   /// inspired from https://stackoverflow.com/a/68917749/7943785
   Matrix4 getMatrixToFitRect() {
     // Offset center of layout
-    final _layoutRect = Rect.fromPoints(
+    final layoutRect = Rect.fromPoints(
         Offset.zero, Offset(widget.layout.width, widget.layout.height));
 
-    Rect _rect = widget.rect;
+    Rect rect = widget.rect;
     if (widget.rect == Rect.zero) {
-      _rect = _layoutRect;
+      rect = layoutRect;
     }
 
     // scale from layout and rect
-    FittedSizes fs = applyBoxFit(BoxFit.contain, _rect.size, widget.layout);
+    FittedSizes fs = applyBoxFit(BoxFit.contain, rect.size, widget.layout);
     double scaleX = fs.destination.width / fs.source.width;
     double scaleY = fs.destination.height / fs.source.height;
 
-    return pointToPoint(min(scaleX, scaleY), _rect.center, _layoutRect.center);
+    return pointToPoint(min(scaleX, scaleY), rect.center, layoutRect.center);
   }
 
   Matrix4 pointToPoint(

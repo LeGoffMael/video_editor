@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:helpers/helpers.dart'
-    show OpacityTransition, SwipeTransition, AnimatedInteractiveViewer;
+import 'package:helpers/helpers.dart' show OpacityTransition, SwipeTransition;
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
