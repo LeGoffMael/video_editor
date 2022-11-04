@@ -40,7 +40,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
   final ValueNotifier<TransformData> _transform =
       ValueNotifier<TransformData>(TransformData());
 
+  /// The size used by the view
   Size _viewerSize = Size.zero;
+
+  // The maximum size of the crop area
+  // Same aspect ratio then the video
   Size _layout = Size.zero;
 
   late VideoEditorController _controller;
@@ -130,16 +134,17 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
       return ValueListenableBuilder(
         valueListenable: _transform,
-        builder: (_, TransformData transform, __) => Center(
-          child: CropTransform(
-            transform: transform,
-            child: widget.showGrid
-                ? _buildLayout(transform)
-                : VideoViewer(
-                    controller: _controller,
-                    child: _buildLayout(transform),
-                  ),
-          ),
+        builder: (_, TransformData transform, __) => CropTransform(
+          transform: transform,
+          child: widget.showGrid
+              ? AspectRatio(
+                  aspectRatio: _controller.video.value.aspectRatio,
+                  child: _buildLayout(transform),
+                )
+              : VideoViewer(
+                  controller: _controller,
+                  child: _buildLayout(transform),
+                ),
         ),
       );
     });
@@ -147,15 +152,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   Widget _buildLayout(TransformData transform) {
     return LayoutBuilder(builder: (_, constraints) {
-      // final size = (widget.controller.rotation == 90 ||
-      //         widget.controller.rotation == 270)
-      //     ? constraints.biggest.flipped
-      //     : constraints.biggest;
       final size = constraints.biggest;
       final didLayoutSizeChanged = _layout != size;
       _layout = size;
-
-      print('_buildLayout ${widget.controller.rotation}, $size');
 
       if (widget.showGrid) {
         if (didLayoutSizeChanged) {
