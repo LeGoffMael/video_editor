@@ -442,74 +442,64 @@ class CropScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(30),
-          child: Column(children: [
-            // TODO : rotation buttons should be on top of [CropGridViewer]
-            Row(children: [
-              Expanded(
-                child: IconButton(
-                  onPressed: () =>
-                      controller.rotate90Degrees(RotateDirection.left),
-                  icon: const Icon(Icons.rotate_left),
-                ),
-              ),
-              Expanded(
-                child: IconButton(
-                  onPressed: () =>
-                      controller.rotate90Degrees(RotateDirection.right),
-                  icon: const Icon(Icons.rotate_right),
-                ),
-              )
-            ]),
-            const SizedBox(height: 15),
+        child: Column(children: [
+          // TODO : rotation buttons should be on top of [CropGridViewer]
+          Row(children: [
             Expanded(
-              child:
-                  CropGridViewer(controller: controller, horizontalMargin: 60),
+              child: IconButton(
+                onPressed: () =>
+                    controller.rotate90Degrees(RotateDirection.left),
+                icon: const Icon(Icons.rotate_left),
+              ),
             ),
-            const SizedBox(height: 15),
-            Row(children: [
-              Expanded(
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Center(
-                    child: Text(
-                      "CANCEL",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+            Expanded(
+              child: IconButton(
+                onPressed: () =>
+                    controller.rotate90Degrees(RotateDirection.right),
+                icon: const Icon(Icons.rotate_right),
               ),
-              buildSplashTap("16:9", 16 / 9,
-                  padding: const EdgeInsets.symmetric(horizontal: 10)),
-              buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("9:16", 9 / 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 10)),
-              buildSplashTap("NO", null,
-                  padding: const EdgeInsets.only(right: 10)),
-              Expanded(
-                child: IconButton(
-                  onPressed: () {
-                    //2 WAYS TO UPDATE CROP
-                    //WAY 1:
-                    controller.updateCrop();
-                    /*WAY 2:
-                    controller.minCrop = controller.cacheMinCrop;
-                    controller.maxCrop = controller.cacheMaxCrop;
-                    */
-                    Navigator.pop(context);
-                  },
-                  icon: const Center(
-                    child: Text(
-                      "OK",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-            ]),
+            )
           ]),
-        ),
+          const SizedBox(height: 15),
+          Expanded(
+            child: CropGridViewer(controller: controller, horizontalMargin: 60),
+          ),
+          const SizedBox(height: 15),
+          Row(children: [
+            Expanded(
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Center(
+                  child: Text(
+                    "CANCEL",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+            buildSplashTap("16:9", 16 / 9,
+                padding: const EdgeInsets.symmetric(horizontal: 10)),
+            buildSplashTap("1:1", 1 / 1),
+            buildSplashTap("9:16", 9 / 16,
+                padding: const EdgeInsets.symmetric(horizontal: 10)),
+            buildSplashTap("NO", null,
+                padding: const EdgeInsets.only(right: 10)),
+            Expanded(
+              child: IconButton(
+                onPressed: () {
+                  controller.updateCrop();
+                  Navigator.pop(context);
+                },
+                icon: const Center(
+                  child: Text(
+                    "OK",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+        ]),
       ),
     );
   }
