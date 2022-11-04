@@ -9,13 +9,17 @@ import 'package:video_editor/ui/transform.dart';
 
 class CropGridViewer extends StatefulWidget {
   /// It is the viewer that allows you to crop the video
-  const CropGridViewer({
+  const CropGridViewer({Key? key, required this.controller})
+      : showGrid = false,
+        scaleAfter = false,
+        super(key: key);
+
+  const CropGridViewer.grid({
     Key? key,
     required this.controller,
-    this.showGrid = true,
-    this.horizontalMargin = 0.0,
     this.scaleAfter = false,
-  }) : super(key: key);
+  })  : showGrid = true,
+        super(key: key);
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
   final VideoEditorController controller;
@@ -24,11 +28,6 @@ class CropGridViewer extends StatefulWidget {
   /// Set this param to `false` to display the preview of the cropped video
   final bool showGrid;
 
-  /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view,
-  /// so in case of a change the new layout can be computed properly (i.e after a rotation)
-  final double horizontalMargin;
-
-  /// TODO
   /// Only useful when [showGrid] is `true`
   final bool scaleAfter;
 

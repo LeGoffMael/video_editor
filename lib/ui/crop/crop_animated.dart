@@ -63,12 +63,10 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
     if (widget.scaleAfter) {
       // to update interactive view only at the end of cropping action (to improve performances ?), similar behavior as iOS photo
       if (!widget.controller.isCropping) {
-        animateMatrix4(
-            getMatrixToFitRect()); // TODO : position error after rotation
+        animateMatrix4(getMatrixToFitRect());
       }
     } else {
-      animateMatrix4(
-          getMatrixToFitRect()); // TODO : position error after rotation
+      animateMatrix4(getMatrixToFitRect());
     }
     super.didUpdateWidget(oldWidget);
   }

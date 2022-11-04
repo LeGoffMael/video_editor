@@ -212,10 +212,7 @@ class _VideoEditorState extends State<VideoEditor> {
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
                               Stack(alignment: Alignment.center, children: [
-                                CropGridViewer(
-                                  controller: _controller,
-                                  showGrid: false,
-                                ),
+                                CropGridViewer(controller: _controller),
                                 AnimatedBuilder(
                                   animation: _controller.video,
                                   builder: (_, __) => OpacityTransition(
@@ -461,9 +458,7 @@ class CropScreen extends StatelessWidget {
             )
           ]),
           const SizedBox(height: 15),
-          Expanded(
-            child: CropGridViewer(controller: controller, horizontalMargin: 60),
-          ),
+          Expanded(child: CropGridViewer.grid(controller: controller)),
           const SizedBox(height: 15),
           Row(children: [
             Expanded(
