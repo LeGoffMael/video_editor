@@ -60,14 +60,14 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
 
   @override
   void didUpdateWidget(covariant AnimatedCropViewer oldWidget) {
-    if (widget.scaleAfter) {
-      // to update interactive view only at the end of cropping action (to improve performances ?), similar behavior as iOS photo
-      if (!widget.controller.isCropping) {
-        animateMatrix4(getMatrixToFitRect());
-      }
-    } else {
-      animateMatrix4(getMatrixToFitRect());
-    }
+    // if (widget.scaleAfter) {
+    //   // to update interactive view only at the end of cropping action (to improve performances ?), similar behavior as iOS photo
+    //   if (!widget.controller.isCropping) {
+    //     animateMatrix4(getMatrixToFitRect());
+    //   }
+    // } else {
+    //   animateMatrix4(getMatrixToFitRect());
+    // }
     super.didUpdateWidget(oldWidget);
   }
 
@@ -101,8 +101,10 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
         height: widget.rect.height + expandedPosition.height);
   }
 
-  void _onPanStart(DragStartDetails details) {
-    final Offset pos = details.localPosition;
+  void _onPanStart(ScaleStartDetails details) {
+    _onInteractionStart(details);
+
+    final Offset pos = details.localFocalPoint;
 
     _boundary = _CropBoundaries.none;
 
@@ -133,24 +135,17 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
         }
       }
     }
+
+    setState(() {});
     widget.controller.isCropping = true;
   }
 
-  void _onPanUpdate(DragUpdateDetails details) {
+  void _onPanUpdate(ScaleUpdateDetails details) {
     if (_boundary != _CropBoundaries.none) {
-      final Offset delta = details.delta;
+      final Offset delta = details.focalPointDelta;
 
       switch (_boundary) {
         case _CropBoundaries.inside:
-          final Offset pos = widget.rect.topLeft + delta;
-          widget.onChangeRect(
-            Rect.fromLTWH(
-              pos.dx.clamp(0, widget.layout.width - widget.rect.width),
-              pos.dy.clamp(0, widget.layout.height - widget.rect.height),
-              widget.rect.width,
-              widget.rect.height,
-            ),
-          );
           break;
         // CORNERS
         case _CropBoundaries.topLeft:
@@ -233,7 +228,10 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
       }
     }
 
-    widget.onChangeRect(Rect.fromLTRB(left, top, right, bottom));
+    if (_boundary != _CropBoundaries.none &&
+        _boundary != _CropBoundaries.inside) {
+      widget.onChangeRect(Rect.fromLTRB(left, top, right, bottom));
+    }
   }
 
   //----------------//
@@ -310,37 +308,32 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
 
   @override
   Widget build(BuildContext context) {
-    final Rect gestureArea = _expandedRect();
-
-    return InteractiveViewer(
-      transformationController: _controller,
-      onInteractionStart: _onInteractionStart,
-      clipBehavior: Clip.none,
-      child: VideoViewer(
-        controller: widget.controller,
-        child: Stack(children: [
-          widget.child,
-          GestureDetector(
-            onPanEnd: (_) {
-              if (_boundary != _CropBoundaries.none) {
-                widget.controller
-                    .updateCacheCropFromLayout(widget.layout, widget.rect);
-              }
-            },
-            onPanStart: _onPanStart,
-            onPanUpdate: _onPanUpdate,
-            child: Container(
-              margin: EdgeInsets.only(
-                left: max(0.0, gestureArea.left),
-                top: max(0.0, gestureArea.top),
-              ),
-              color: Colors.transparent,
-              width: gestureArea.width,
-              height: gestureArea.height,
-            ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        InteractiveViewer(
+          transformationController: _controller,
+          panEnabled: _boundary == _CropBoundaries.inside ||
+              _boundary == _CropBoundaries.none,
+          onInteractionStart: _onPanStart,
+          onInteractionUpdate: _onPanUpdate,
+          onInteractionEnd: (_) {
+            if (_boundary != _CropBoundaries.none &&
+                _boundary != _CropBoundaries.inside) {
+              animateMatrix4(getMatrixToFitRect());
+            }
+          },
+          boundaryMargin: EdgeInsets.only(
+            left: widget.rect.left / _controller.value.getMaxScaleOnAxis(),
+            top: widget.rect.top / _controller.value.getMaxScaleOnAxis(),
+            right: widget.rect.right - widget.rect.width,
+            bottom: widget.rect.bottom - widget.rect.height,
           ),
-        ]),
-      ),
+          minScale: 0.1,
+          child: VideoViewer(controller: widget.controller),
+        ),
+        widget.child
+      ],
     );
   }
 }

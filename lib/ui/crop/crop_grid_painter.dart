@@ -182,6 +182,9 @@ class CropGridPainter extends CustomPainter {
   }
 
   @override
+  bool hitTest(Offset position) => false;
+
+  @override
   bool shouldRepaint(CropGridPainter oldDelegate) => true;
 
   @override
