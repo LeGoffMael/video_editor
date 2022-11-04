@@ -75,14 +75,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _controller.cacheMinCrop = _controller.minCrop;
 
       // init the crop area with preferredCropAspectRatio
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateRect();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateRect());
     } else {
       // init the widget with controller values if it is not the croping screen
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scaleRect();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
     }
 
     super.initState();
