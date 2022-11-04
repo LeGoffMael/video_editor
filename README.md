@@ -5,7 +5,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/seel-channel/video_editor?style=social)](https://github.com/seel-channel/video_editor/stargazers)
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
-The changes are then exported using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library.
+
+The exportation is made using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library, which does not support all platforms (only iOS, Android & macOS).
 
 ## 📖 Installation
 
@@ -39,12 +40,14 @@ Those Android API level and iOS deployment target are required to uses this pack
 <tr>
 <th align="center">Android<br>API Level</th>
 <th align="center">iOS Minimum<br>Deployment Target</th>
+<th align="center">macOS Minimum<br>Deployment Target</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td align="center">24</td>
 <td align="center">12.1</td>
+<td align="center">10.15</td>
 </tr>
 </tbody>
 </table>
