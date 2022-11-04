@@ -21,7 +21,7 @@ class TrimTimeline extends StatefulWidget {
   final EdgeInsets margin;
 
   @override
-  _TrimTimelineState createState() => _TrimTimelineState();
+  State<TrimTimeline> createState() => _TrimTimelineState();
 }
 
 class _TrimTimelineState extends State<TrimTimeline> {
@@ -29,11 +29,11 @@ class _TrimTimelineState extends State<TrimTimeline> {
 
   @override
   void initState() {
-    final Duration _duration =
+    final Duration duration =
         widget.controller.maxDuration < widget.controller.videoDuration
             ? widget.controller.maxDuration
             : widget.controller.videoDuration;
-    _timeGap = (_duration.inSeconds / (widget.secondGap + 1)).ceil();
+    _timeGap = (duration.inSeconds / (widget.secondGap + 1)).ceil();
     super.initState();
   }
 

@@ -3,9 +3,11 @@ import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/helpers.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -68,7 +70,10 @@ class VideoEditorController extends ChangeNotifier {
     TrimSliderStyle? trimStyle,
     CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
-  })  : _video = VideoPlayerController.file(file),
+  })  : _video = VideoPlayerController.file(File(
+          // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
+          Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
+        )),
         _maxDuration = maxDuration ?? Duration.zero,
         cropStyle = cropStyle ?? CropGridStyle(),
         coverStyle = coverStyle ?? CoverSelectionStyle(),
@@ -191,6 +196,29 @@ class VideoEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update the [preferredCropAspectRatio] param and init/reset crop parameters [minCrop] & [maxCrop] to match the desired ratio
+  /// The crop area will be at the center of the layout
+  void cropAspectRatio(double? value) {
+    preferredCropAspectRatio = value;
+
+    if (value != null) {
+      final newSize =
+          computeSizeWithRatio(Size(_videoWidth, _videoHeight), value);
+
+      Rect centerCrop = Rect.fromCenter(
+        center: Offset(_videoWidth / 2, _videoHeight / 2),
+        width: newSize.width,
+        height: newSize.height,
+      );
+
+      minCrop =
+          Offset(centerCrop.left / _videoWidth, centerCrop.top / _videoHeight);
+      maxCrop = Offset(
+          centerCrop.right / _videoWidth, centerCrop.bottom / _videoHeight);
+      notifyListeners();
+    }
+  }
+
   //----------------//
   //VIDEO CONTROLLER//
   //----------------//
@@ -198,7 +226,8 @@ class VideoEditorController extends ChangeNotifier {
   /// Attempts to open the given video [File] and load metadata about the video.
   /// Update the trim position depending on the [maxDuration] param
   /// Generate the default cover [_selectedCover]
-  Future<void> initialize() async {
+  /// Initialize [minCrop] & [maxCrop] values based on [aspectRatio]
+  Future<void> initialize({double? aspectRatio}) async {
     await _video.initialize().then((_) {
       _videoWidth = _video.value.size.width;
       _videoHeight = _video.value.size.height;
@@ -217,7 +246,8 @@ class VideoEditorController extends ChangeNotifier {
       _updateTrimRange();
     }
 
-    generateDefaultCoverThumnail();
+    cropAspectRatio(aspectRatio);
+    generateDefaultCoverThumbnail();
 
     notifyListeners();
   }
@@ -247,7 +277,7 @@ class VideoEditorController extends ChangeNotifier {
   /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#crop))
   ///
   /// The result is in the format `crop=w:h:x,y`
-  Future<String> _getCrop() async {
+  String _getCrop() {
     int enddx = (_videoWidth * maxCrop.dx).floor();
     int enddy = (_videoHeight * maxCrop.dy).floor();
     int startdx = (_videoWidth * minCrop.dx).floor();
@@ -341,7 +371,7 @@ class VideoEditorController extends ChangeNotifier {
   }
 
   /// Generate cover at [startTrim] time in milliseconds
-  void generateDefaultCoverThumnail() async {
+  void generateDefaultCoverThumbnail() async {
     final defaultCover =
         await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);
     updateSelectedCover(defaultCover);
@@ -352,14 +382,14 @@ class VideoEditorController extends ChangeNotifier {
   /// return [CoverData] depending on [timeMs] milliseconds
   Future<CoverData> generateCoverThumbnail(
       {int timeMs = 0, int quality = 10}) async {
-    final Uint8List? _thumbData = await VideoThumbnail.thumbnailData(
+    final Uint8List? thumbData = await VideoThumbnail.thumbnailData(
       imageFormat: ImageFormat.JPEG,
       video: file.path,
       timeMs: timeMs,
       quality: quality,
     );
 
-    return CoverData(thumbData: _thumbData, timeMs: timeMs);
+    return CoverData(thumbData: thumbData, timeMs: timeMs);
   }
 
   /// Get the [selectedCover] notifier
@@ -419,7 +449,9 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Export the video using this edition parameters and return a `File`.
   ///
-  /// The [onCompleted] param must be set to retun the exported [File] video
+  /// The [onCompleted] param must be set to return the exported [File] video.
+  ///
+  /// The [onError] function provides the [Exception] and [StackTrace] that causes the exportation error.
   ///
   /// If the [name] is `null`, then it uses this video filename.
   ///
@@ -442,7 +474,8 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> exportVideo({
-    required void Function(File? file) onCompleted,
+    required void Function(File file) onCompleted,
+    void Function(Object, StackTrace)? onError,
     String? name,
     String? outDir,
     String format = "mp4",
@@ -463,8 +496,7 @@ class VideoEditorController extends ChangeNotifier {
     final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
         ? "-ss $_trimStart -to $_trimEnd"
         : "";
-    final String crop =
-        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
@@ -474,25 +506,32 @@ class VideoEditorController extends ChangeNotifier {
     final List<String> filters = [crop, scaleInstruction, rotation, gif];
     filters.removeWhere((item) => item.isEmpty);
     final String filter = filters.isNotEmpty && isFiltersEnabled
-        ? "-filter:v " + filters.join(",")
+        ? "-filter:v ${filters.join(",")}"
         : "";
     final String execute =
         // ignore: unnecessary_string_escapes
-        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
+        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y \"$outputPath\"";
 
     // PROGRESS CALLBACKS
-    await FFmpegKit.executeAsync(
+    FFmpegKit.executeAsync(
       execute,
       (session) async {
         final state =
             FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
-        final failStackTrace = await session.getFailStackTrace();
 
-        debugPrint(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
-
-        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
+        if (ReturnCode.isSuccess(code)) {
+          onCompleted(File(outputPath));
+        } else {
+          if (onError != null) {
+            onError(
+              Exception(
+                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
+              StackTrace.current,
+            );
+          }
+          return;
+        }
       },
       null,
       onProgress != null
@@ -569,7 +608,9 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Export this selected cover, or by default the first one, return an image [File].
   ///
-  /// The [onCompleted] param must be set to retun the exported [File] cover
+  /// The [onCompleted] param must be set to return the exported [File] cover
+  ///
+  /// The [onError] function provides the [Exception] and [StackTrace] that causes the exportation error.
   ///
   /// If the [name] is `null`, then it uses this video filename.
   ///
@@ -587,7 +628,8 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> extractCover({
-    required void Function(File? file) onCompleted,
+    required void Function(File file) onCompleted,
+    void Function(Object, StackTrace)? onError,
     String? name,
     String? outDir,
     String format = "jpg",
@@ -598,11 +640,14 @@ class VideoEditorController extends ChangeNotifier {
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     // file generated from the thumbnail library or video source
-    final String? _coverPath = await _generateCoverFile(
-      quality: quality,
-    );
-    if (_coverPath == null) {
-      debugPrint("ERROR ON COVER EXTRACTION WITH VideoThumbnail LIBRARY");
+    final String? coverPath = await _generateCoverFile(quality: quality);
+    if (coverPath == null) {
+      if (onError != null) {
+        onError(
+          Exception('VideoThumbnail library error while exporting the cover'),
+          StackTrace.current,
+        );
+      }
       return;
     }
     name ??= path.basenameWithoutExtension(file.path);
@@ -610,8 +655,7 @@ class VideoEditorController extends ChangeNotifier {
     final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     // CALCULATE FILTERS
-    final String crop =
-        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
@@ -621,24 +665,31 @@ class VideoEditorController extends ChangeNotifier {
     final List<String> filters = [crop, scaleInstruction, rotation];
     filters.removeWhere((item) => item.isEmpty);
     final String filter = filters.isNotEmpty && isFiltersEnabled
-        ? "-filter:v " + filters.join(",")
+        ? "-filter:v ${filters.join(",")}"
         : "";
     // ignore: unnecessary_string_escapes
-    final String execute = "-i \'$_coverPath\' $filter -y $outputPath";
+    final String execute = "-i \'$coverPath\' $filter -y $outputPath";
 
     // PROGRESS CALLBACKS
-    await FFmpegKit.executeAsync(
+    FFmpegKit.executeAsync(
       execute,
       (session) async {
         final state =
             FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
-        final failStackTrace = await session.getFailStackTrace();
 
-        debugPrint(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
-
-        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
+        if (ReturnCode.isSuccess(code)) {
+          onCompleted(File(outputPath));
+        } else {
+          if (onError != null) {
+            onError(
+              Exception(
+                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
+              StackTrace.current,
+            );
+          }
+          return;
+        }
       },
       null,
       onProgress,

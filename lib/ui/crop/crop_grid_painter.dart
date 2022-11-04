@@ -28,15 +28,15 @@ class CropGridPainter extends CustomPainter {
 
     // when scaling, the positions might not be exactly accurates
     // so add an extra margin to be sure to overlay all video
-    final _margin = showGrid ? 0.0 : 1.0;
+    final margin = showGrid ? 0.0 : 1.0;
 
     // extract [rect] area from the canvas
     canvas.drawPath(
       Path.combine(
         PathOperation.difference,
         Path()
-          ..addRect(Rect.fromLTWH(-_margin, -_margin, size.width + _margin * 2,
-              size.height + _margin * 2)),
+          ..addRect(Rect.fromLTWH(-margin, -margin, size.width + margin * 2,
+              size.height + margin * 2)),
         Path()
           ..addRect(rect)
           ..close(),

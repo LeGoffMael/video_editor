@@ -40,7 +40,7 @@ class VideoPickerPage extends StatefulWidget {
   const VideoPickerPage({Key? key}) : super(key: key);
 
   @override
-  _VideoPickerPageState createState() => _VideoPickerPageState();
+  State<VideoPickerPage> createState() => _VideoPickerPageState();
 }
 
 class _VideoPickerPageState extends State<VideoPickerPage> {
@@ -48,7 +48,7 @@ class _VideoPickerPageState extends State<VideoPickerPage> {
 
   void _pickVideo() async {
     final XFile? file = await _picker.pickVideo(source: ImageSource.gallery);
-    if (file != null) {
+    if (mounted && file != null) {
       Navigator.push(
           context,
           MaterialPageRoute<void>(
@@ -95,7 +95,7 @@ class VideoEditor extends StatefulWidget {
   final File file;
 
   @override
-  _VideoEditorState createState() => _VideoEditorState();
+  State<VideoEditor> createState() => _VideoEditorState();
 }
 
 class _VideoEditorState extends State<VideoEditor> {
@@ -111,7 +111,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     _controller = VideoEditorController.file(widget.file,
         maxDuration: const Duration(seconds: 30))
-      ..initialize().then((_) => setState(() {}));
+      ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
     super.initState();
   }
 
@@ -137,36 +137,34 @@ class _VideoEditorState extends State<VideoEditor> {
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
       onProgress: (stats, value) => _exportingProgress.value = value,
+      onError: (e, s) => _exportText = "Error on export video :(",
       onCompleted: (file) {
         _isExporting.value = false;
         if (!mounted) return;
-        if (file != null) {
-          final VideoPlayerController _videoController =
-              VideoPlayerController.file(file);
-          _videoController.initialize().then((value) async {
-            setState(() {});
-            _videoController.play();
-            _videoController.setLooping(true);
-            await showDialog(
-              context: context,
-              builder: (_) => Padding(
-                padding: const EdgeInsets.all(30),
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: _videoController.value.aspectRatio,
-                    child: VideoPlayer(_videoController),
-                  ),
+
+        final VideoPlayerController videoController =
+            VideoPlayerController.file(file);
+        videoController.initialize().then((value) async {
+          setState(() {});
+          videoController.play();
+          videoController.setLooping(true);
+          await showDialog(
+            context: context,
+            builder: (_) => Padding(
+              padding: const EdgeInsets.all(30),
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: videoController.value.aspectRatio,
+                  child: VideoPlayer(videoController),
                 ),
               ),
-            );
-            await _videoController.pause();
-            _videoController.dispose();
-          });
-          _exportText = "Video success export!";
-        } else {
-          _exportText = "Error on export video :(";
-        }
+            ),
+          );
+          await videoController.pause();
+          videoController.dispose();
+        });
 
+        _exportText = "Video success export!";
         setState(() => _exported = true);
         Future.delayed(const Duration(seconds: 2),
             () => setState(() => _exported = false));
@@ -177,21 +175,18 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportCover() async {
     setState(() => _exported = false);
     await _controller.extractCover(
+      onError: (e, s) => _exportText = "Error on cover exportation :(",
       onCompleted: (cover) {
         if (!mounted) return;
 
-        if (cover != null) {
-          _exportText = "Cover exported! ${cover.path}";
-          showDialog(
-            context: context,
-            builder: (_) => Padding(
-              padding: const EdgeInsets.all(30),
-              child: Center(child: Image.memory(cover.readAsBytesSync())),
-            ),
-          );
-        } else {
-          _exportText = "Error on cover exportation :(";
-        }
+        _exportText = "Cover exported! ${cover.path}";
+        showDialog(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(30),
+            child: Center(child: Image.memory(cover.readAsBytesSync())),
+          ),
+        );
 
         setState(() => _exported = true);
         Future.delayed(const Duration(seconds: 2),
@@ -395,12 +390,12 @@ class _VideoEditorState extends State<VideoEditor> {
         width: MediaQuery.of(context).size.width,
         margin: EdgeInsets.symmetric(vertical: height / 4),
         child: TrimSlider(
-            child: TrimTimeline(
-                controller: _controller,
-                margin: const EdgeInsets.only(top: 10)),
             controller: _controller,
             height: height,
-            horizontalMargin: height / 4),
+            horizontalMargin: height / 4,
+            child: TrimTimeline(
+                controller: _controller,
+                margin: const EdgeInsets.only(top: 10))),
       )
     ];
   }
@@ -489,7 +484,7 @@ class CropScreen extends StatelessWidget {
               buildSplashTap("16:9", 16 / 9,
                   padding: const EdgeInsets.symmetric(horizontal: 10)),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("4:5", 4 / 5,
+              buildSplashTap("9:16", 9 / 16,
                   padding: const EdgeInsets.symmetric(horizontal: 10)),
               buildSplashTap("NO", null,
                   padding: const EdgeInsets.only(right: 10)),

@@ -24,7 +24,7 @@ class ThumbnailSlider extends StatefulWidget {
   final VideoEditorController controller;
 
   @override
-  _ThumbnailSliderState createState() => _ThumbnailSliderState();
+  State<ThumbnailSlider> createState() => _ThumbnailSliderState();
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
@@ -35,6 +35,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;
 
+  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
   late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
@@ -45,7 +46,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     widget.controller.addListener(_scaleRect);
 
     // init the widget with controller values
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _scaleRect();
     });
 
@@ -65,6 +66,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
+      _viewerSize,
       widget.controller,
     );
   }
@@ -73,19 +75,23 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final String path = widget.controller.file.path;
     final int duration = widget.controller.video.value.duration.inMilliseconds;
     final double eachPart = duration / _thumbnails;
-    List<Uint8List> _byteList = [];
+    List<Uint8List> byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
-      Uint8List? _bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.JPEG,
-        video: path,
-        timeMs: (eachPart * i).toInt(),
-        quality: widget.quality,
-      );
-      if (_bytes != null) {
-        _byteList.add(_bytes);
+      try {
+        final Uint8List? bytes = await VideoThumbnail.thumbnailData(
+          imageFormat: ImageFormat.JPEG,
+          video: path,
+          timeMs: (eachPart * i).toInt(),
+          quality: widget.quality,
+        );
+        if (bytes != null) {
+          byteList.add(bytes);
+        }
+      } catch (e) {
+        debugPrint(e.toString());
       }
 
-      yield _byteList;
+      yield byteList;
     }
   }
 
@@ -107,6 +113,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, box) {
+      _viewerSize = box.biggest;
       final double width = box.maxWidth;
       if (_width != width) {
         _width = width;

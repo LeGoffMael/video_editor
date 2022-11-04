@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/domain/helpers.dart';
 
 class TransformData {
   TransformData({
@@ -11,25 +14,16 @@ class TransformData {
   final Offset translate;
 
   factory TransformData.fromRect(
+    // the selected crop rect area
     Rect rect,
+    // the maximum size of the crop area
     Size layout,
+    // the maximum size to display
+    Size maxSize,
     VideoEditorController controller,
   ) {
-    final double videoAspect = controller.video.value.aspectRatio;
-    final double relativeAspect = rect.width / rect.height;
-
-    final double xScale = layout.width / rect.width;
-    final double yScale = layout.height / rect.height;
-
-    final double scale = videoAspect < 0.8
-        ? relativeAspect <= 1
-            ? yScale
-            : xScale + videoAspect
-        : relativeAspect < 0.8
-            ? yScale + videoAspect
-            : xScale;
-
-    final double rotation = -controller.rotation * (3.1416 / 180.0);
+    final double scale = scaleToSize(maxSize, rect);
+    final double rotation = -controller.rotation * (pi / 180.0);
     final Offset translate = Offset(
       ((layout.width - rect.width) / 2) - rect.left,
       ((layout.height - rect.height) / 2) - rect.top,
@@ -46,7 +40,7 @@ class TransformData {
     VideoEditorController controller,
   ) {
     return TransformData(
-      rotation: -controller.rotation * (3.1416 / 180.0),
+      rotation: -controller.rotation * (pi / 180.0),
       scale: 1.0,
       translate: Offset.zero,
     );
