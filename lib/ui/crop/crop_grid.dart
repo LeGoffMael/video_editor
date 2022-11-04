@@ -93,15 +93,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _controller.preferredCropAspectRatio!,
         );
       }
-      _controller.cacheMinCrop = Offset(
-        _rect.value.left / _layout.width,
-        _rect.value.top / _layout.height,
-      );
-      _controller.cacheMaxCrop = Offset(
-        _rect.value.right / _layout.width,
-        _rect.value.bottom / _layout.height,
-      );
-      _controller.isCropping = false;
+      widget.controller.updateCacheCropFromLayout(_layout, _rect.value);
     });
   }
 

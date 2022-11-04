@@ -440,7 +440,6 @@ class CropScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(children: [
-          // TODO : rotation buttons should be on top of [CropGridViewer]
           Row(children: [
             Expanded(
               child: IconButton(

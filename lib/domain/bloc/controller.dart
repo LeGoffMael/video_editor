@@ -296,6 +296,14 @@ class VideoEditorController extends ChangeNotifier {
     maxCrop = cacheMaxCrop;
   }
 
+  /// Should be used internaly
+  void updateCacheCropFromLayout(Size layout, Rect rect) {
+    cacheMinCrop = Offset(rect.left / layout.width, rect.top / layout.height);
+    cacheMaxCrop =
+        Offset(rect.right / layout.width, rect.bottom / layout.height);
+    isCropping = false;
+  }
+
   //----------//
   //VIDEO TRIM//
   //----------//

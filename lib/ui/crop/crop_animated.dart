@@ -323,15 +323,8 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
           GestureDetector(
             onPanEnd: (_) {
               if (_boundary != _CropBoundaries.none) {
-                widget.controller.cacheMinCrop = Offset(
-                  widget.rect.left / widget.layout.width,
-                  widget.rect.top / widget.layout.height,
-                );
-                widget.controller.cacheMaxCrop = Offset(
-                  widget.rect.right / widget.layout.width,
-                  widget.rect.bottom / widget.layout.height,
-                );
-                widget.controller.isCropping = false;
+                widget.controller
+                    .updateCacheCropFromLayout(widget.layout, widget.rect);
               }
             },
             onPanStart: _onPanStart,
