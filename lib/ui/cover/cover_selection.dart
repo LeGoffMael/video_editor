@@ -36,10 +36,9 @@ class CoverSelection extends StatefulWidget {
 
 class _CoverSelectionState extends State<CoverSelection>
     with AutomaticKeepAliveClientMixin {
-  double _aspect = 1.0, _width = 1.0;
+  double _aspect = 1.0;
   Duration? _startTrim, _endTrim;
 
-  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
@@ -65,9 +64,7 @@ class _CoverSelectionState extends State<CoverSelection>
     widget.controller.addListener(_scaleRect);
 
     // init the widget with controller values
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scaleRect();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
   }
 
   @override
@@ -75,18 +72,17 @@ class _CoverSelectionState extends State<CoverSelection>
 
   void _scaleRect() {
     _rect.value = _calculateCoverRect();
+    if (widget.controller.preferredCropAspectRatio != null) {
+      _aspect = widget.controller.preferredCropAspectRatio!;
+    }
+    _layout = _calculateLayout();
+
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
-      _viewerSize,
+      _layout,
       widget.controller,
     );
-
-    if (widget.controller.preferredCropAspectRatio != null &&
-        _aspect != widget.controller.preferredCropAspectRatio) {
-      _aspect = widget.controller.preferredCropAspectRatio!;
-      _layout = _calculateLayout();
-    }
 
     // if trim values changed generate new thumbnails
     if (!widget.controller.isTrimming &&
@@ -94,9 +90,7 @@ class _CoverSelectionState extends State<CoverSelection>
             _endTrim != widget.controller.endTrim)) {
       _startTrim = widget.controller.startTrim;
       _endTrim = widget.controller.endTrim;
-      setState(() {
-        _stream = _generateThumbnails();
-      });
+      setState(() => _stream = _generateThumbnails());
     }
   }
 
@@ -152,47 +146,39 @@ class _CoverSelectionState extends State<CoverSelection>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return LayoutBuilder(builder: (_, box) {
-      _viewerSize = box.biggest;
-      final double width = box.maxWidth;
-      if (_width != width) {
-        _width = width;
-        _layout = _calculateLayout();
-        _rect.value = _calculateCoverRect();
-      }
+    _layout = _calculateLayout();
+    _rect.value = _calculateCoverRect();
 
-      return StreamBuilder(
-          stream: _stream,
-          builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
-            final data = snapshot.data;
-            return snapshot.hasData
-                ? Wrap(
+    return StreamBuilder(
+        stream: _stream,
+        builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
+          return snapshot.hasData
+              ? ValueListenableBuilder(
+                  valueListenable: _transform,
+                  builder: (_, TransformData transform, __) => Wrap(
                     runSpacing: 10.0,
                     spacing: 10.0,
-                    children: data!
-                        .map((coverData) => ValueListenableBuilder(
-                            valueListenable: _transform,
-                            builder: (_, TransformData transform, __) {
-                              return ValueListenableBuilder(
-                                valueListenable:
-                                    widget.controller.selectedCoverNotifier,
-                                builder:
-                                    (context, CoverData? selectedCover, __) =>
-                                        _buildSingleCover(
-                                  coverData,
-                                  transform,
-                                  widget.controller.coverStyle,
-                                  isSelected: coverData.sameTime(
-                                      widget.controller.selectedCoverVal!),
-                                ),
-                              );
-                            }))
+                    children: snapshot.data!
+                        .map(
+                          (coverData) => ValueListenableBuilder(
+                            valueListenable:
+                                widget.controller.selectedCoverNotifier,
+                            builder: (context, CoverData? selectedCover, __) =>
+                                _buildSingleCover(
+                              coverData,
+                              transform,
+                              widget.controller.coverStyle,
+                              isSelected: coverData.sameTime(
+                                  widget.controller.selectedCoverVal!),
+                            ),
+                          ),
+                        )
                         .toList()
                         .cast<Widget>(),
-                  )
-                : const SizedBox();
-          });
-    });
+                  ),
+                )
+              : const SizedBox();
+        });
   }
 
   Widget _buildSingleCover(
@@ -201,51 +187,48 @@ class _CoverSelectionState extends State<CoverSelection>
     CoverSelectionStyle coverStyle, {
     required bool isSelected,
   }) {
-    return InkWell(
-      onTap: () => widget.controller.updateSelectedCover(cover),
-      child: Stack(
-        alignment: coverStyle.selectedIndicatorAlign,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? coverStyle.selectedBorderColor
-                    : Colors.transparent,
-                width: coverStyle.selectedBorderWidth,
-              ),
-            ),
-            child: CropTransform(
-              transform: transform,
-              child: Container(
-                alignment: Alignment.center,
-                height: _layout.height,
-                width: _layout.width,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image(
-                      image: MemoryImage(cover.thumbData!),
-                      width: _layout.width,
-                      height: _layout.height,
+    return SizedBox.fromSize(
+      size: _layout,
+      child: CropTransform(
+        transform: transform,
+        child: AspectRatio(
+          aspectRatio: _aspect,
+          child: InkWell(
+            onTap: () => widget.controller.updateSelectedCover(cover),
+            child: Stack(
+              alignment: coverStyle.selectedIndicatorAlign,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected
+                          ? coverStyle.selectedBorderColor
+                          : Colors.transparent,
+                      width: coverStyle.selectedBorderWidth,
                     ),
-                    CustomPaint(
-                      size: _layout,
-                      painter: CropGridPainter(
-                        _rect.value,
-                        showGrid: false,
-                        style: widget.controller.cropStyle,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image(image: MemoryImage(cover.thumbData!)),
+                      CustomPaint(
+                        size: _layout,
+                        painter: CropGridPainter(
+                          _rect.value,
+                          showGrid: false,
+                          style: widget.controller.cropStyle,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                isSelected && coverStyle.selectedIndicator != null
+                    ? coverStyle.selectedIndicator!
+                    : const SizedBox.shrink(),
+              ],
             ),
           ),
-          isSelected && coverStyle.selectedIndicator != null
-              ? coverStyle.selectedIndicator!
-              : const SizedBox.shrink(),
-        ],
+        ),
       ),
     );
   }
