@@ -116,9 +116,8 @@ class _CoverViewerState extends State<CoverViewer> {
                                       _layout = size;
                                       // init the widget with controller values
                                       WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        _scaleRect();
-                                      });
+                                          .addPostFrameCallback(
+                                              (_) => _scaleRect());
                                     }
 
                                     return ValueListenableBuilder(

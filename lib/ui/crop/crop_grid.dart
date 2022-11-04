@@ -323,84 +323,81 @@ class _CropGridViewerState extends State<CropGridViewer> {
       return ValueListenableBuilder(
         valueListenable: _transform,
         builder: (_, TransformData transform, __) => Center(
-          child: Container(
-            // when widget.showGrid is true, the layout size should never be bigger than the screen size
-            constraints: BoxConstraints(
-                maxHeight: ((_controller.rotation == 90 ||
-                            _controller.rotation == 270)) &&
-                        widget.showGrid
-                    ? MediaQuery.of(context).size.width -
-                        widget.horizontalMargin
-                    : Size.infinite.height),
-            child: LayoutBuilder(builder: (_, constraints) {
-              Size size = constraints.biggest;
-              if (_layout != size) {
-                _layout = size;
-              }
-              if (widget.showGrid) {
-                if (_layout != size) {
-                  // need to recompute crop if layout size changed, (i.e after rotation)
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _calculatePreferedCrop();
-                  });
-                }
-
-                return ValueListenableBuilder(
-                  valueListenable: _rect,
-                  builder: (_, Rect value, __) => AnimatedCropViewer(
+          child: CropTransform(
+            transform: transform,
+            child: widget.showGrid
+                ? _buildLayout(transform)
+                : VideoViewer(
                     controller: _controller,
-                    rect: _rect.value,
-                    layout: _layout,
-                    scaleAfter: widget.scaleAfter,
-                    child: _buildTransformContainer(transform, value),
+                    child: _buildLayout(transform),
                   ),
-                );
-              } else {
-                if (_layout != size) {
-                  _rect.value = _calculateCropRect();
-                }
-
-                return ValueListenableBuilder(
-                  valueListenable: _rect,
-                  builder: (_, Rect value, __) =>
-                      _buildTransformContainer(transform, value),
-                );
-              }
-            }),
           ),
         ),
       );
     });
   }
 
+  Widget _buildLayout(TransformData transform) {
+    return LayoutBuilder(builder: (_, constraints) {
+      final size = constraints.biggest;
+      final didLayoutSizeChanged = _layout != size;
+      _layout = size;
+
+      if (widget.showGrid) {
+        if (didLayoutSizeChanged) {
+          // need to recompute crop if layout size changed, (i.e after rotation)
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _calculatePreferedCrop());
+        }
+
+        return ValueListenableBuilder(
+          valueListenable: _rect,
+          builder: (_, Rect value, __) => AnimatedCropViewer(
+            controller: _controller,
+            rect: _rect.value,
+            layout: _layout,
+            scaleAfter: widget.scaleAfter,
+            child: VideoViewer(
+              controller: _controller,
+              child: _buildTransformContainer(transform, value),
+            ),
+          ),
+        );
+      } else {
+        if (didLayoutSizeChanged) {
+          _rect.value = _calculateCropRect();
+        }
+
+        return ValueListenableBuilder(
+          valueListenable: _rect,
+          builder: (_, Rect value, __) =>
+              _buildTransformContainer(transform, value),
+        );
+      }
+    });
+  }
+
   /// Build [InteractiveViewer] scaling automatically depending on [rect] size and position
   Widget _buildTransformContainer(TransformData transform, Rect rect) {
     final Rect gestureArea = _expandedRect();
-    // TODO : CropTransform and VideoViewer must be parents of [LayoutBuilder] to apply rotation and compute size properly
-    return CropTransform(
-      transform: transform,
-      child: VideoViewer(
-        controller: _controller,
-        child: widget.showGrid
-            ? Stack(children: [
-                _buildPaint(rect),
-                GestureDetector(
-                    onPanEnd: (_) => _onPanEnd(),
-                    onPanStart: _onPanStart,
-                    onPanUpdate: _onPanUpdate,
-                    child: Container(
-                      margin: EdgeInsets.only(
-                        left: max(0.0, gestureArea.left),
-                        top: max(0.0, gestureArea.top),
-                      ),
-                      color: Colors.transparent,
-                      width: gestureArea.width,
-                      height: gestureArea.height,
-                    )),
-              ])
-            : _buildPaint(rect),
-      ),
-    );
+    return widget.showGrid
+        ? Stack(children: [
+            _buildPaint(rect),
+            GestureDetector(
+                onPanEnd: (_) => _onPanEnd(),
+                onPanStart: _onPanStart,
+                onPanUpdate: _onPanUpdate,
+                child: Container(
+                  margin: EdgeInsets.only(
+                    left: max(0.0, gestureArea.left),
+                    top: max(0.0, gestureArea.top),
+                  ),
+                  color: Colors.transparent,
+                  width: gestureArea.width,
+                  height: gestureArea.height,
+                )),
+          ])
+        : _buildPaint(rect);
   }
 
   /// Build [Widget] that hides the cropped area and show the crop grid if widget.showGris is true

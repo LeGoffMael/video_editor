@@ -1,7 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/domain/helpers.dart';
 
 class AnimatedCropViewer extends StatefulWidget {
   final Widget child;
@@ -36,11 +35,6 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
   Animation<Matrix4>? _animationMatrix4;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void didUpdateWidget(covariant AnimatedCropViewer oldWidget) {
     if (widget.scaleAfter) {
       // to update interactive view only at the end of cropping action (to improve performances ?), similar behavior as iOS photo
@@ -55,6 +49,14 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
     super.didUpdateWidget(oldWidget);
   }
 
+  @override
+  void dispose() {
+    _clearAnimation();
+    _controller.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
   // Clear Matrix4D animation
   void _onInteractionStart(ScaleStartDetails details) {
     if (_animationController.status == AnimationStatus.forward) {
@@ -65,8 +67,7 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
   /// inspired from https://stackoverflow.com/a/68917749/7943785
   Matrix4 getMatrixToFitRect() {
     // Offset center of layout
-    final layoutRect = Rect.fromPoints(
-        Offset.zero, Offset(widget.layout.width, widget.layout.height));
+    final layoutRect = rectFromSize(widget.layout);
 
     Rect rect = widget.rect;
     if (widget.rect == Rect.zero) {
@@ -75,14 +76,21 @@ class _AnimatedCropViewerState extends State<AnimatedCropViewer>
 
     // scale from layout and rect
     FittedSizes fs = applyBoxFit(BoxFit.contain, rect.size, widget.layout);
-    double scaleX = fs.destination.width / fs.source.width;
-    double scaleY = fs.destination.height / fs.source.height;
-
-    return pointToPoint(min(scaleX, scaleY), rect.center, layoutRect.center);
+    return pointToPoint(
+      scaleToSize(fs.destination, rectFromSize(fs.source)),
+      rect.center,
+      layoutRect.center,
+    );
   }
 
+  Rect rectFromSize(Size size) =>
+      Rect.fromPoints(Offset.zero, Offset(size.width, size.height));
+
   Matrix4 pointToPoint(
-      double scale, Offset srcFocalPoint, Offset dstFocalPoint) {
+    double scale,
+    Offset srcFocalPoint,
+    Offset dstFocalPoint,
+  ) {
     return Matrix4.identity()
       ..translate(dstFocalPoint.dx, dstFocalPoint.dy)
       ..scale(scale)
