@@ -22,6 +22,10 @@ class TransformData {
     Size maxSize,
     VideoEditorController controller,
   ) {
+    if (controller.rotation == 90 || controller.rotation == 270) {
+      maxSize = maxSize.flipped;
+    }
+
     final double scale = scaleToSize(maxSize, rect);
     final double rotation = -controller.rotation * (pi / 180.0);
     final Offset translate = Offset(
