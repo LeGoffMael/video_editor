@@ -1,3 +1,7 @@
+## [1.5.2]
+
+- Fix scale issue when video is rotated
+
 ## [1.5.1]
 
 - New `aspectRatio` param in initialize function, to set up the crop param without opening the crop view
