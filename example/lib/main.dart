@@ -109,6 +109,8 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
+    // Trim duration will be limited to 30 seconds
+    // The cropped area will be initialized to the center of the video with a 9/16 ratio
     _controller = VideoEditorController.file(widget.file,
         maxDuration: const Duration(seconds: 30))
       ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
@@ -473,8 +475,13 @@ class CropScreen extends StatelessWidget {
             const SizedBox(height: 15),
             Row(children: [
               Expanded(
+                flex: 2,
                 child: IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    // set back the preferred ratio to the current crop area ratio
+                    controller.setPreferredRatioFromCrop();
+                    Navigator.pop(context);
+                  },
                   icon: const Center(
                     child: Text(
                       "CANCEL",
@@ -483,23 +490,15 @@ class CropScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              buildSplashTap("16:9", 16 / 9,
-                  padding: const EdgeInsets.symmetric(horizontal: 10)),
+              buildSplashTap("16:9", 16 / 9),
               buildSplashTap("1:1", 1 / 1),
-              buildSplashTap("9:16", 9 / 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 10)),
-              buildSplashTap("NO", null,
-                  padding: const EdgeInsets.only(right: 10)),
+              buildSplashTap("9:16", 9 / 16),
+              buildSplashTap("NO", null),
               Expanded(
+                flex: 2,
                 child: IconButton(
                   onPressed: () {
-                    //2 WAYS TO UPDATE CROP
-                    //WAY 1:
                     controller.updateCrop();
-                    /*WAY 2:
-                    controller.minCrop = controller.cacheMinCrop;
-                    controller.maxCrop = controller.cacheMaxCrop;
-                    */
                     Navigator.pop(context);
                   },
                   icon: const Center(
@@ -522,10 +521,10 @@ class CropScreen extends StatelessWidget {
     double? aspectRatio, {
     EdgeInsetsGeometry? padding,
   }) {
-    return InkWell(
-      onTap: () => controller.preferredCropAspectRatio = aspectRatio,
-      child: Padding(
-        padding: padding ?? EdgeInsets.zero,
+    return Expanded(
+      flex: 1,
+      child: InkWell(
+        onTap: () => controller.preferredCropAspectRatio = aspectRatio,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
