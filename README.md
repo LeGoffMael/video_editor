@@ -69,9 +69,11 @@ Those Android API level and iOS deployment target are required to uses this pack
 
 | Function                         | Description                       |
 | -------------------------------- | --------------------------------- |
-| initialize()                     | Init the `controller` parameters, the video, the trim and the cover |
+| initialize(aspectRatio)          | Init the `controller` parameters, the video, the trim and the cover, call `cropAspectRatio` |
 | rotate90Degrees(RotateDirection) | Rotate the video by 90 degrees in the direction provided            |
 | preferredCropAspectRatio         | Update the aspect ratio of the crop area                            |
+| setPreferredRatioFromCrop        | Update the aspect ratio to the current crop area ratio              |
+| cropAspectRatio                  | Update the aspect ratio + update the crop area to the center of the video size |
 | updateCrop                       | Update the controller crop min and max values                       |
 | getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
 | exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
