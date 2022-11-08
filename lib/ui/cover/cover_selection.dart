@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
+import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
@@ -66,7 +67,7 @@ class _CoverSelectionState extends State<CoverSelection>
   bool get wantKeepAlive => true;
 
   void _scaleRect() {
-    _rect.value = _calculateCoverRect();
+    _rect.value = calculateCroppedRect(widget.controller, _layout);
 
     _transform.value = TransformData.fromRect(
       _rect.value,
@@ -111,16 +112,6 @@ class _CoverSelectionState extends State<CoverSelection>
 
       yield byteList;
     }
-  }
-
-  Rect _calculateCoverRect() {
-    final Offset min = widget.controller.minCrop;
-    final Offset max = widget.controller.maxCrop;
-
-    return Rect.fromPoints(
-      Offset(min.dx * _layout.width, min.dy * _layout.height),
-      Offset(max.dx * _layout.width, max.dy * _layout.height),
-    );
   }
 
   /// Returns the max size the layout should take with the rect value

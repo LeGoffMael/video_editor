@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
@@ -53,7 +54,7 @@ class _CoverViewerState extends State<CoverViewer> {
   }
 
   void _scaleRect() {
-    _rect.value = _calculateCropRect();
+    _rect.value = calculateCroppedRect(widget.controller, _layout);
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
@@ -68,19 +69,6 @@ class _CoverViewerState extends State<CoverViewer> {
     if (widget.controller.selectedCoverVal!.thumbData == null) {
       widget.controller.generateDefaultCoverThumbnail();
     }
-  }
-
-  //-----------//
-  //RECT CHANGE//
-  //-----------//
-  Rect _calculateCropRect() {
-    final Offset minCrop = _controller.minCrop;
-    final Offset maxCrop = _controller.maxCrop;
-
-    return Rect.fromPoints(
-      Offset(minCrop.dx * _layout.width, minCrop.dy * _layout.height),
-      Offset(maxCrop.dx * _layout.width, maxCrop.dy * _layout.height),
-    );
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:video_editor/video_editor.dart';
 
 /// Returns a desired dimension of [layout] that respect [r] aspect ratio
 Size computeSizeWithRatio(Size layout, double r) {
@@ -71,3 +72,20 @@ Rect translateRectIntoBounds(Size layout, Rect rect) {
 /// Return the scale for [rect] to fit [layout]
 double scaleToSize(Size layout, Rect rect) =>
     min(layout.width / rect.width, layout.height / rect.height);
+
+/// Calculate crop [Rect] area
+/// depending of [controller] min and max crop values and the size of the layout
+Rect calculateCroppedRect(
+  VideoEditorController controller,
+  Size layout, {
+  Offset? min,
+  Offset? max,
+}) {
+  final Offset minCrop = min ?? controller.minCrop;
+  final Offset maxCrop = max ?? controller.maxCrop;
+
+  return Rect.fromPoints(
+    Offset(minCrop.dx * layout.width, minCrop.dy * layout.height),
+    Offset(maxCrop.dx * layout.width, maxCrop.dy * layout.height),
+  );
+}

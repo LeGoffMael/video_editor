@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
+import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -62,7 +63,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   }
 
   void _scaleRect() {
-    _rect.value = _calculateTrimRect();
+    _rect.value = calculateCroppedRect(widget.controller, _layout);
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
@@ -95,21 +96,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     }
   }
 
-  Rect _calculateTrimRect() {
-    final Offset min = widget.controller.minCrop;
-    final Offset max = widget.controller.maxCrop;
-    return Rect.fromPoints(
-      Offset(
-        min.dx * _layout.width,
-        min.dy * _layout.height,
-      ),
-      Offset(
-        max.dx * _layout.width,
-        max.dy * _layout.height,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, box) {
@@ -121,7 +107,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
         _thumbnails = (_width ~/ _layout.width) + 1;
-        _rect.value = _calculateTrimRect();
+        _rect.value = calculateCroppedRect(widget.controller, _layout);
       }
 
       return StreamBuilder(
