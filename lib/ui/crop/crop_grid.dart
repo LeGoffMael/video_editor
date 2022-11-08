@@ -310,9 +310,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
             child: Container(
                 // when widget.showGrid is true, the layout size should never be bigger than the screen size
                 constraints: BoxConstraints(
-                    maxHeight: ((_controller.rotation == 90 ||
-                                _controller.rotation == 270)) &&
-                            widget.showGrid
+                    maxHeight: _controller.isRotated && widget.showGrid
                         ? MediaQuery.of(context).size.width -
                             widget.horizontalMargin
                         : Size.infinite.height),

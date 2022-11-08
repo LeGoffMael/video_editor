@@ -73,6 +73,10 @@ Rect translateRectIntoBounds(Size layout, Rect rect) {
 double scaleToSize(Size layout, Rect rect) =>
     min(layout.width / rect.width, layout.height / rect.height);
 
+/// Return the scale for [rect] to not be smaller [layout]
+double scaleToSizeMax(Size layout, Rect rect) =>
+    max(layout.width / rect.width, layout.height / rect.height);
+
 /// Calculate crop [Rect] area
 /// depending of [controller] min and max crop values and the size of the layout
 Rect calculateCroppedRect(
@@ -89,3 +93,6 @@ Rect calculateCroppedRect(
     Offset(maxCrop.dx * layout.width, maxCrop.dy * layout.height),
   );
 }
+
+/// Return `true` if the difference between [a] and [b] is less than `0.001`
+bool isNumberAlmost(double a, int b) => a.abs() - b < 0.001;

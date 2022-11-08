@@ -80,43 +80,42 @@ class _CoverViewerState extends State<CoverViewer> {
         valueListenable: _transform,
         builder: (_, TransformData transform, __) => ValueListenableBuilder(
           valueListenable: widget.controller.selectedCoverNotifier,
-          builder: (context, CoverData? selectedCover, __) => selectedCover
-                      ?.thumbData ==
-                  null
-              ? Center(child: Text(widget.noCoverText))
-              : CropTransform(
-                  transform: transform,
-                  child: ImageViewer(
-                    controller: widget.controller,
-                    image: Image(image: MemoryImage(selectedCover!.thumbData!)),
-                    child: LayoutBuilder(
-                      builder: (_, constraints) {
-                        Size size = constraints.biggest;
-                        if (_layout != size) {
-                          _layout = size;
-                          // init the widget with controller values
-                          WidgetsBinding.instance
-                              .addPostFrameCallback((_) => _scaleRect());
-                        }
+          builder: (context, CoverData? selectedCover, __) =>
+              selectedCover?.thumbData == null
+                  ? Center(child: Text(widget.noCoverText))
+                  : CropTransform(
+                      transform: transform,
+                      child: ImageViewer(
+                        controller: widget.controller,
+                        bytes: selectedCover!.thumbData!,
+                        child: LayoutBuilder(
+                          builder: (_, constraints) {
+                            Size size = constraints.biggest;
+                            if (_layout != size) {
+                              _layout = size;
+                              // init the widget with controller values
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) => _scaleRect());
+                            }
 
-                        return ValueListenableBuilder(
-                          valueListenable: _rect,
-                          builder: (_, Rect value, __) {
-                            return CustomPaint(
-                              size: Size.infinite,
-                              painter: CropGridPainter(
-                                value,
-                                style: _controller.cropStyle,
-                                showGrid: false,
-                                showCenterRects: false,
-                              ),
+                            return ValueListenableBuilder(
+                              valueListenable: _rect,
+                              builder: (_, Rect value, __) {
+                                return CustomPaint(
+                                  size: Size.infinite,
+                                  painter: CropGridPainter(
+                                    value,
+                                    style: _controller.cropStyle,
+                                    showGrid: false,
+                                    showCenterRects: false,
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
-                ),
         ),
       );
     });

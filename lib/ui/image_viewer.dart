@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 
@@ -5,12 +7,12 @@ class ImageViewer extends StatelessWidget {
   const ImageViewer({
     Key? key,
     required this.controller,
-    required this.image,
+    required this.bytes,
     this.child,
   }) : super(key: key);
 
   final VideoEditorController controller;
-  final Image image;
+  final Uint8List bytes;
   final Widget? child;
 
   @override
@@ -20,7 +22,7 @@ class ImageViewer extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: controller.video.value.aspectRatio,
-            child: image,
+            child: Image(image: MemoryImage(bytes)),
           ),
           if (child != null)
             AspectRatio(

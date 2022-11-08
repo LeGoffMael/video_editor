@@ -5,6 +5,7 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
+import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
@@ -33,24 +34,21 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   final ValueNotifier<TransformData> _transform =
       ValueNotifier<TransformData>(TransformData());
 
-  double _aspect = 1.0, _width = 1.0;
-  int _thumbnails = 8;
+  /// The max width of [ThumbnailSlider]
+  double _sliderWidth = 1.0;
 
-  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
+  late Size _maxLayout =
+      _calculateMaxLayout(widget.controller.video.value.aspectRatio);
+
+  /// The quantity of thumbnails to generate
+  final int _thumbnailsCount = 8;
   late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
   @override
   void initState() {
     super.initState();
-    _aspect = widget.controller.video.value.aspectRatio;
     widget.controller.addListener(_scaleRect);
-
-    // init the widget with controller values
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scaleRect();
-    });
-
     super.initState();
   }
 
@@ -64,20 +62,31 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
   void _scaleRect() {
     _rect.value = calculateCroppedRect(widget.controller, _layout);
+
+    final ratio = _rect.value == Rect.zero
+        ? widget.controller.video.value.aspectRatio
+        : _rect.value.size.aspectRatio;
+    _maxLayout = _calculateMaxLayout(ratio);
+
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
-      _viewerSize,
+      _maxLayout, // the maximum size to show the thumb
       widget.controller,
     );
+    // crop area ratio is < 1, increase scale to fit all `ThumbnailSlider` space
+    if (ratio <= 1 || widget.controller.isRotated) {
+      _transform.value = _transform.value
+          .copyWith(scale: scaleToSizeMax(_maxLayout, _rect.value));
+    }
   }
 
   Stream<List<Uint8List>> _generateThumbnails() async* {
     final String path = widget.controller.file.path;
     final int duration = widget.controller.video.value.duration.inMilliseconds;
-    final double eachPart = duration / _thumbnails;
+    final double eachPart = duration / _thumbnailsCount;
     List<Uint8List> byteList = [];
-    for (int i = 1; i <= _thumbnails; i++) {
+    for (int i = 1; i <= _thumbnailsCount; i++) {
       try {
         final Uint8List? bytes = await VideoThumbnail.thumbnailData(
           imageFormat: ImageFormat.JPEG,
@@ -96,19 +105,30 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     }
   }
 
+  /// Returns the max size the layout should take with the rect value
+  Size _calculateMaxLayout(double ratio) {
+    // check if the ratio is almost 1
+    if (isNumberAlmost(ratio, 1)) return Size.square(widget.height);
+
+    final verticalLayout = Size(_sliderWidth / _thumbnailsCount, widget.height);
+
+    if (ratio >= 1) {
+      if (widget.controller.isRotated) {
+        return verticalLayout;
+      }
+      // if crop is horizontal, fit with ratio, max height is [widget.height]
+      return Size(widget.height * ratio, widget.height);
+    } else if (widget.controller.isRotated) {
+      return Size(widget.height, widget.height * ratio);
+    }
+    // otherwise max height is [widget.height], and max width is [ThumbnailSlider] / [_thumbnailsCount]
+    return verticalLayout;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, box) {
-      _viewerSize = box.biggest;
-      final double width = box.maxWidth;
-      if (_width != width) {
-        _width = width;
-        _layout = _aspect <= 1.0
-            ? Size(widget.height * _aspect, widget.height)
-            : Size(widget.height, widget.height / _aspect);
-        _thumbnails = (_width ~/ _layout.width) + 1;
-        _rect.value = calculateCroppedRect(widget.controller, _layout);
-      }
+      _sliderWidth = box.maxWidth;
 
       return StreamBuilder(
         stream: _stream,
@@ -120,41 +140,46 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                   padding: EdgeInsets.zero,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: data!.length,
-                  itemBuilder: (_, int index) {
-                    return ValueListenableBuilder(
-                      valueListenable: _transform,
-                      builder: (_, TransformData transform, __) {
-                        return CropTransform(
-                          transform: transform,
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: _layout.height,
-                            width: _layout.width,
-                            child: Stack(children: [
-                              Image(
-                                image: MemoryImage(data[index]),
-                                width: _layout.width,
-                                height: _layout.height,
-                                alignment: Alignment.topLeft,
-                              ),
-                              CustomPaint(
-                                size: _layout,
-                                painter: CropGridPainter(
-                                  _rect.value,
-                                  showGrid: false,
-                                  style: widget.controller.cropStyle,
-                                ),
-                              ),
-                            ]),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                  itemBuilder: (_, index) =>
+                      ValueListenableBuilder<TransformData>(
+                    valueListenable: _transform,
+                    builder: (_, transform, __) =>
+                        _buildSingleThumbnail(data[index], transform),
+                  ),
                 )
               : const SizedBox();
         },
       );
     });
+  }
+
+  Widget _buildSingleThumbnail(Uint8List bytes, TransformData transform) {
+    return Container(
+      constraints: BoxConstraints.tight(_maxLayout),
+      child: CropTransform(
+        transform: transform,
+        child: ImageViewer(
+          controller: widget.controller,
+          bytes: bytes,
+          child: LayoutBuilder(builder: (_, constraints) {
+            Size size = constraints.biggest;
+            if (_layout != size) {
+              _layout = size;
+              // init the widget with controller values
+              WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
+            }
+
+            return CustomPaint(
+              size: Size.infinite,
+              painter: CropGridPainter(
+                _rect.value,
+                showGrid: false,
+                style: widget.controller.cropStyle,
+              ),
+            );
+          }),
+        ),
+      ),
+    );
   }
 }

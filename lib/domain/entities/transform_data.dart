@@ -13,6 +13,17 @@ class TransformData {
   final double rotation, scale;
   final Offset translate;
 
+  TransformData copyWith({
+    double? scale,
+    double? rotation,
+    Offset? translate,
+  }) =>
+      TransformData(
+        scale: scale ?? this.scale,
+        rotation: rotation ?? this.rotation,
+        translate: translate ?? this.translate,
+      );
+
   factory TransformData.fromRect(
     // the selected crop rect area
     Rect rect,
@@ -23,8 +34,7 @@ class TransformData {
     // if controller is not provided, rotation is set to default (0)
     VideoEditorController? controller,
   ) {
-    if (controller != null &&
-        (controller.rotation == 90 || controller.rotation == 270)) {
+    if (controller != null && controller.isRotated) {
       maxSize = maxSize.flipped;
     }
 

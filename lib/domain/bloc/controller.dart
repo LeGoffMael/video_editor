@@ -259,6 +259,7 @@ class VideoEditorController extends ChangeNotifier {
     final executions = await FFmpegKit.listSessions();
     if (executions.isNotEmpty) await FFmpegKit.cancel();
     _video.dispose();
+    _selectedCover.dispose();
     super.dispose();
   }
 
@@ -416,6 +417,8 @@ class VideoEditorController extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  bool get isRotated => rotation == 90 || rotation == 270;
 
   /// Convert the [_rotation] value into a [String]
   /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#transpose-1))

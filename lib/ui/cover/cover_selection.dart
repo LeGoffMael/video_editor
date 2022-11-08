@@ -189,7 +189,7 @@ class _CoverSelectionState extends State<CoverSelection>
                 transform: transform,
                 child: ImageViewer(
                   controller: widget.controller,
-                  image: Image(image: MemoryImage(cover.thumbData!)),
+                  bytes: cover.thumbData!,
                   child: LayoutBuilder(builder: (_, constraints) {
                     Size size = constraints.biggest;
                     if (_layout != size) {
