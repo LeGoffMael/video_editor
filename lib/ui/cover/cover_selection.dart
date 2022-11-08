@@ -81,7 +81,7 @@ class _CoverSelectionState extends State<CoverSelection>
       _rect.value,
       _layout,
       _layout,
-      widget.controller,
+      null, // controller rotation should not affect this widget
     );
 
     // if trim values changed generate new thumbnails
@@ -187,14 +187,16 @@ class _CoverSelectionState extends State<CoverSelection>
     CoverSelectionStyle coverStyle, {
     required bool isSelected,
   }) {
-    return SizedBox.fromSize(
-      size: _layout,
-      child: CropTransform(
-        transform: transform,
-        child: AspectRatio(
-          aspectRatio: _aspect,
-          child: InkWell(
-            onTap: () => widget.controller.updateSelectedCover(cover),
+    // here the rotation should affect the dimension of the widget
+    // it is better to use [RotatedBox] instead of [Tranform.rotate]
+    return InkWell(
+      onTap: () => widget.controller.updateSelectedCover(cover),
+      child: RotatedBox(
+        quarterTurns: widget.controller.rotation ~/ -90,
+        child: SizedBox.fromSize(
+          size: _layout,
+          child: CropTransform(
+            transform: transform,
             child: Stack(
               alignment: coverStyle.selectedIndicatorAlign,
               children: [

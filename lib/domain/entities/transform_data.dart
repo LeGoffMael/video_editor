@@ -20,14 +20,16 @@ class TransformData {
     Size layout,
     // the maximum size to display
     Size maxSize,
-    VideoEditorController controller,
+    // if controller is not provided, rotation is set to default (0)
+    VideoEditorController? controller,
   ) {
-    if (controller.rotation == 90 || controller.rotation == 270) {
+    if (controller != null &&
+        (controller.rotation == 90 || controller.rotation == 270)) {
       maxSize = maxSize.flipped;
     }
 
     final double scale = scaleToSize(maxSize, rect);
-    final double rotation = -controller.rotation * (pi / 180.0);
+    final double rotation = -(controller?.rotation ?? 0) * (pi / 180.0);
     final Offset translate = Offset(
       ((layout.width - rect.width) / 2) - rect.left,
       ((layout.height - rect.height) / 2) - rect.top,
@@ -40,9 +42,7 @@ class TransformData {
     );
   }
 
-  factory TransformData.fromController(
-    VideoEditorController controller,
-  ) {
+  factory TransformData.fromController(VideoEditorController controller) {
     return TransformData(
       rotation: -controller.rotation * (pi / 180.0),
       scale: 1.0,
