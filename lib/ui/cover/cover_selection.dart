@@ -5,6 +5,7 @@ import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
+import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 
@@ -13,7 +14,7 @@ class CoverSelection extends StatefulWidget {
   const CoverSelection({
     Key? key,
     required this.controller,
-    this.height = 60,
+    this.size = 60,
     this.quality = 10,
     this.quantity = 5,
   }) : super(key: key);
@@ -21,8 +22,8 @@ class CoverSelection extends StatefulWidget {
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the cover selection view
   final VideoEditorController controller;
 
-  /// The [height] param specifies the height of the generated thumbnails
-  final double height;
+  /// The [size] param specifies the size to display the generated thumbnails
+  final double size;
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail))
   final int quality;
@@ -71,16 +72,15 @@ class _CoverSelectionState extends State<CoverSelection>
   bool get wantKeepAlive => true;
 
   void _scaleRect() {
-    _rect.value = _calculateCoverRect();
     if (widget.controller.preferredCropAspectRatio != null) {
       _aspect = widget.controller.preferredCropAspectRatio!;
     }
-    _layout = _calculateLayout();
+    _rect.value = _calculateCoverRect();
 
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
-      _layout,
+      Size.square(widget.size), // the maximum size to show the thumb
       null, // controller rotation should not affect this widget
     );
 
@@ -125,29 +125,22 @@ class _CoverSelectionState extends State<CoverSelection>
   Rect _calculateCoverRect() {
     final Offset min = widget.controller.minCrop;
     final Offset max = widget.controller.maxCrop;
+
     return Rect.fromPoints(
-      Offset(
-        min.dx * _layout.width,
-        min.dy * _layout.height,
-      ),
-      Offset(
-        max.dx * _layout.width,
-        max.dy * _layout.height,
-      ),
+      Offset(min.dx * _layout.width, min.dy * _layout.height),
+      Offset(max.dx * _layout.width, max.dy * _layout.height),
     );
   }
 
   Size _calculateLayout() {
     return _aspect < 1.0
-        ? Size(widget.height * _aspect, widget.height)
-        : Size(widget.height, widget.height / _aspect);
+        ? Size(widget.size * _aspect, widget.size)
+        : Size(widget.size, widget.size / _aspect);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    _layout = _calculateLayout();
-    _rect.value = _calculateCoverRect();
 
     return StreamBuilder(
         stream: _stream,
@@ -189,47 +182,53 @@ class _CoverSelectionState extends State<CoverSelection>
   }) {
     // here the rotation should affect the dimension of the widget
     // it is better to use [RotatedBox] instead of [Tranform.rotate]
-    return InkWell(
-      onTap: () => widget.controller.updateSelectedCover(cover),
-      child: RotatedBox(
-        quarterTurns: widget.controller.rotation ~/ -90,
-        child: SizedBox.fromSize(
-          size: _layout,
-          child: CropTransform(
-            transform: transform,
-            child: Stack(
-              alignment: coverStyle.selectedIndicatorAlign,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isSelected
-                          ? coverStyle.selectedBorderColor
-                          : Colors.transparent,
-                      width: coverStyle.selectedBorderWidth,
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image(image: MemoryImage(cover.thumbData!)),
-                      CustomPaint(
-                        size: _layout,
-                        painter: CropGridPainter(
-                          _rect.value,
-                          showGrid: false,
-                          style: widget.controller.cropStyle,
-                        ),
-                      ),
-                    ],
-                  ),
+    return RotatedBox(
+      quarterTurns: widget.controller.rotation ~/ -90,
+      child: InkWell(
+        onTap: () => widget.controller.updateSelectedCover(cover),
+        child: Stack(
+          alignment: coverStyle.selectedIndicatorAlign,
+          children: [
+            Container(
+              constraints: BoxConstraints.tight(_calculateLayout()),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected
+                      ? coverStyle.selectedBorderColor
+                      : Colors.transparent,
+                  width: coverStyle.selectedBorderWidth,
                 ),
-                isSelected && coverStyle.selectedIndicator != null
-                    ? coverStyle.selectedIndicator!
-                    : const SizedBox.shrink(),
-              ],
+              ),
+              child: CropTransform(
+                transform: transform,
+                child: ImageViewer(
+                  controller: widget.controller,
+                  image: Image(image: MemoryImage(cover.thumbData!)),
+                  child: LayoutBuilder(builder: (_, constraints) {
+                    Size size = constraints.biggest;
+                    if (_layout != size) {
+                      _layout = size;
+                      // init the widget with controller values
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _scaleRect());
+                    }
+
+                    return CustomPaint(
+                      size: Size.infinite,
+                      painter: CropGridPainter(
+                        _rect.value,
+                        showGrid: false,
+                        style: widget.controller.cropStyle,
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
-          ),
+            isSelected && coverStyle.selectedIndicator != null
+                ? coverStyle.selectedIndicator!
+                : const SizedBox.shrink(),
+          ],
         ),
       ),
     );

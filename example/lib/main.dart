@@ -405,7 +405,7 @@ class _VideoEditorState extends State<VideoEditor> {
         margin: EdgeInsets.symmetric(horizontal: height / 4),
         child: CoverSelection(
           controller: _controller,
-          height: height,
+          size: height,
           quantity: 8,
         ));
   }
