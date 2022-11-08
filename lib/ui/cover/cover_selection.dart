@@ -37,7 +37,6 @@ class CoverSelection extends StatefulWidget {
 
 class _CoverSelectionState extends State<CoverSelection>
     with AutomaticKeepAliveClientMixin {
-  double _aspect = 1.0;
   Duration? _startTrim, _endTrim;
 
   Size _layout = Size.zero;
@@ -58,23 +57,15 @@ class _CoverSelectionState extends State<CoverSelection>
   @override
   void initState() {
     super.initState();
-    _aspect = widget.controller.preferredCropAspectRatio ??
-        widget.controller.video.value.aspectRatio;
     _startTrim = widget.controller.startTrim;
     _endTrim = widget.controller.endTrim;
     widget.controller.addListener(_scaleRect);
-
-    // init the widget with controller values
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
   }
 
   @override
   bool get wantKeepAlive => true;
 
   void _scaleRect() {
-    if (widget.controller.preferredCropAspectRatio != null) {
-      _aspect = widget.controller.preferredCropAspectRatio!;
-    }
     _rect.value = _calculateCoverRect();
 
     _transform.value = TransformData.fromRect(
@@ -132,10 +123,14 @@ class _CoverSelectionState extends State<CoverSelection>
     );
   }
 
-  Size _calculateLayout() {
-    return _aspect < 1.0
-        ? Size(widget.size * _aspect, widget.size)
-        : Size(widget.size, widget.size / _aspect);
+  /// Returns the max size the layout should take with the rect value
+  Size _calculateMaxLayout() {
+    final ratio = _rect.value == Rect.zero
+        ? widget.controller.video.value.aspectRatio
+        : _rect.value.size.aspectRatio;
+    return ratio < 1.0
+        ? Size(widget.size * ratio, widget.size)
+        : Size(widget.size, widget.size / ratio);
   }
 
   @override
@@ -190,7 +185,7 @@ class _CoverSelectionState extends State<CoverSelection>
           alignment: coverStyle.selectedIndicatorAlign,
           children: [
             Container(
-              constraints: BoxConstraints.tight(_calculateLayout()),
+              constraints: BoxConstraints.tight(_calculateMaxLayout()),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: isSelected
