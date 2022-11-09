@@ -69,11 +69,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       _maxLayout, // the maximum size to show the thumb
       widget.controller,
     );
-    // if rotated, increase scale to fit all `ThumbnailSlider` space
-    if (widget.controller.isRotated) {
-      _transform.value = _transform.value
-          .copyWith(scale: scaleToSizeMax(_maxLayout, _rect.value));
-    }
 
     // regenerate thumbnails if need more to fit the slider
     final neededThumbs = (_sliderWidth ~/ _maxLayout.width) + 1;
@@ -119,7 +114,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final size = Size(widget.height * ratio, widget.height);
 
     if (widget.controller.isRotated) {
-      return size.flipped;
+      return Size(widget.height / ratio, widget.height);
     }
     return size;
   }
