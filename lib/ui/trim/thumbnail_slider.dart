@@ -38,12 +38,11 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   double _sliderWidth = 1.0;
 
   Size _layout = Size.zero;
-  late Size _maxLayout =
-      _calculateMaxLayout(widget.controller.video.value.aspectRatio);
+  late Size _maxLayout = _calculateMaxLayout();
 
   /// The quantity of thumbnails to generate
-  final int _thumbnailsCount = 8;
-  late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
+  late int _thumbnailsCount = 8;
+  late Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
   @override
   void initState() {
@@ -62,11 +61,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
   void _scaleRect() {
     _rect.value = calculateCroppedRect(widget.controller, _layout);
-
-    final ratio = _rect.value == Rect.zero
-        ? widget.controller.video.value.aspectRatio
-        : _rect.value.size.aspectRatio;
-    _maxLayout = _calculateMaxLayout(ratio);
+    _maxLayout = _calculateMaxLayout();
 
     _transform.value = TransformData.fromRect(
       _rect.value,
@@ -74,10 +69,17 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
       _maxLayout, // the maximum size to show the thumb
       widget.controller,
     );
-    // crop area ratio is < 1, increase scale to fit all `ThumbnailSlider` space
-    if (ratio <= 1 || widget.controller.isRotated) {
+    // if rotated, increase scale to fit all `ThumbnailSlider` space
+    if (widget.controller.isRotated) {
       _transform.value = _transform.value
           .copyWith(scale: scaleToSizeMax(_maxLayout, _rect.value));
+    }
+
+    // regenerate thumbnails if need more to fit the slider
+    final neededThumbs = (_sliderWidth ~/ _maxLayout.width) + 1;
+    if (neededThumbs > _thumbnailsCount) {
+      _thumbnailsCount = neededThumbs;
+      setState(() => _stream = _generateThumbnails());
     }
   }
 
@@ -106,23 +108,20 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   }
 
   /// Returns the max size the layout should take with the rect value
-  Size _calculateMaxLayout(double ratio) {
+  Size _calculateMaxLayout() {
+    final ratio = _rect.value == Rect.zero
+        ? widget.controller.video.value.aspectRatio
+        : _rect.value.size.aspectRatio;
+
     // check if the ratio is almost 1
     if (isNumberAlmost(ratio, 1)) return Size.square(widget.height);
 
-    final verticalLayout = Size(_sliderWidth / _thumbnailsCount, widget.height);
+    final size = Size(widget.height * ratio, widget.height);
 
-    if (ratio >= 1) {
-      if (widget.controller.isRotated) {
-        return verticalLayout;
-      }
-      // if crop is horizontal, fit with ratio, max height is [widget.height]
-      return Size(widget.height * ratio, widget.height);
-    } else if (widget.controller.isRotated) {
-      return Size(widget.height, widget.height * ratio);
+    if (widget.controller.isRotated) {
+      return size.flipped;
     }
-    // otherwise max height is [widget.height], and max width is [ThumbnailSlider] / [_thumbnailsCount]
-    return verticalLayout;
+    return size;
   }
 
   @override

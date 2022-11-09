@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:video_editor/video_editor.dart';
 
 /// Returns a desired dimension of [layout] that respect [r] aspect ratio
@@ -95,4 +96,4 @@ Rect calculateCroppedRect(
 }
 
 /// Return `true` if the difference between [a] and [b] is less than `0.001`
-bool isNumberAlmost(double a, int b) => a.abs() - b < 0.001;
+bool isNumberAlmost(double a, int b) => nearEqual(a, b.toDouble(), 0.01);
