@@ -330,7 +330,7 @@ class VideoEditorController extends ChangeNotifier {
   /// Get the [isTrimmed]
   ///
   /// `true` if the trimmed value has beem changed
-  bool get isTrimmmed => _isTrimmed;
+  bool get isTrimmed => _isTrimmed;
 
   /// Get the [isTrimming]
   ///

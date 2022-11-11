@@ -38,7 +38,7 @@ Stream<List<CoverData>> generateCoverThumbnails(
   required int quantity,
   int quality = 10,
 }) async* {
-  final int duration = controller.isTrimmmed
+  final int duration = controller.isTrimmed
       ? (controller.endTrim - controller.startTrim).inMilliseconds
       : controller.videoDuration.inMilliseconds;
   final double eachPart = duration / quantity;
@@ -48,7 +48,7 @@ Stream<List<CoverData>> generateCoverThumbnails(
     try {
       final CoverData bytes = await generateSingleCoverThumbnail(
         controller.file.path,
-        timeMs: (controller.isTrimmmed
+        timeMs: (controller.isTrimmed
                 ? (eachPart * i) + controller.startTrim.inMilliseconds
                 : (eachPart * i))
             .toInt(),
