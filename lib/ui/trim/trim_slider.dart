@@ -44,6 +44,9 @@ class _TrimSliderState extends State<TrimSlider>
   Size _trimLayout = Size.zero;
   Size _fullLayout = Size.zero;
 
+  late final ratio = widget.controller.videoDuration.inMilliseconds /
+      widget.controller.maxDuration.inMilliseconds;
+
   final _scrollController = ScrollController();
   double _thumbnailPosition = 0.0;
 
@@ -113,15 +116,18 @@ class _TrimSliderState extends State<TrimSlider>
         }
         break;
       case _TrimBoundaries.inside:
+        // TODO : when reaching end of scroll view, rect should clamp to it
         final pos = _rect.topLeft + delta;
         // Move thumbs slider when the trimmer is on the edges
-        if (_rect.topLeft.dx + delta.dx < widget.horizontalMargin ||
-            _rect.topRight.dx + delta.dx > _trimLayout.width) {
+        if (ratio > 1) {
           _scrollController.position.moveTo(
-            _scrollController.offset + delta.dx,
+            _scrollController.offset - delta.dx,
+            clamp: false,
           );
-        }
-        if (pos.dx > widget.horizontalMargin && pos.dx < _rect.right) {
+          _changeTrimRect(
+              left: (_rect.topLeft.dx - (delta.dx / 2))
+                  .clamp(widget.horizontalMargin, _rect.right));
+        } else if (pos.dx > widget.horizontalMargin && pos.dx < _rect.right) {
           _changeTrimRect(left: pos.dx);
         }
         break;
@@ -135,6 +141,8 @@ class _TrimSliderState extends State<TrimSlider>
   }
 
   void _onHorizontalDragEnd(_) {
+    // TODO : move rect here after scroll is over, to scroll position if ratio > 1
+
     if (_boundary == _TrimBoundaries.none) return;
     _updateControllerIsTrimming(false);
     if (_boundary != _TrimBoundaries.progress) {
@@ -182,9 +190,9 @@ class _TrimSliderState extends State<TrimSlider>
         _boundary == _TrimBoundaries.none) return;
 
     // if the left side changed and overtake the current postion
-    if ((_boundary == _TrimBoundaries.inside ||
-            _boundary == _TrimBoundaries.left) &&
-        startTrim > widget.controller.trimPosition) {
+    if (_boundary == _TrimBoundaries.inside ||
+        (_boundary == _TrimBoundaries.left &&
+            startTrim > widget.controller.trimPosition)) {
       // reset position to startTrim
       await widget.controller.video.seekTo(widget.controller.startTrim);
     } else if ((_boundary == _TrimBoundaries.inside ||
@@ -250,8 +258,6 @@ class _TrimSliderState extends State<TrimSlider>
         contrainst.maxWidth - widget.horizontalMargin * 2,
         contrainst.maxHeight,
       );
-      final ratio = widget.controller.videoDuration.inMilliseconds /
-          widget.controller.maxDuration.inMilliseconds;
       _fullLayout = Size(
         trimLayout.width * (ratio > 1 ? ratio : 1),
         contrainst.maxHeight,

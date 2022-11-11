@@ -269,6 +269,8 @@ class _VideoEditorState extends State<VideoEditor> {
                                 ),
                                 Expanded(
                                   child: TabBarView(
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     children: [
                                       Column(
                                           mainAxisAlignment:
