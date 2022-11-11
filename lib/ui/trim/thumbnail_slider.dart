@@ -123,11 +123,24 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                       final index =
                           getBestIndex(_neededThumbnails, data!.length, i);
 
-                      if (index >= data.length) {
-                        return const SizedBox();
-                      }
-
-                      return _buildSingleThumbnail(data[index], transform);
+                      return Stack(
+                        children: [
+                          Opacity(
+                            opacity: 0.2,
+                            child: _buildSingleThumbnail(
+                              data[0],
+                              transform,
+                              isPlaceholder: true,
+                            ),
+                          ),
+                          if (index < data.length)
+                            _buildSingleThumbnail(
+                              data[index],
+                              transform,
+                              isPlaceholder: false,
+                            ),
+                        ],
+                      );
                     },
                   ),
                 )
@@ -137,7 +150,11 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     });
   }
 
-  Widget _buildSingleThumbnail(Uint8List bytes, TransformData transform) {
+  Widget _buildSingleThumbnail(
+    Uint8List bytes,
+    TransformData transform, {
+    required bool isPlaceholder,
+  }) {
     return Container(
       constraints: BoxConstraints.tight(_maxLayout),
       child: CropTransform(
@@ -145,9 +162,10 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
         child: ImageViewer(
           controller: widget.controller,
           bytes: bytes,
+          fadeIn: !isPlaceholder,
           child: LayoutBuilder(builder: (_, constraints) {
             Size size = constraints.biggest;
-            if (_layout != size) {
+            if (!isPlaceholder && _layout != size) {
               _layout = size;
               // init the widget with controller values
               WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
