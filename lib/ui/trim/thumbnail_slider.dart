@@ -41,14 +41,15 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   late Size _maxLayout = _calculateMaxLayout();
 
   /// The quantity of thumbnails to generate
-  late int _thumbnailsCount = 8;
+  int _thumbnailsCount = 8;
+  late int _neededThumbnails = _thumbnailsCount;
+
   late Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_scaleRect);
-    super.initState();
   }
 
   @override
@@ -71,9 +72,9 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     );
 
     // regenerate thumbnails if need more to fit the slider
-    final neededThumbs = (_sliderWidth ~/ _maxLayout.width) + 1;
-    if (neededThumbs > _thumbnailsCount) {
-      _thumbnailsCount = neededThumbs;
+    _neededThumbnails = (_sliderWidth ~/ _maxLayout.width) + 1;
+    if (_neededThumbnails > _thumbnailsCount) {
+      _thumbnailsCount = _neededThumbnails;
       setState(() => _stream = _generateThumbnails());
     }
   }
@@ -106,21 +107,28 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     return LayoutBuilder(builder: (_, box) {
       _sliderWidth = box.maxWidth;
 
-      return StreamBuilder(
+      return StreamBuilder<List<Uint8List>>(
         stream: _stream,
-        builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
+        builder: (_, snapshot) {
           final data = snapshot.data;
           return snapshot.hasData
               ? ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: data!.length,
-                  itemBuilder: (_, index) =>
-                      ValueListenableBuilder<TransformData>(
+                  itemCount: _neededThumbnails,
+                  itemBuilder: (_, i) => ValueListenableBuilder<TransformData>(
                     valueListenable: _transform,
-                    builder: (_, transform, __) =>
-                        _buildSingleThumbnail(data[index], transform),
+                    builder: (_, transform, __) {
+                      final index =
+                          getBestIndex(_neededThumbnails, data!.length, i);
+
+                      if (index >= data.length) {
+                        return const SizedBox();
+                      }
+
+                      return _buildSingleThumbnail(data[index], transform);
+                    },
                   ),
                 )
               : const SizedBox();

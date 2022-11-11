@@ -97,3 +97,16 @@ Rect calculateCroppedRect(
 
 /// Return `true` if the difference between [a] and [b] is less than `0.001`
 bool isNumberAlmost(double a, int b) => nearEqual(a, b.toDouble(), 0.01);
+
+/// Return the best index to spread among the list [length] when limited to a [max] value
+/// When [max] is 0 or smaller than [length], returns [index]
+///
+/// ```
+/// i.e = max=4, length=11
+/// index=0 => = 0
+/// index=1 => = 3
+/// index=2 => = 6
+/// index=3 => = 9
+/// ```
+int getBestIndex(int max, int length, int index) =>
+    max >= length || max == 0 ? index : (index * (length / max).round());
