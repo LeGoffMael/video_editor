@@ -5,6 +5,7 @@ import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
+import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
@@ -45,7 +46,7 @@ class _CoverSelectionState extends State<CoverSelection>
   final ValueNotifier<TransformData> _transform =
       ValueNotifier<TransformData>(TransformData());
 
-  late Stream<List<CoverData>> _stream = (() => _generateThumbnails())();
+  late Stream<List<CoverData>> _stream = (() => _generateCoverThumbnails())();
 
   @override
   void dispose() {
@@ -82,37 +83,15 @@ class _CoverSelectionState extends State<CoverSelection>
             _endTrim != widget.controller.endTrim)) {
       _startTrim = widget.controller.startTrim;
       _endTrim = widget.controller.endTrim;
-      setState(() => _stream = _generateThumbnails());
+      setState(() => _stream = _generateCoverThumbnails());
     }
   }
 
-  Stream<List<CoverData>> _generateThumbnails() async* {
-    final int duration = widget.controller.isTrimmmed
-        ? (widget.controller.endTrim - widget.controller.startTrim)
-            .inMilliseconds
-        : widget.controller.videoDuration.inMilliseconds;
-    final double eachPart = duration / widget.quantity;
-    List<CoverData> byteList = [];
-    for (int i = 0; i < widget.quantity; i++) {
-      try {
-        final CoverData bytes = await widget.controller.generateCoverThumbnail(
-            timeMs: (widget.controller.isTrimmmed
-                    ? (eachPart * i) +
-                        widget.controller.startTrim.inMilliseconds
-                    : (eachPart * i))
-                .toInt(),
-            quality: widget.quality);
-
-        if (bytes.thumbData != null) {
-          byteList.add(bytes);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-
-      yield byteList;
-    }
-  }
+  Stream<List<CoverData>> _generateCoverThumbnails() => generateCoverThumbnails(
+        widget.controller,
+        quantity: widget.quantity,
+        quality: widget.quality,
+      );
 
   /// Returns the max size the layout should take with the rect value
   Size _calculateMaxLayout() {

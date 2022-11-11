@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
+import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   const ThumbnailSlider({
@@ -78,29 +78,11 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     }
   }
 
-  Stream<List<Uint8List>> _generateThumbnails() async* {
-    final String path = widget.controller.file.path;
-    final int duration = widget.controller.video.value.duration.inMilliseconds;
-    final double eachPart = duration / _thumbnailsCount;
-    List<Uint8List> byteList = [];
-    for (int i = 1; i <= _thumbnailsCount; i++) {
-      try {
-        final Uint8List? bytes = await VideoThumbnail.thumbnailData(
-          imageFormat: ImageFormat.JPEG,
-          video: path,
-          timeMs: (eachPart * i).toInt(),
-          quality: widget.quality,
-        );
-        if (bytes != null) {
-          byteList.add(bytes);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-
-      yield byteList;
-    }
-  }
+  Stream<List<Uint8List>> _generateThumbnails() => generateTrimThumbnails(
+        widget.controller,
+        quantity: _thumbnailsCount,
+        quality: widget.quality,
+      );
 
   /// Returns the max size the layout should take with the rect value
   Size _calculateMaxLayout() {

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
@@ -8,6 +7,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/helpers.dart';
+import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -373,24 +373,11 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Generate cover at [startTrim] time in milliseconds
   void generateDefaultCoverThumbnail() async {
-    final defaultCover =
-        await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);
-    updateSelectedCover(defaultCover);
-  }
-
-  /// Generate a cover at [timeMs] in video
-  ///
-  /// return [CoverData] depending on [timeMs] milliseconds
-  Future<CoverData> generateCoverThumbnail(
-      {int timeMs = 0, int quality = 10}) async {
-    final Uint8List? thumbData = await VideoThumbnail.thumbnailData(
-      imageFormat: ImageFormat.JPEG,
-      video: file.path,
-      timeMs: timeMs,
-      quality: quality,
+    final defaultCover = await generateSingleCoverThumbnail(
+      file.path,
+      timeMs: startTrim.inMilliseconds,
     );
-
-    return CoverData(thumbData: thumbData, timeMs: timeMs);
+    updateSelectedCover(defaultCover);
   }
 
   /// Get the [selectedCover] notifier
