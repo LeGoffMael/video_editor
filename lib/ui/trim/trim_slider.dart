@@ -37,8 +37,13 @@ class TrimSlider extends StatefulWidget {
 }
 
 class _TrimSliderState extends State<TrimSlider>
-    with AutomaticKeepAliveClientMixin<TrimSlider> {
+    with AutomaticKeepAliveClientMixin<TrimSlider>, TickerProviderStateMixin {
   _TrimBoundaries _boundary = _TrimBoundaries.none;
+
+  // to make a smooth video indicator
+  Animation<double>? _videoIndicatorAnimation;
+  AnimationController? _animationController;
+  late Tween<double> _linearTween;
 
   Rect _rect = Rect.zero;
   Size _trimLayout = Size.zero;
@@ -51,13 +56,71 @@ class _TrimSliderState extends State<TrimSlider>
   bool _isVideoPlayerHold = false;
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller.video.addListener(videoIndicatorAnimation);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Defining the tween points
+      _linearTween = Tween(begin: _rect.left, end: _rect.right);
+      _animationController = AnimationController(
+        vsync: this,
+        duration: widget.controller.endTrim - widget.controller.startTrim,
+      );
+
+      _videoIndicatorAnimation = _linearTween.animate(_animationController!)
+        ..addListener(() => setState(() {}))
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _animationController?.repeat();
+          }
+        });
+    });
+  }
+
+  @override
   void dispose() {
+    widget.controller.video.removeListener(videoIndicatorAnimation);
+    _animationController?.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   bool get wantKeepAlive => true;
+
+  void videoIndicatorAnimation() {
+    if (widget.controller.video.value.isPlaying) {
+      setState(() {
+        if (_getTrimPosition() > _rect.right.toInt()) {
+          if (widget.controller.video.value.isLooping) {
+            _animationController?.reset();
+          } else {
+            widget.controller.video.pause();
+            _animationController?.stop();
+          }
+        } else {
+          if (!(_animationController?.isAnimating ?? false)) {
+            _animationController?.forward();
+          }
+        }
+      });
+    } else if (widget.controller.video.value.isInitialized) {
+      _animationController?.stop();
+    }
+  }
+
+  void _resetVideoIndicatorAnimation({double? begin, double? end}) {
+    if (begin != null) {
+      _linearTween.begin = begin;
+    }
+    if (end != null) {
+      _linearTween.end = end;
+    }
+    _animationController?.duration =
+        widget.controller.endTrim - widget.controller.startTrim;
+    _animationController?.reset();
+  }
 
   //--------//
   //GESTURES//
@@ -67,7 +130,7 @@ class _TrimSliderState extends State<TrimSlider>
     final double pos = details.localPosition.dx;
     final double max = _rect.right;
     final double min = _rect.left;
-    final double progressTrim = _getTrimPosition();
+    final double progressTrim = _videoIndicatorAnimation?.value ?? 0;
     final List<double> minMargin = [min - margin, min + margin];
     final List<double> maxMargin = [max - margin, max + margin];
 
@@ -103,6 +166,7 @@ class _TrimSliderState extends State<TrimSlider>
             pos.dx < _rect.right - trimWidth * 2) {
           _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
         }
+        _resetVideoIndicatorAnimation(begin: _rect.left);
         break;
       case _TrimBoundaries.right:
         final pos = _rect.topRight + delta;
@@ -111,6 +175,7 @@ class _TrimSliderState extends State<TrimSlider>
             pos.dx > _rect.left + trimWidth * 2) {
           _changeTrimRect(width: _rect.width + delta.dx);
         }
+        _resetVideoIndicatorAnimation(end: _rect.right);
         break;
       case _TrimBoundaries.inside:
         final pos = _rect.topLeft + delta;
@@ -182,24 +247,23 @@ class _TrimSliderState extends State<TrimSlider>
         _boundary == _TrimBoundaries.none) return;
 
     // if the left side changed and overtake the current postion
-    if ((_boundary == _TrimBoundaries.inside ||
-            _boundary == _TrimBoundaries.left) &&
-        startTrim > widget.controller.trimPosition) {
+    if ((_boundary == _TrimBoundaries.inside) ||
+        (_boundary == _TrimBoundaries.left &&
+            startTrim > widget.controller.trimPosition) ||
+        (_boundary == _TrimBoundaries.right &&
+            endTrim < widget.controller.trimPosition)) {
       // reset position to startTrim
+      _resetVideoIndicatorAnimation(begin: startTrim);
       await widget.controller.video.seekTo(widget.controller.startTrim);
-    } else if ((_boundary == _TrimBoundaries.inside ||
-            _boundary == _TrimBoundaries.right) &&
-        endTrim < widget.controller.trimPosition) {
-      // or if the right side changed and is under the current postion, reset position to endTrim
-      // substract 10 milliseconds to avoid the video to loop and to show startTrim
-      await widget.controller.video
-          .seekTo(widget.controller.endTrim - const Duration(milliseconds: 10));
     }
   }
 
-  void _controllerSeekTo(double position) => widget.controller.video.seekTo(
-        widget.controller.videoDuration * (position / (_fullLayout.width)),
-      );
+  void _controllerSeekTo(double position) async {
+    _animationController?.value = (position / _fullLayout.width);
+    await widget.controller.video.seekTo(
+      widget.controller.videoDuration * (position / _fullLayout.width),
+    );
+  }
 
   void _updateControllerTrim() {
     final double width = _fullLayout.width;
@@ -284,7 +348,7 @@ class _TrimSliderState extends State<TrimSlider>
                         ),
                       ),
                       if (widget.child != null)
-                        SizedBox(width: _fullLayout.width, child: widget.child)
+                        SizedBox(width: _fullLayout.width, child: widget.child),
                     ],
                   ),
                 ),
@@ -315,13 +379,13 @@ class _TrimSliderState extends State<TrimSlider>
                     size: Size.fromHeight(widget.height),
                     painter: TrimSliderPainter(
                       _rect,
-                      _getTrimPosition(),
+                      _videoIndicatorAnimation?.value ?? 0,
                       widget.controller.trimStyle,
                     ),
                   );
                 },
               ),
-            )
+            ),
           ]));
     });
   }
