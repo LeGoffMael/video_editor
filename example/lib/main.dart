@@ -362,9 +362,12 @@ class _VideoEditorState extends State<VideoEditor> {
   List<Widget> _trimSlider() {
     return [
       AnimatedBuilder(
-        animation: _controller.video,
+        animation: Listenable.merge([
+          _controller,
+          _controller.video,
+        ]),
         builder: (_, __) {
-          final duration = _controller.video.value.duration.inSeconds;
+          final duration = _controller.videoDuration.inSeconds;
           final pos = _controller.trimPosition * duration;
           final start = _controller.minTrim * duration;
           final end = _controller.maxTrim * duration;
@@ -381,7 +384,7 @@ class _VideoEditorState extends State<VideoEditor> {
                   const SizedBox(width: 10),
                   Text(formatter(Duration(seconds: end.toInt()))),
                 ]),
-              )
+              ),
             ]),
           );
         },
