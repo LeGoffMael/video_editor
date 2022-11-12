@@ -3,7 +3,7 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/trim/thumbnail_slider.dart';
 import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 
-enum _TrimBoundaries { left, right, inside, progress, none }
+enum _TrimBoundaries { left, right, inside, progress }
 
 class TrimSlider extends StatefulWidget {
   /// Slider that trim video length.
@@ -38,7 +38,7 @@ class TrimSlider extends StatefulWidget {
 
 class _TrimSliderState extends State<TrimSlider>
     with AutomaticKeepAliveClientMixin<TrimSlider> {
-  _TrimBoundaries _boundary = _TrimBoundaries.none;
+  _TrimBoundaries? _boundary;
 
   Rect _rect = Rect.zero;
   Size _trimLayout = Size.zero;
@@ -46,6 +46,7 @@ class _TrimSliderState extends State<TrimSlider>
 
   late final ratio = widget.controller.videoDuration.inMilliseconds /
       widget.controller.maxDuration.inMilliseconds;
+  late final isExtendTrim = ratio > 1;
 
   final _scrollController = ScrollController();
   double _thumbnailPosition = 0.0;
@@ -53,10 +54,47 @@ class _TrimSliderState extends State<TrimSlider>
   /// Set to `true` if the video was playing before the gesture
   bool _isVideoPlayerHold = false;
 
+  late final trimWidth = widget.controller.trimStyle.lineWidth;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isExtendTrim) _scrollController.addListener(attachTrimToScroll);
+  }
+
   @override
   void dispose() {
+    if (isExtendTrim) _scrollController.removeListener(attachTrimToScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void attachTrimToScroll() {
+    if (_scrollController.position.outOfRange == false) return;
+
+    // TODO : clamp only when rect right is > scroll pos
+    if (_scrollController.position.pixels >
+        _scrollController.position.maxScrollExtent) {
+      final right = _scrollController.position.maxScrollExtent -
+          (_scrollController.position.pixels -
+              _scrollController.position.maxScrollExtent -
+              (widget.horizontalMargin * 2));
+
+      _changeTrimRect(
+        left: right - _rect.width + widget.horizontalMargin - trimWidth,
+      );
+      // TODO : clamp only when rect left is < scroll pos
+      //
+      // (_boundary == null &&
+      //     _scrollController.offset < -1 &&
+      //     _scrollController.offset.abs() + widget.horizontalMargin >
+      //         _rect.left)
+    } else if (_scrollController.position.pixels + widget.horizontalMargin <
+        _rect.left) {
+      _changeTrimRect(
+        left: -_scrollController.position.pixels + widget.horizontalMargin,
+      );
+    }
   }
 
   @override
@@ -74,29 +112,20 @@ class _TrimSliderState extends State<TrimSlider>
     final List<double> minMargin = [min - margin, min + margin];
     final List<double> maxMargin = [max - margin, max + margin];
 
-    //IS TOUCHING THE GRID
-    if (pos >= minMargin[0] && pos <= maxMargin[1]) {
-      //TOUCH BOUNDARIES
-      if (pos >= minMargin[0] && pos <= minMargin[1]) {
-        _boundary = _TrimBoundaries.left;
-      } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
-        _boundary = _TrimBoundaries.right;
-      } else if (pos >= progressTrim - margin && pos <= progressTrim + margin) {
-        _boundary = _TrimBoundaries.progress;
-      } else if (pos >= minMargin[1] && pos <= maxMargin[0]) {
-        _boundary = _TrimBoundaries.inside;
-      } else {
-        _boundary = _TrimBoundaries.none;
-      }
-      _updateControllerIsTrimming(true);
-    } else {
-      _boundary = _TrimBoundaries.none;
+    _boundary = _TrimBoundaries.inside;
+    // TOUCH BOUNDARIES
+    if (pos >= minMargin[0] && pos <= minMargin[1]) {
+      _boundary = _TrimBoundaries.left;
+    } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
+      _boundary = _TrimBoundaries.right;
+    } else if (pos >= progressTrim - margin && pos <= progressTrim + margin) {
+      _boundary = _TrimBoundaries.progress;
     }
+    _updateControllerIsTrimming(true);
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     final Offset delta = details.delta;
-    final trimWidth = widget.controller.trimStyle.lineWidth;
 
     switch (_boundary) {
       case _TrimBoundaries.left:
@@ -116,17 +145,12 @@ class _TrimSliderState extends State<TrimSlider>
         }
         break;
       case _TrimBoundaries.inside:
-        // TODO : when reaching end of scroll view, rect should clamp to it
         final pos = _rect.topLeft + delta;
-        // Move thumbs slider when the trimmer is on the edges
-        if (ratio > 1) {
+        if (isExtendTrim) {
           _scrollController.position.moveTo(
             _scrollController.offset - delta.dx,
             clamp: false,
           );
-          _changeTrimRect(
-              left: (_rect.topLeft.dx - (delta.dx / 2))
-                  .clamp(widget.horizontalMargin, _rect.right));
         } else if (pos.dx > widget.horizontalMargin && pos.dx < _rect.right) {
           _changeTrimRect(left: pos.dx);
         }
@@ -135,15 +159,13 @@ class _TrimSliderState extends State<TrimSlider>
         final double pos = details.localPosition.dx;
         if (pos >= _rect.left && pos <= _rect.right) _controllerSeekTo(pos);
         break;
-      case _TrimBoundaries.none:
+      default:
         break;
     }
   }
 
-  void _onHorizontalDragEnd(_) {
-    // TODO : move rect here after scroll is over, to scroll position if ratio > 1
-
-    if (_boundary == _TrimBoundaries.none) return;
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (_boundary == null) return;
     _updateControllerIsTrimming(false);
     if (_boundary != _TrimBoundaries.progress) {
       _updateControllerTrim();
@@ -158,10 +180,7 @@ class _TrimSliderState extends State<TrimSlider>
     width = width ?? _rect.width;
 
     final Duration diff = _getDurationDiff(left, width);
-
-    if (left >= 0 &&
-        left + width - widget.horizontalMargin <= _trimLayout.width &&
-        diff <= widget.controller.maxDuration) {
+    if (diff <= widget.controller.maxDuration) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
       _updateControllerTrim();
     }
@@ -186,8 +205,7 @@ class _TrimSliderState extends State<TrimSlider>
 
   /// Reset the video cursor position to fit the rect
   void _resetControllerPosition(double startTrim, double endTrim) async {
-    if (_boundary == _TrimBoundaries.progress &&
-        _boundary == _TrimBoundaries.none) return;
+    if (_boundary == _TrimBoundaries.progress || _boundary == null) return;
 
     // if the left side changed and overtake the current postion
     if (_boundary == _TrimBoundaries.inside ||
@@ -221,7 +239,7 @@ class _TrimSliderState extends State<TrimSlider>
   }
 
   void _updateControllerIsTrimming(bool value) {
-    if (_boundary == _TrimBoundaries.none) return;
+    if (_boundary == null) return;
 
     if (value && widget.controller.isPlaying) {
       _isVideoPlayerHold = true;
@@ -259,7 +277,7 @@ class _TrimSliderState extends State<TrimSlider>
         contrainst.maxHeight,
       );
       _fullLayout = Size(
-        trimLayout.width * (ratio > 1 ? ratio : 1),
+        trimLayout.width * (isExtendTrim ? ratio : 1),
         contrainst.maxHeight,
       );
       if (_trimLayout != trimLayout) {
@@ -296,6 +314,8 @@ class _TrimSliderState extends State<TrimSlider>
                 ),
               ),
               onNotification: (notification) {
+                if (!isExtendTrim) return true;
+
                 _boundary = _TrimBoundaries.inside;
                 _updateControllerIsTrimming(true);
                 if (notification is ScrollEndNotification) {
@@ -307,8 +327,8 @@ class _TrimSliderState extends State<TrimSlider>
               },
             ),
             GestureDetector(
-              onHorizontalDragUpdate: _onHorizontalDragUpdate,
               onHorizontalDragStart: _onHorizontalDragStart,
+              onHorizontalDragUpdate: _onHorizontalDragUpdate,
               onHorizontalDragEnd: _onHorizontalDragEnd,
               behavior: HitTestBehavior.opaque,
               child: AnimatedBuilder(
