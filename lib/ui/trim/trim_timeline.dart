@@ -1,61 +1,58 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 
-class TrimTimeline extends StatefulWidget {
+class TrimTimeline extends StatelessWidget {
   /// Show the timeline corresponding to the [TrimSlider]
   const TrimTimeline({
     Key? key,
     required this.controller,
-    this.secondGap = 5,
-    this.margin = EdgeInsets.zero,
+    this.quantity = 8,
+    this.padding = EdgeInsets.zero,
   }) : super(key: key);
 
-  /// The [controller] param is mandatory so depending on the [controller.maxDuration], the generated timeline will be different
+  /// The [controller] param is mandatory so depending on the video's duration,
+  /// the size of the generated timeline will be different
   final VideoEditorController controller;
 
-  /// The [secondGap] param specifies time gap in second between every points of the timeline
-  /// The default value of this property is 5 seconds
-  final double secondGap;
+  /// Expected [quantity] of elements shown in the timeline, is not fixed,
+  /// will be determine by the max width available and the video duration
+  final int quantity;
 
-  /// The [margin] param specifies the space surrounding the timeline
-  final EdgeInsets margin;
-
-  @override
-  State<TrimTimeline> createState() => _TrimTimelineState();
-}
-
-class _TrimTimelineState extends State<TrimTimeline> {
-  int _timeGap = 0;
-
-  @override
-  void initState() {
-    final Duration duration =
-        widget.controller.maxDuration < widget.controller.videoDuration
-            ? widget.controller.maxDuration
-            : widget.controller.videoDuration;
-    _timeGap = (duration.inSeconds / (widget.secondGap + 1)).ceil();
-    super.initState();
-  }
+  /// The [padding] param specifies the space surrounding the timeline
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        margin: widget.margin,
-        child: Row(
+    return LayoutBuilder(builder: (_, contrainst) {
+      int count =
+          max(1, (contrainst.maxWidth ~/ MediaQuery.of(context).size.width)) *
+              min(quantity, controller.videoDuration.inMilliseconds ~/ 100);
+      final gap = controller.videoDuration.inMilliseconds ~/ (count - 1);
+
+      return Padding(
+        padding: padding,
+        child: IntrinsicWidth(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              for (int i = 0;
-                  i <=
-                      (widget.controller.videoDuration.inSeconds / _timeGap)
-                          .ceil();
-                  i++)
-                Text(
-                  (i * _timeGap <= widget.controller.videoDuration.inSeconds
-                          ? i * _timeGap
-                          : '')
-                      .toString(),
-                ),
-            ]));
+            children: List.generate(count, (i) {
+              final t = Duration(milliseconds: i * gap);
+              final String text;
+
+              if (gap < 1000) {
+                text =
+                    '${(t.inMilliseconds / 1000).toStringAsFixed(1).padLeft(2, '0')}s';
+              } else {
+                text = '${t.inSeconds}s';
+              }
+
+              return Text(text, style: Theme.of(context).textTheme.bodySmall);
+            }),
+          ),
+        ),
+      );
+    });
   }
 }

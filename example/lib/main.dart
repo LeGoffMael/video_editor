@@ -392,12 +392,14 @@ class _VideoEditorState extends State<VideoEditor> {
         width: MediaQuery.of(context).size.width,
         margin: EdgeInsets.symmetric(vertical: height / 4),
         child: TrimSlider(
+          controller: _controller,
+          height: height,
+          horizontalMargin: height / 4,
+          child: TrimTimeline(
             controller: _controller,
-            height: height,
-            horizontalMargin: height / 4,
-            child: TrimTimeline(
-                controller: _controller,
-                margin: const EdgeInsets.only(top: 10))),
+            padding: const EdgeInsets.only(top: 10),
+          ),
+        ),
       )
     ];
   }
