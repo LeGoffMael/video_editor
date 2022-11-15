@@ -314,7 +314,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
                         ? MediaQuery.of(context).size.width -
                             widget.horizontalMargin
                         : Size.infinite.height),
-                child: CropTransform(
+                child: CropTransformWithAnimation(
                     transform: transform,
                     child: VideoViewer(
                       controller: _controller,
