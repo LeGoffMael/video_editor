@@ -181,40 +181,44 @@ class _TrimSliderState extends State<TrimSlider>
     final List<double> maxMargin = [max - margin, max + margin];
 
     _boundary = _TrimBoundaries.inside;
-    // TOUCH BOUNDARIES
-    if (pos >= minMargin[0] && pos <= minMargin[1]) {
-      _boundary = _TrimBoundaries.left;
-    } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
-      _boundary = _TrimBoundaries.right;
-    } else if (pos >= progressTrim - margin && pos <= progressTrim + margin) {
-      _boundary = _TrimBoundaries.progress;
+
+    /// boundary should not be set to other that inside when scroll controller is moving
+    /// it would lead to weird behavior to change position while scrolling
+    if (!_scrollController.position.isScrollingNotifier.value) {
+      // TOUCH BOUNDARIES
+      if (pos >= minMargin[0] && pos <= minMargin[1]) {
+        _boundary = _TrimBoundaries.left;
+      } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
+        _boundary = _TrimBoundaries.right;
+      } else if (pos >= progressTrim - margin && pos <= progressTrim + margin) {
+        _boundary = _TrimBoundaries.progress;
+      }
     }
+
     _updateControllerIsTrimming(true);
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     final Offset delta = details.delta;
+    final posLeft = _rect.topLeft + delta;
+    final posRight = _rect.topRight + delta;
 
     switch (_boundary) {
       case _TrimBoundaries.left:
-        final pos = _rect.topLeft + delta;
         // avoid minTrim to be bigger than maxTrim
-        if (pos.dx > widget.horizontalMargin &&
-            pos.dx < _rect.right - trimWidth * 2) {
-          _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
+        if (posLeft.dx > widget.horizontalMargin &&
+            posLeft.dx < _rect.right - trimWidth * 2) {
+          _changeTrimRect(left: posLeft.dx, width: _rect.width - delta.dx);
         }
         break;
       case _TrimBoundaries.right:
-        final pos = _rect.topRight + delta;
         // avoid maxTrim to be smaller than minTrim
-        if (pos.dx < _trimLayout.width + widget.horizontalMargin &&
-            pos.dx > _rect.left + trimWidth * 2) {
+        if (posRight.dx < _trimLayout.width + widget.horizontalMargin &&
+            posRight.dx > _rect.left + trimWidth * 2) {
           _changeTrimRect(width: _rect.width + delta.dx);
         }
         break;
       case _TrimBoundaries.inside:
-        final posLeft = _rect.topLeft + delta;
-        final posRight = _rect.topRight + delta;
         if (isExtendTrim) {
           _scrollController.position.moveTo(
             _scrollController.offset - delta.dx,
