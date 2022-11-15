@@ -83,6 +83,12 @@ class _TrimSliderState extends State<TrimSlider>
   /// Will fix [_rect] to the scroll view when it is bouncing
   void attachTrimToScroll() {
     if (_scrollController.position.outOfRange == false) {
+      // update trim and video position when scrolled from [SingleChildScrollView]
+      if (_boundary == null) {
+        _boundary = _TrimBoundaries.inside;
+        _updateControllerTrim();
+        _boundary = null;
+      }
       _preSynchLeft = null;
       _preSynchRight = null;
       _lastScrollPixels = null;
@@ -94,8 +100,9 @@ class _TrimSliderState extends State<TrimSlider>
 
     // if is not bouncing save position
     if (!isBouncing) {
+      // use last scroll position because isScrollingNotifier is updated after the max bounce position is set
       _lastScrollPixels = _scrollController.position.pixels;
-    } else if (_lastScrollPixels != null) {
+    } else {
       // on the left side
       if (_scrollController.position.extentBefore == 0.0 &&
           _preSynchLeft == null) {
@@ -103,13 +110,13 @@ class _TrimSliderState extends State<TrimSlider>
           0,
           _rect.left -
               widget.horizontalMargin -
-              (_lastScrollPixels?.abs() ?? 0),
+              (_lastScrollPixels ?? _scrollController.position.pixels).abs(),
         );
         // on the right side
       } else if (_scrollController.position.extentAfter == 0.0 &&
           _preSynchRight == null) {
         final scrollOffset = (_scrollController.position.maxScrollExtent -
-                (_lastScrollPixels ?? 0))
+                (_lastScrollPixels ?? _scrollController.position.pixels))
             .abs();
         _preSynchRight = max(
           0,
@@ -142,7 +149,7 @@ class _TrimSliderState extends State<TrimSlider>
             widget.horizontalMargin -
             trimWidth -
             (_preSynchRight ?? 0),
-        updateTrim: !isBouncing,
+        updateTrim: !isBouncing || _boundary == null,
       );
       // if view is bouncing on the left side
     } else if (_scrollController.position.extentBefore == 0.0 &&
@@ -153,7 +160,7 @@ class _TrimSliderState extends State<TrimSlider>
         left: -_scrollController.position.pixels +
             widget.horizontalMargin +
             (_preSynchLeft ?? 0),
-        updateTrim: !isBouncing,
+        updateTrim: !isBouncing || _boundary == null,
       );
     }
   }
@@ -213,6 +220,8 @@ class _TrimSliderState extends State<TrimSlider>
             _scrollController.offset - delta.dx,
             clamp: false,
           );
+          // update trim and video position
+          _updateControllerTrim();
         } else if (posLeft.dx > widget.horizontalMargin &&
             posRight.dx < _trimLayout.width + widget.horizontalMargin) {
           _changeTrimRect(left: posLeft.dx);
