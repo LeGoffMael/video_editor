@@ -5,10 +5,10 @@ enum TrimSliderEdgesType { bar, circle }
 class TrimSliderStyle {
   ///Style for [TrimSlider]. It's use on VideoEditorController
   TrimSliderStyle({
-    Color? background,
+    this.background = Colors.black54,
     this.positionLineColor = Colors.white,
     this.positionLineWidth = 4,
-    this.lineColor = Colors.white,
+    this.lineColor = Colors.white70,
     this.onTrimmingColor = const Color(0xffffcc00),
     this.lineWidth = 2,
     this.borderRadius = 5.0,
@@ -17,16 +17,14 @@ class TrimSliderStyle {
     double? edgesSize,
     // icons
     this.iconColor = Colors.black,
-    this.iconSize = 25,
-    this.leftIcon = Icons.arrow_left,
-    this.rightIcon = Icons.arrow_right,
-  })  : background = background ?? Colors.black.withOpacity(0.6),
-        edgesSize =
-            edgesSize ?? (edgesType == TrimSliderEdgesType.bar ? 10 : 8);
+    this.iconSize = 16,
+    this.leftIcon = Icons.arrow_back_ios_rounded,
+    this.rightIcon = Icons.arrow_forward_ios_rounded,
+  }) : edgesSize = edgesSize ?? (edgesType == TrimSliderEdgesType.bar ? 10 : 8);
 
   /// The [background] param specifies the color of the paint area outside the trimmed area
   ///
-  /// Defaults to `Colors.black.withOpacity(0.6)`
+  /// Defaults to [Colors.black54]
   final Color background;
 
   /// The [positionLineColor] param specifies the color of the line showing the video position
@@ -41,7 +39,7 @@ class TrimSliderStyle {
 
   /// The [lineColor] param specifies the color of the borders around the trimmed area
   ///
-  /// Defaults to [Colors.white]
+  /// Defaults to [Colors.white70]
   final Color lineColor;
 
   /// The [onTrimmingColor] param specifies the color of the borders around the trimmed area while it is getting trimmed
@@ -78,17 +76,17 @@ class TrimSliderStyle {
 
   /// The [iconSize] param specifies the size of the icon on the trimmed area's edges
   ///
-  /// Defaults to `25`
+  /// Defaults to `16`
   final double iconSize;
 
   /// The [leftIcon] param specifies the icon to show on the left edge of the trimmed area
   ///
-  /// Defaults to [Icons.arrow_left]
+  /// Defaults to [Icons.arrow_back_ios_rounded]
   final IconData? leftIcon;
 
   /// The [rightIcon] param specifies the icon to show on the right edge of the trimmed area
   ///
-  /// Defaults to [Icons.arrow_right]
+  /// Defaults to [Icons.arrow_forward_ios_rounded]
   final IconData? rightIcon;
 
   /// Returns left and right line width depending on [edgesType]

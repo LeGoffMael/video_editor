@@ -323,6 +323,7 @@ class _TrimSliderState extends State<TrimSlider>
                 builder: (_, __) {
                   return CustomPaint(
                     size: Size.fromHeight(widget.height),
+                    // TODO : left and right edges should not overlap the thumbnails
                     painter: TrimSliderPainter(
                       _rect,
                       _getTrimPosition(),

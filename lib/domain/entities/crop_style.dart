@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CropGridStyle {
   ///Style for [CropGridViewer]. It's use on VideoEditorController
   CropGridStyle({
-    Color? croppingBackground,
+    this.croppingBackground = Colors.black45,
     this.background = Colors.black,
     this.gridLineColor = Colors.white,
     this.gridLineWidth = 1,
@@ -11,12 +11,11 @@ class CropGridStyle {
     this.boundariesColor = Colors.white,
     this.boundariesLength = 20,
     this.boundariesWidth = 5,
-  }) : croppingBackground =
-            croppingBackground ?? Colors.black.withOpacity(0.48);
+  });
 
   /// The [croppingBackground] param specifies the color of the paint area outside the crop area when copping
   ///
-  /// Defaults to `Colors.black.withOpacity(0.48)`
+  /// Defaults to [Colors.black45]
   final Color croppingBackground;
 
   /// The [background] param specifies the color of the paint area outside the crop area when not copping

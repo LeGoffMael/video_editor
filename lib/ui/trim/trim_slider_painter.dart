@@ -16,20 +16,7 @@ class TrimSliderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final trimColor = isTrimming ? style.onTrimmingColor : style.lineColor;
-
     final Paint background = Paint()..color = style.background;
-    final progress = Paint()
-      ..color = style.positionLineColor
-      ..strokeWidth = style.positionLineWidth;
-    final line = Paint()
-      ..color = trimColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = style.lineWidth;
-    final circle = Paint()..color = trimColor;
-
-    final double halfLineWidth = style.lineWidth / 2;
-    final double halfHeight = rect.height / 2;
 
     final rrect = RRect.fromRectAndRadius(
       rect,
@@ -49,8 +36,130 @@ class TrimSliderPainter extends CustomPainter {
       background,
     );
 
+    final trimColor = isTrimming ? style.onTrimmingColor : style.lineColor;
+    final line = Paint()
+      ..color = trimColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = style.lineWidth;
+    final edges = Paint()..color = trimColor;
+
+    final double halfLineWidth = style.lineWidth / 2;
+    final double halfHeight = rect.height / 2;
+
+    final centerLeft = Offset(rect.left + halfLineWidth, halfHeight);
+    final centerRight = Offset(rect.right - halfLineWidth, halfHeight);
+
+    switch (style.edgesType) {
+      case TrimSliderEdgesType.bar:
+        paintBar(
+          canvas,
+          size,
+          rrect: rrect,
+          line: line,
+          edges: edges,
+          centerLeft: centerLeft,
+          centerRight: centerRight,
+          halfLineWidth: halfLineWidth,
+        );
+        break;
+      case TrimSliderEdgesType.circle:
+        paintCircle(
+          canvas,
+          size,
+          rrect: rrect,
+          line: line,
+          edges: edges,
+          centerLeft: centerLeft,
+          centerRight: centerRight,
+        );
+        break;
+    }
+  }
+
+  void paintBar(
+    Canvas canvas,
+    Size size, {
+    required RRect rrect,
+    required Paint line,
+    required Paint edges,
+    required Offset centerLeft,
+    required Offset centerRight,
+    required double halfLineWidth,
+  }) {
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.union,
+        // DRAW TOP AND BOTTOM LINES
+        Path()
+          ..addRect(Rect.fromPoints(
+            rect.topLeft,
+            rect.topRight + Offset(0.0, line.strokeWidth),
+          ))
+          ..addRect(
+            Rect.fromPoints(
+              rect.bottomRight - Offset(line.strokeWidth, line.strokeWidth),
+              rect.bottomLeft,
+            ),
+          ),
+        // DRAW EDGES
+        Path()
+          ..addRRect(
+            RRect.fromRectAndCorners(
+              Rect.fromCenter(
+                center: centerLeft - Offset(halfLineWidth, 0),
+                width: style.edgesSize,
+                height: size.height,
+              ),
+              topLeft: Radius.circular(style.borderRadius),
+              bottomLeft: Radius.circular(style.borderRadius),
+            ),
+          )
+          ..addRRect(
+            RRect.fromRectAndCorners(
+              Rect.fromCenter(
+                center: centerRight + Offset(halfLineWidth, 0),
+                width: style.edgesSize,
+                height: size.height,
+              ),
+              topRight: Radius.circular(style.borderRadius),
+              bottomRight: Radius.circular(style.borderRadius),
+            ),
+          ),
+      ),
+      edges,
+    );
+
+    paintIcons(canvas);
+
+    paintIndicator(canvas, size);
+  }
+
+  void paintCircle(
+    Canvas canvas,
+    Size size, {
+    required RRect rrect,
+    required Paint line,
+    required Paint edges,
+    required Offset centerLeft,
+    required Offset centerRight,
+  }) {
     // DRAW RECT BORDERS
     canvas.drawRRect(rrect, line);
+
+    paintIndicator(canvas, size);
+
+    // LEFT CIRCLE
+    canvas.drawCircle(centerLeft, style.edgesSize, edges);
+    // RIGHT CIRCLE
+    canvas.drawCircle(centerRight, style.edgesSize, edges);
+
+    paintIcons(canvas);
+  }
+
+  void paintIndicator(Canvas canvas, Size size) {
+    final progress = Paint()
+      ..color = style.positionLineColor
+      ..strokeWidth = style.positionLineWidth;
 
     // DRAW VIDEO INDICATOR
     canvas.drawRRect(
@@ -63,44 +172,9 @@ class TrimSliderPainter extends CustomPainter {
       ),
       progress,
     );
+  }
 
-    final centerLeft = Offset(rect.left + halfLineWidth, halfHeight);
-    final centerRight = Offset(rect.right - halfLineWidth, halfHeight);
-
-    if (style.edgesType == TrimSliderEdgesType.circle) {
-      // LEFT CIRCLE
-      canvas.drawCircle(centerLeft, style.edgesSize, circle);
-      // RIGHT CIRCLE
-      canvas.drawCircle(centerRight, style.edgesSize, circle);
-    } else if (style.edgesType == TrimSliderEdgesType.bar) {
-      // LEFT RECT
-      canvas.drawRRect(
-        RRect.fromRectAndCorners(
-          Rect.fromCenter(
-            center: centerLeft - Offset(halfLineWidth, 0),
-            width: style.edgesSize,
-            height: size.height + style.lineWidth,
-          ),
-          topLeft: Radius.circular(style.borderRadius),
-          bottomLeft: Radius.circular(style.borderRadius),
-        ),
-        circle,
-      );
-      // RIGHT RECT
-      canvas.drawRRect(
-        RRect.fromRectAndCorners(
-          Rect.fromCenter(
-            center: centerRight + Offset(halfLineWidth, 0),
-            width: style.edgesSize,
-            height: size.height + style.lineWidth,
-          ),
-          topRight: Radius.circular(style.borderRadius),
-          bottomRight: Radius.circular(style.borderRadius),
-        ),
-        circle,
-      );
-    }
-
+  void paintIcons(Canvas canvas) {
     // LEFT ICON
     if (style.leftIcon != null) {
       TextPainter leftArrow = TextPainter(textDirection: TextDirection.rtl);
@@ -112,9 +186,12 @@ class TrimSliderPainter extends CustomPainter {
               color: style.iconColor));
       leftArrow.layout();
       leftArrow.paint(
-          canvas,
-          Offset(
-              rect.left - style.iconSize / 2, halfHeight - style.iconSize / 2));
+        canvas,
+        Offset(
+          rect.left - style.iconSize / 2,
+          rect.height / 2 - style.iconSize / 2,
+        ),
+      );
     }
 
     // RIGHT ICON
@@ -128,9 +205,12 @@ class TrimSliderPainter extends CustomPainter {
               color: style.iconColor));
       rightArrow.layout();
       rightArrow.paint(
-          canvas,
-          Offset(rect.right - style.iconSize / 2,
-              halfHeight - style.iconSize / 2));
+        canvas,
+        Offset(
+          rect.right - style.iconSize / 2,
+          rect.height / 2 - style.iconSize / 2,
+        ),
+      );
     }
   }
 
