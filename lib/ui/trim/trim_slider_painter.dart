@@ -24,49 +24,33 @@ class TrimSliderPainter extends CustomPainter {
       ..strokeWidth = style.positionLineWidth;
     final line = Paint()
       ..color = trimColor
-      ..strokeWidth = style.lineWidth
-      ..strokeCap = StrokeCap.square;
-    final double edgesSize = style.edgesSize;
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = style.lineWidth;
     final circle = Paint()..color = trimColor;
 
     final double halfLineWidth = style.lineWidth / 2;
     final double halfHeight = rect.height / 2;
 
-    // BACKGROUND LEFT
-    canvas.drawRect(
-      Rect.fromPoints(
-        Offset.zero,
-        rect.bottomLeft,
+    final rrect = RRect.fromRectAndRadius(
+      rect,
+      Radius.circular(style.borderRadius),
+    );
+
+    // DRAW LEFT AND RIGHT BACKGROUNDS
+    // extract [rect] trimmed area from the canvas
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
+        Path()
+          ..addRRect(rrect)
+          ..close(),
       ),
       background,
     );
 
-    // BACKGROUND RIGHT
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.topRight,
-        Offset(size.width, size.height),
-      ),
-      background,
-    );
-
-    // TOP RECT
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.topLeft,
-        rect.topRight + Offset(0.0, line.strokeWidth),
-      ),
-      line,
-    );
-
-    // BOTTOM RECT
-    canvas.drawRect(
-      Rect.fromPoints(
-        rect.bottomRight - Offset(line.strokeWidth, line.strokeWidth),
-        rect.bottomLeft,
-      ),
-      line,
-    );
+    // DRAW RECT BORDERS
+    canvas.drawRRect(rrect, line);
 
     // DRAW VIDEO INDICATOR
     canvas.drawRRect(
@@ -84,42 +68,34 @@ class TrimSliderPainter extends CustomPainter {
     final centerRight = Offset(rect.right - halfLineWidth, halfHeight);
 
     if (style.edgesType == TrimSliderEdgesType.circle) {
-      // LEFT RECT
-      canvas.drawRect(
-        Rect.fromPoints(
-          rect.bottomLeft - Offset(-line.strokeWidth, line.strokeWidth),
-          rect.topLeft,
-        ),
-        line,
-      );
       // LEFT CIRCLE
-      canvas.drawCircle(centerLeft, edgesSize, circle);
-      // RIGHT RECT
-      canvas.drawRect(
-        Rect.fromPoints(
-          rect.topRight - Offset(line.strokeWidth, -line.strokeWidth),
-          rect.bottomRight,
-        ),
-        line,
-      );
+      canvas.drawCircle(centerLeft, style.edgesSize, circle);
       // RIGHT CIRCLE
-      canvas.drawCircle(centerRight, edgesSize, circle);
+      canvas.drawCircle(centerRight, style.edgesSize, circle);
     } else if (style.edgesType == TrimSliderEdgesType.bar) {
       // LEFT RECT
-      canvas.drawRect(
-        Rect.fromCenter(
-          center: centerLeft - Offset(halfLineWidth, 0),
-          width: edgesSize,
-          height: size.height,
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromCenter(
+            center: centerLeft - Offset(halfLineWidth, 0),
+            width: style.edgesSize,
+            height: size.height + style.lineWidth,
+          ),
+          topLeft: Radius.circular(style.borderRadius),
+          bottomLeft: Radius.circular(style.borderRadius),
         ),
         circle,
       );
       // RIGHT RECT
-      canvas.drawRect(
-        Rect.fromCenter(
-          center: centerRight + Offset(halfLineWidth, 0),
-          width: edgesSize,
-          height: size.height,
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromCenter(
+            center: centerRight + Offset(halfLineWidth, 0),
+            width: style.edgesSize,
+            height: size.height + style.lineWidth,
+          ),
+          topRight: Radius.circular(style.borderRadius),
+          bottomRight: Radius.circular(style.borderRadius),
         ),
         circle,
       );

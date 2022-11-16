@@ -20,6 +20,6 @@ class CoverSelectionStyle {
 
   /// The [borderRadius] param specifies the border radius of each cover thumbnail
   ///
-  /// Defaults to `0`
+  /// Defaults to `5`
   final double borderRadius;
 }

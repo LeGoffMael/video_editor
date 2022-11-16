@@ -11,6 +11,7 @@ class TrimSliderStyle {
     this.lineColor = Colors.white,
     this.onTrimmingColor = const Color(0xffffcc00),
     this.lineWidth = 2,
+    this.borderRadius = 5.0,
     // edges
     this.edgesType = TrimSliderEdgesType.bar,
     double? edgesSize,
@@ -52,6 +53,11 @@ class TrimSliderStyle {
   ///
   /// Defaults to `2`
   final double lineWidth;
+
+  /// The [borderRadius] param specifies the border radius around the trimmer
+  ///
+  /// Defaults to `5`
+  final double borderRadius;
 
   /// The [edgesType] param specifies the style to apply to the edges (left & right) of the trimmer
   ///
