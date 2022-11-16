@@ -6,11 +6,13 @@ import 'package:video_editor/domain/bloc/controller.dart';
 class TrimTimeline extends StatelessWidget {
   /// Show the timeline corresponding to the [TrimSlider]
   const TrimTimeline({
-    Key? key,
+    super.key,
     required this.controller,
     this.quantity = 8,
     this.padding = EdgeInsets.zero,
-  }) : super(key: key);
+    this.localSeconds = 's',
+    this.textStyle,
+  });
 
   /// The [controller] param is mandatory so depending on the video's duration,
   /// the size of the generated timeline will be different
@@ -18,10 +20,24 @@ class TrimTimeline extends StatelessWidget {
 
   /// Expected [quantity] of elements shown in the timeline, is not fixed,
   /// will be determine by the max width available and the video duration
+  ///
+  /// Defaults to `8`
   final int quantity;
 
   /// The [padding] param specifies the space surrounding the timeline
+  ///
+  /// Defaults to `EdgeInsets.zero`
   final EdgeInsets padding;
+
+  /// The [String] to represents the seconds to show next to each timeline element
+  ///
+  /// Defaults to `s`
+  final String localSeconds;
+
+  /// The [TextStyle] to use to style the timeline text
+  ///
+  /// Defaults to `textTheme.bodySmall`
+  final TextStyle? textStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +58,17 @@ class TrimTimeline extends StatelessWidget {
               final String text;
 
               if (gap < 1000) {
-                text =
-                    '${(t.inMilliseconds / 1000).toStringAsFixed(1).padLeft(2, '0')}s';
+                text = (t.inMilliseconds / 1000)
+                    .toStringAsFixed(1)
+                    .padLeft(2, '0');
               } else {
-                text = '${t.inSeconds}s';
+                text = '${t.inSeconds}';
               }
 
-              return Text(text, style: Theme.of(context).textTheme.bodySmall);
+              return Text(
+                '$text$localSeconds',
+                style: textStyle ?? Theme.of(context).textTheme.bodySmall,
+              );
             }),
           ),
         ),
