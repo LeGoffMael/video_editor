@@ -14,24 +14,34 @@ import 'package:video_editor/domain/bloc/controller.dart';
 class CoverSelection extends StatefulWidget {
   /// Slider that allow to select a generated cover
   const CoverSelection({
-    Key? key,
+    super.key,
     required this.controller,
     this.size = 60,
     this.quality = 10,
     this.quantity = 5,
-  }) : super(key: key);
+    this.selectedCoverBuilder,
+  });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the cover selection view
   final VideoEditorController controller;
 
   /// The [size] param specifies the size to display the generated thumbnails
+  ///
+  /// Defaults to `60`
   final double size;
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail))
+  ///
+  /// Defaults to `10`
   final int quality;
 
   /// The [quantity] param specifies the quantity of thumbnails to generate
+  ///
+  /// Default to `5`
   final int quantity;
+
+  /// Returns how the selected cover should be displayed
+  final Widget Function(Widget selectedCover, Size)? selectedCoverBuilder;
 
   @override
   State<CoverSelection> createState() => _CoverSelectionState();
@@ -49,19 +59,19 @@ class _CoverSelectionState extends State<CoverSelection>
   late Stream<List<CoverData>> _stream = (() => _generateCoverThumbnails())();
 
   @override
-  void dispose() {
-    widget.controller.removeListener(_scaleRect);
-    _transform.dispose();
-    _rect.dispose();
-    super.dispose();
-  }
-
-  @override
   void initState() {
     super.initState();
     _startTrim = widget.controller.startTrim;
     _endTrim = widget.controller.endTrim;
     widget.controller.addListener(_scaleRect);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_scaleRect);
+    _transform.dispose();
+    _rect.dispose();
+    super.dispose();
   }
 
   @override
@@ -107,29 +117,43 @@ class _CoverSelectionState extends State<CoverSelection>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return StreamBuilder(
+    return StreamBuilder<List<CoverData>>(
         stream: _stream,
-        builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
+        builder: (_, snapshot) {
           return snapshot.hasData
-              ? ValueListenableBuilder(
+              ? ValueListenableBuilder<TransformData>(
                   valueListenable: _transform,
-                  builder: (_, TransformData transform, __) => Wrap(
+                  builder: (_, transform, __) => Wrap(
                     runSpacing: 10.0,
                     spacing: 10.0,
                     children: snapshot.data!
                         .map(
-                          (coverData) => ValueListenableBuilder(
-                            valueListenable:
-                                widget.controller.selectedCoverNotifier,
-                            builder: (context, CoverData? selectedCover, __) =>
-                                _buildSingleCover(
-                              coverData,
-                              transform,
-                              widget.controller.coverStyle,
-                              isSelected: coverData.sameTime(
-                                  widget.controller.selectedCoverVal!),
-                            ),
-                          ),
+                          (coverData) => ValueListenableBuilder<CoverData?>(
+                              valueListenable:
+                                  widget.controller.selectedCoverNotifier,
+                              builder: (context, selectedCover, __) {
+                                final isSelected = coverData.sameTime(
+                                    widget.controller.selectedCoverVal!);
+                                final coverThumbnail = _buildSingleCover(
+                                  coverData,
+                                  transform,
+                                  widget.controller.coverStyle,
+                                  isSelected: isSelected,
+                                );
+
+                                if (isSelected &&
+                                    widget.selectedCoverBuilder != null) {
+                                  final size = _calculateMaxLayout();
+                                  return widget.selectedCoverBuilder!(
+                                    coverThumbnail,
+                                    widget.controller.isRotated
+                                        ? size.flipped
+                                        : size,
+                                  );
+                                }
+
+                                return coverThumbnail;
+                              }),
                         )
                         .toList()
                         .cast<Widget>(),
@@ -150,21 +174,13 @@ class _CoverSelectionState extends State<CoverSelection>
     return RotatedBox(
       quarterTurns: widget.controller.rotation ~/ -90,
       child: InkWell(
+        borderRadius: BorderRadius.circular(coverStyle.borderRadius),
         onTap: () => widget.controller.updateSelectedCover(cover),
-        child: Stack(
-          alignment: coverStyle.selectedIndicatorAlign,
-          children: [
-            Container(
-              constraints: BoxConstraints.tight(_calculateMaxLayout()),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected
-                      ? coverStyle.selectedBorderColor
-                      : Colors.transparent,
-                  width: coverStyle.selectedBorderWidth,
-                ),
-              ),
-              child: CropTransform(
+        child: SizedBox.fromSize(
+          size: _calculateMaxLayout(),
+          child: Stack(
+            children: [
+              CropTransform(
                 transform: transform,
                 child: ImageViewer(
                   controller: widget.controller,
@@ -182,6 +198,7 @@ class _CoverSelectionState extends State<CoverSelection>
                       size: Size.infinite,
                       painter: CropGridPainter(
                         _rect.value,
+                        radius: coverStyle.borderRadius / 2,
                         showGrid: false,
                         style: widget.controller.cropStyle,
                       ),
@@ -189,11 +206,22 @@ class _CoverSelectionState extends State<CoverSelection>
                   }),
                 ),
               ),
-            ),
-            isSelected && coverStyle.selectedIndicator != null
-                ? coverStyle.selectedIndicator!
-                : const SizedBox.shrink(),
-          ],
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        BorderRadius.circular(coverStyle.borderRadius),
+                    border: Border.all(
+                      color: isSelected
+                          ? coverStyle.selectedBorderColor
+                          : Colors.transparent,
+                      width: coverStyle.borderWidth,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

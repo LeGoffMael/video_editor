@@ -405,12 +405,19 @@ class _VideoEditorState extends State<VideoEditor> {
 
   Widget _coverSelection() {
     return Container(
-        margin: EdgeInsets.symmetric(horizontal: height / 4),
-        child: CoverSelection(
-          controller: _controller,
-          size: height,
-          quantity: 8,
-        ));
+      margin: EdgeInsets.symmetric(horizontal: height / 4),
+      child: CoverSelection(
+        controller: _controller,
+        size: height,
+        quantity: 8,
+        selectedCoverBuilder: (cover, size) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [cover, const Icon(Icons.check_circle)],
+          );
+        },
+      ),
+    );
   }
 
   Widget _customSnackBar() {
