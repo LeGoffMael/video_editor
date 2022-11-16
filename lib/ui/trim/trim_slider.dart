@@ -8,25 +8,31 @@ enum _TrimBoundaries { left, right, inside, progress, none }
 class TrimSlider extends StatefulWidget {
   /// Slider that trim video length.
   const TrimSlider({
-    Key? key,
+    super.key,
     required this.controller,
     this.height = 60,
     this.quality = 10,
     this.horizontalMargin = 0.0,
     this.child,
-  }) : super(key: key);
+  });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
   final VideoEditorController controller;
 
   /// The [height] param specifies the height of the generated thumbnails
+  ///
+  /// Defaults to `60`
   final double height;
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 (([more info](https://pub.dev/packages/video_thumbnail)))
+  ///
+  /// Defaults to `10`
   final int quality;
 
   /// The [horizontalMargin] param specifies the horizontal space to set around the slider.
   /// It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`)
+  ///
+  /// Defaults to `0`
   final double horizontalMargin;
 
   /// The [child] param can be specify to display a widget below this one (e.g: [TrimTimeline])
@@ -93,14 +99,14 @@ class _TrimSliderState extends State<TrimSlider>
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     final Offset delta = details.delta;
-    final trimWidth = widget.controller.trimStyle.lineWidth;
+    final edgeWidth = widget.controller.trimStyle.edgeWidth;
 
     switch (_boundary) {
       case _TrimBoundaries.left:
         final pos = _rect.topLeft + delta;
         // avoid minTrim to be bigger than maxTrim
         if (pos.dx > widget.horizontalMargin &&
-            pos.dx < _rect.right - trimWidth * 2) {
+            pos.dx < _rect.right - edgeWidth * 2) {
           _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
         }
         break;
@@ -108,7 +114,7 @@ class _TrimSliderState extends State<TrimSlider>
         final pos = _rect.topRight + delta;
         // avoid maxTrim to be smaller than minTrim
         if (pos.dx < _trimLayout.width + widget.horizontalMargin &&
-            pos.dx > _rect.left + trimWidth * 2) {
+            pos.dx > _rect.left + edgeWidth * 2) {
           _changeTrimRect(width: _rect.width + delta.dx);
         }
         break;
@@ -317,6 +323,7 @@ class _TrimSliderState extends State<TrimSlider>
                       _rect,
                       _getTrimPosition(),
                       widget.controller.trimStyle,
+                      isTrimming: widget.controller.isTrimming,
                     ),
                   );
                 },

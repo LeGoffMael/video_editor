@@ -1,48 +1,91 @@
 import 'package:flutter/material.dart';
 
+enum TrimSliderEdgesType { bar, circle }
+
 class TrimSliderStyle {
   ///Style for [TrimSlider]. It's use on VideoEditorController
   TrimSliderStyle({
     Color? background,
-    this.positionLineColor = Colors.red,
-    this.positionLineWidth = 2,
+    this.positionLineColor = Colors.white,
+    this.positionLineWidth = 4,
     this.lineColor = Colors.white,
+    this.onTrimmingColor = const Color(0xffffcc00),
     this.lineWidth = 2,
+    // edges
+    this.edgesType = TrimSliderEdgesType.bar,
+    double? edgesSize,
+    // icons
     this.iconColor = Colors.black,
-    this.circleSize = 8,
     this.iconSize = 25,
     this.leftIcon = Icons.arrow_left,
     this.rightIcon = Icons.arrow_right,
-  }) : background = background ?? Colors.black.withOpacity(0.6);
+  })  : background = background ?? Colors.black.withOpacity(0.6),
+        edgesSize =
+            edgesSize ?? (edgesType == TrimSliderEdgesType.bar ? 10 : 8);
 
   /// The [background] param specifies the color of the paint area outside the trimmed area
-  /// The default value of this property `Colors.black.withOpacity(0.6)
+  ///
+  /// Defaults to `Colors.black.withOpacity(0.6)`
   final Color background;
 
   /// The [positionLineColor] param specifies the color of the line showing the video position
+  ///
+  /// Defaults to [Colors.white]
   final Color positionLineColor;
 
   /// The [positionLineWidth] param specifies the width  of the line showing the video position
+  ///
+  /// Defaults to `4`
   final double positionLineWidth;
 
   /// The [lineColor] param specifies the color of the borders around the trimmed area
+  ///
+  /// Defaults to [Colors.white]
   final Color lineColor;
 
+  /// The [onTrimmingColor] param specifies the color of the borders around the trimmed area while it is getting trimmed
+  ///
+  /// Defaults to `Color(0xffffcc00)`
+  final Color onTrimmingColor;
+
   /// The [lineWidth] param specifies the width of the borders around the trimmed area
+  ///
+  /// Defaults to `2`
   final double lineWidth;
 
+  /// The [edgesType] param specifies the style to apply to the edges (left & right) of the trimmer
+  ///
+  /// Defaults to [TrimSliderEdgesType.bar]
+  final TrimSliderEdgesType edgesType;
+
+  /// The [edgesSize] param specifies the size of the edges behind the icons
+  /// used only if [edgesType] equals [TrimSliderEdgesType.circle]
+  ///
+  /// If [edgesType] equals [TrimSliderEdgesType.bar] defaults to `10`
+  /// If [edgesType] equals [TrimSliderEdgesType.circle] defaults to `8`
+  final double edgesSize;
+
   /// The [iconColor] param specifies the color of the icons on the trimmed area's edges
+  ///
+  /// Defaults to [Colors.black]
   final Color iconColor;
 
-  /// The [circleSize] param specifies the size of the circle behind the icons on the trimmed area's edges
-  final double circleSize;
-
   /// The [iconSize] param specifies the size of the icon on the trimmed area's edges
+  ///
+  /// Defaults to `25`
   final double iconSize;
 
   /// The [leftIcon] param specifies the icon to show on the left edge of the trimmed area
+  ///
+  /// Defaults to [Icons.arrow_left]
   final IconData? leftIcon;
 
   /// The [rightIcon] param specifies the icon to show on the right edge of the trimmed area
+  ///
+  /// Defaults to [Icons.arrow_right]
   final IconData? rightIcon;
+
+  /// Returns left and right line width depending on [edgesType]
+  double get edgeWidth =>
+      edgesType == TrimSliderEdgesType.bar ? edgesSize : lineWidth;
 }

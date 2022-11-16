@@ -10,7 +10,7 @@ class CoverSelectionStyle {
 
   /// The [selectedBorderColor] param specifies the color of the border around the selected cover thumbnail
   ///
-  /// Defaults to `Colors.white`
+  /// Defaults to [Colors.white]
   final Color selectedBorderColor;
 
   /// The [borderWidth] param specifies the width of the border around each cover thumbnails
