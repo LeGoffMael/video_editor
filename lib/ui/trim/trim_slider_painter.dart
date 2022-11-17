@@ -135,7 +135,7 @@ class TrimSliderPainter extends CustomPainter {
           Rect.fromCenter(
             center: centerLeft,
             width: style.edgesSize,
-            height: size.height,
+            height: size.height + style.lineWidth * 2,
           ),
         )
         // RIGTH EDGE
@@ -143,7 +143,7 @@ class TrimSliderPainter extends CustomPainter {
           Rect.fromCenter(
             center: centerRight,
             width: style.edgesSize,
-            height: size.height,
+            height: size.height + style.lineWidth * 2,
           ),
         );
     }
