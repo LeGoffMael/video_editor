@@ -175,14 +175,18 @@ class _TrimSliderState extends State<TrimSlider>
     final isNotMax = _rect.right != _trimLayout.width + _horizontalMargin;
 
     // if touch left edge, set left to minimum (UI can be not accurate)
-    if (isNotMin && left - _horizontalMargin < 1) {
+    if (isNotMin &&
+        left - _horizontalMargin < 1 &&
+        _scrollController.offset < _horizontalMargin) {
       shouldHaptic = true;
       width += left - _horizontalMargin; // to not affect width by changing left
       left = _horizontalMargin;
     }
     // if touch right edge, set right to maximum (UI can be not accurate)
     if (isNotMax &&
-        (_trimLayout.width + _horizontalMargin) - (left + width) < 1) {
+        (_trimLayout.width + _horizontalMargin) - (left + width) < 1 &&
+        _scrollController.offset ==
+            _scrollController.position.maxScrollExtent) {
       shouldHaptic = true;
       width = _trimLayout.width + _horizontalMargin - left;
     }
