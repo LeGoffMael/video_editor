@@ -359,6 +359,7 @@ class _TrimSliderState extends State<TrimSlider>
                       _getTrimPosition(),
                       widget.controller.trimStyle,
                       isTrimming: widget.controller.isTrimming,
+                      isTrimmed: widget.controller.isTrimmed,
                     ),
                   );
                 },

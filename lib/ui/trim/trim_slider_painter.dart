@@ -7,10 +7,11 @@ class TrimSliderPainter extends CustomPainter {
     this.position,
     this.style, {
     this.isTrimming = false,
+    this.isTrimmed = false,
   });
 
   final Rect rect;
-  final bool isTrimming;
+  final bool isTrimming, isTrimmed;
   final double position;
   final TrimSliderStyle style;
 
@@ -36,7 +37,11 @@ class TrimSliderPainter extends CustomPainter {
       background,
     );
 
-    final trimColor = isTrimming ? style.onTrimmingColor : style.lineColor;
+    final trimColor = isTrimming
+        ? style.onTrimmingColor
+        : isTrimmed
+            ? style.onTrimmedColor
+            : style.lineColor;
     final line = Paint()
       ..color = trimColor
       ..style = PaintingStyle.stroke
