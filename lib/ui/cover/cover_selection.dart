@@ -54,7 +54,7 @@ class _CoverSelectionState extends State<CoverSelection>
   Size _layout = Size.zero;
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
-      ValueNotifier<TransformData>(TransformData());
+      ValueNotifier<TransformData>(const TransformData());
 
   late Stream<List<CoverData>> _stream = (() => _generateCoverThumbnails())();
 

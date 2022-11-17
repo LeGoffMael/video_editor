@@ -75,8 +75,8 @@ class VideoEditorController extends ChangeNotifier {
           Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
         )),
         _maxDuration = maxDuration ?? Duration.zero,
-        cropStyle = cropStyle ?? CropGridStyle(),
-        coverStyle = coverStyle ?? CoverSelectionStyle(),
+        cropStyle = cropStyle ?? const CropGridStyle(),
+        coverStyle = coverStyle ?? const CoverSelectionStyle(),
         trimStyle = trimStyle ?? TrimSliderStyle();
 
   int _rotation = 0;

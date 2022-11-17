@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CoverSelectionStyle {
   /// Style for [CoverSelection]. It's use on VideoEditorController
-  CoverSelectionStyle({
+  const CoverSelectionStyle({
     this.selectedBorderColor = Colors.white,
     this.borderWidth = 2,
     this.borderRadius = 5.0,

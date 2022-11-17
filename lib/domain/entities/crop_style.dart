@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CropGridStyle {
   ///Style for [CropGridViewer]. It's use on VideoEditorController
-  CropGridStyle({
+  const CropGridStyle({
     this.croppingBackground = Colors.black45,
     this.background = Colors.black,
     this.gridLineColor = Colors.white,
