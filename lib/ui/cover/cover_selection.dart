@@ -19,6 +19,7 @@ class CoverSelection extends StatefulWidget {
     this.size = 60,
     this.quality = 10,
     this.quantity = 5,
+    this.wrap,
     this.selectedCoverBuilder,
   });
 
@@ -39,6 +40,10 @@ class CoverSelection extends StatefulWidget {
   ///
   /// Default to `5`
   final int quantity;
+
+  /// Specifies a [wrap] param to change how should be displayed the covers thumbnails
+  /// the `children` param will be ommited
+  final Wrap? wrap;
 
   /// Returns how the selected cover should be displayed
   final Widget Function(Widget selectedCover, Size)? selectedCoverBuilder;
@@ -116,6 +121,7 @@ class _CoverSelectionState extends State<CoverSelection>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final wrap = widget.wrap ?? Wrap();
 
     return StreamBuilder<List<CoverData>>(
         stream: _stream,
@@ -124,8 +130,15 @@ class _CoverSelectionState extends State<CoverSelection>
               ? ValueListenableBuilder<TransformData>(
                   valueListenable: _transform,
                   builder: (_, transform, __) => Wrap(
-                    runSpacing: 10.0,
-                    spacing: 10.0,
+                    direction: wrap.direction,
+                    alignment: wrap.alignment,
+                    spacing: widget.wrap?.spacing ?? 10.0,
+                    runSpacing: widget.wrap?.runSpacing ?? 10.0,
+                    runAlignment: wrap.runAlignment,
+                    crossAxisAlignment: wrap.crossAxisAlignment,
+                    textDirection: wrap.textDirection,
+                    verticalDirection: wrap.verticalDirection,
+                    clipBehavior: wrap.clipBehavior,
                     children: snapshot.data!
                         .map(
                           (coverData) => ValueListenableBuilder<CoverData?>(
