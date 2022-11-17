@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/helpers.dart';
 
 enum TrimSliderEdgesType { bar, circle }
 
@@ -8,9 +9,9 @@ class TrimSliderStyle {
     this.background = Colors.black54,
     this.positionLineColor = Colors.white,
     this.positionLineWidth = 4,
-    this.lineColor = Colors.white70,
-    this.onTrimmingColor = const Color(0xffffcc00),
-    this.onTrimmedColor = const Color(0xffffcc00),
+    this.lineColor = Colors.white60,
+    this.onTrimmingColor = kDefaultSelectedColor,
+    this.onTrimmedColor = kDefaultSelectedColor,
     this.lineWidth = 2,
     this.borderRadius = 5.0,
     // edges
@@ -45,12 +46,12 @@ class TrimSliderStyle {
 
   /// The [onTrimmingColor] param specifies the color of the borders around the trimmed area while it is getting trimmed
   ///
-  /// Defaults to `Color(0xffffcc00)`
+  /// Defaults to [kDefaultSelectedColor]
   final Color onTrimmingColor;
 
   /// The [onTrimmedColor] param specifies the color of the borders around the trimmed area when the trimmed parameters are not default values
   ///
-  /// Defaults to `Color(0xffffcc00)`
+  /// Defaults to [kDefaultSelectedColor]
   final Color onTrimmedColor;
 
   /// The [lineWidth] param specifies the width of the borders around the trimmed area
