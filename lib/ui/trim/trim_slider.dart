@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/trim/thumbnail_slider.dart';
 import 'package:video_editor/ui/trim/trim_slider_painter.dart';
@@ -14,6 +15,7 @@ class TrimSlider extends StatefulWidget {
     this.quality = 10,
     this.horizontalMargin = 0.0,
     this.child,
+    this.hasHaptic = true,
   });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
@@ -37,6 +39,9 @@ class TrimSlider extends StatefulWidget {
 
   /// The [child] param can be specify to display a widget below this one (e.g: [TrimTimeline])
   final Widget? child;
+
+  //// Should haptic feed back be triggered when the trim touch an edge (left or right)
+  final bool hasHaptic;
 
   @override
   State<TrimSlider> createState() => _TrimSliderState();
@@ -109,25 +114,25 @@ class _TrimSliderState extends State<TrimSlider>
     final Offset delta = details.delta;
     final edgeWidth = widget.controller.trimStyle.edgeWidth;
 
+    final posLeft = _rect.topLeft + delta;
+    final posRight = _rect.topRight + delta;
+
     switch (_boundary) {
       case _TrimBoundaries.left:
-        final pos = _rect.topLeft + delta;
         // avoid minTrim to be bigger than maxTrim
-        if (pos.dx > _horizontalMargin &&
-            pos.dx < _rect.right - edgeWidth * 2) {
-          _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
+        if (posLeft.dx > _horizontalMargin &&
+            posLeft.dx < _rect.right - edgeWidth * 2) {
+          _changeTrimRect(left: posLeft.dx, width: _rect.width - delta.dx);
         }
         break;
       case _TrimBoundaries.right:
-        final pos = _rect.topRight + delta;
         // avoid maxTrim to be smaller than minTrim
-        if (pos.dx < _trimLayout.width + _horizontalMargin &&
-            pos.dx > _rect.left + edgeWidth * 2) {
+        if (posRight.dx < _trimLayout.width + _horizontalMargin &&
+            posRight.dx > _rect.left + edgeWidth * 2) {
           _changeTrimRect(width: _rect.width + delta.dx);
         }
         break;
       case _TrimBoundaries.inside:
-        final pos = _rect.topLeft + delta;
         // Move thumbs slider when the trimmer is on the edges
         if (_rect.topLeft.dx + delta.dx < _horizontalMargin ||
             _rect.topRight.dx + delta.dx > _trimLayout.width) {
@@ -135,8 +140,9 @@ class _TrimSliderState extends State<TrimSlider>
             _scrollController.offset + delta.dx,
           );
         }
-        if (pos.dx > _horizontalMargin && pos.dx < _rect.right) {
-          _changeTrimRect(left: pos.dx);
+        if (posLeft.dx > _horizontalMargin &&
+            posRight.dx < _trimLayout.width + _horizontalMargin) {
+          _changeTrimRect(left: posLeft.dx);
         }
         break;
       case _TrimBoundaries.progress:
@@ -164,6 +170,23 @@ class _TrimSliderState extends State<TrimSlider>
     left = left ?? _rect.left;
     width = width ?? _rect.width;
 
+    bool shouldHaptic = false;
+    final isNotMin = _rect.left != _horizontalMargin;
+    final isNotMax = _rect.right != _trimLayout.width + _horizontalMargin;
+
+    // if touch left edge, set left to minimum (UI can be not accurate)
+    if (isNotMin && left - _horizontalMargin < 1) {
+      shouldHaptic = true;
+      width += left - _horizontalMargin; // to not affect width by changing left
+      left = _horizontalMargin;
+    }
+    // if touch right edge, set right to maximum (UI can be not accurate)
+    if (isNotMax &&
+        (_trimLayout.width + _horizontalMargin) - (left + width) < 1) {
+      shouldHaptic = true;
+      width = _trimLayout.width + _horizontalMargin - left;
+    }
+
     final Duration diff = _getDurationDiff(left, width);
 
     if (left >= 0 &&
@@ -171,6 +194,10 @@ class _TrimSliderState extends State<TrimSlider>
         diff <= widget.controller.maxDuration) {
       _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
       _updateControllerTrim();
+      // if left edge or right edge is touched, vibrate
+      if (widget.hasHaptic && shouldHaptic) {
+        HapticFeedback.lightImpact();
+      }
     }
   }
 
