@@ -111,23 +111,20 @@ class _TrimSliderState extends State<TrimSlider>
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     final Offset delta = details.delta;
-    final edgeWidth = widget.controller.trimStyle.edgeWidth;
-
     final posLeft = _rect.topLeft + delta;
     final posRight = _rect.topRight + delta;
 
     switch (_boundary) {
       case _TrimBoundaries.left:
         // avoid minTrim to be bigger than maxTrim
-        if (posLeft.dx > _horizontalMargin &&
-            posLeft.dx < _rect.right - edgeWidth * 2) {
+        if (posLeft.dx > _horizontalMargin && posLeft.dx < _rect.right) {
           _changeTrimRect(left: posLeft.dx, width: _rect.width - delta.dx);
         }
         break;
       case _TrimBoundaries.right:
         // avoid maxTrim to be smaller than minTrim
         if (posRight.dx < _trimLayout.width + _horizontalMargin &&
-            posRight.dx > _rect.left + edgeWidth * 2) {
+            posRight.dx > _rect.left) {
           _changeTrimRect(width: _rect.width + delta.dx);
         }
         break;
