@@ -56,7 +56,6 @@ class _TrimSliderState extends State<TrimSlider>
   Size _fullLayout = Size.zero;
 
   final _scrollController = ScrollController();
-  double _thumbnailPosition = 0.0;
 
   /// Set to `true` if the video was playing before the gesture
   bool _isVideoPlayerHold = false;
@@ -240,7 +239,8 @@ class _TrimSliderState extends State<TrimSlider>
   /// If the expected position is bigger than [controller.endTrim], set it to [controller.endTrim]
   void _controllerSeekTo(double position) async {
     final to = widget.controller.videoDuration *
-        (position / (_fullLayout.width + _horizontalMargin * 2));
+        ((position + _scrollController.offset) /
+            (_fullLayout.width + _horizontalMargin * 2));
     await widget.controller.video.seekTo(
         to > widget.controller.endTrim ? widget.controller.endTrim : to);
   }
@@ -248,9 +248,9 @@ class _TrimSliderState extends State<TrimSlider>
   void _updateControllerTrim() {
     final double width = _fullLayout.width;
     final startTrim =
-        (_rect.left + _thumbnailPosition - _horizontalMargin) / width;
+        (_rect.left + _scrollController.offset - _horizontalMargin) / width;
     final endTrim =
-        (_rect.right + _thumbnailPosition - _horizontalMargin) / width;
+        (_rect.right + _scrollController.offset - _horizontalMargin) / width;
 
     widget.controller.updateTrim(startTrim, endTrim);
     _resetControllerPosition(startTrim, endTrim);
@@ -275,7 +275,7 @@ class _TrimSliderState extends State<TrimSlider>
   // Using function instead of getter seems faster when grabbing the cursor
   double _getTrimPosition() =>
       _fullLayout.width * widget.controller.trimPosition -
-      _thumbnailPosition +
+      _scrollController.offset +
       _horizontalMargin;
 
   Duration _getDurationDiff(double left, double width) {
@@ -337,10 +337,9 @@ class _TrimSliderState extends State<TrimSlider>
               onNotification: (notification) {
                 _boundary = _TrimBoundaries.inside;
                 _updateControllerIsTrimming(true);
+                _updateControllerTrim();
                 if (notification is ScrollEndNotification) {
-                  _thumbnailPosition = notification.metrics.pixels;
                   _updateControllerIsTrimming(false);
-                  _updateControllerTrim();
                 }
                 return true;
               },
