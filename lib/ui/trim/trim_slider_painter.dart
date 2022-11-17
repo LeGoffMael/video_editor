@@ -43,11 +43,11 @@ class TrimSliderPainter extends CustomPainter {
       ..strokeWidth = style.lineWidth;
     final edges = Paint()..color = trimColor;
 
-    final double halfLineWidth = style.lineWidth / 2;
+    final double halfLineWidth = style.edgeWidth / 2;
     final double halfHeight = rect.height / 2;
 
-    final centerLeft = Offset(rect.left + halfLineWidth, halfHeight);
-    final centerRight = Offset(rect.right - halfLineWidth, halfHeight);
+    final centerLeft = Offset(rect.left - halfLineWidth, halfHeight);
+    final centerRight = Offset(rect.right + halfLineWidth, halfHeight);
 
     switch (style.edgesType) {
       case TrimSliderEdgesType.bar:
@@ -93,45 +93,126 @@ class TrimSliderPainter extends CustomPainter {
         Path()
           ..addRect(Rect.fromPoints(
             rect.topLeft,
-            rect.topRight + Offset(0.0, line.strokeWidth),
+            rect.topRight - Offset(0.0, style.lineWidth),
           ))
           ..addRect(
             Rect.fromPoints(
-              rect.bottomRight - Offset(line.strokeWidth, line.strokeWidth),
+              rect.bottomRight + Offset(0.0, style.lineWidth),
               rect.bottomLeft,
             ),
           ),
         // DRAW EDGES
-        Path()
-          ..addRRect(
-            RRect.fromRectAndCorners(
-              Rect.fromCenter(
-                center: centerLeft - Offset(halfLineWidth, 0),
-                width: style.edgesSize,
-                height: size.height,
-              ),
-              topLeft: Radius.circular(style.borderRadius),
-              bottomLeft: Radius.circular(style.borderRadius),
-            ),
-          )
-          ..addRRect(
-            RRect.fromRectAndCorners(
-              Rect.fromCenter(
-                center: centerRight + Offset(halfLineWidth, 0),
-                width: style.edgesSize,
-                height: size.height,
-              ),
-              topRight: Radius.circular(style.borderRadius),
-              bottomRight: Radius.circular(style.borderRadius),
-            ),
-          ),
+        getEdgesBarPath(
+          size,
+          centerLeft: centerLeft,
+          centerRight: centerRight,
+          halfLineWidth: halfLineWidth,
+        ),
       ),
       edges,
     );
 
-    paintIcons(canvas);
+    paintIcons(canvas, centerLeft: centerLeft, centerRight: centerRight);
 
     paintIndicator(canvas, size);
+  }
+
+  Path getEdgesBarPath(
+    Size size, {
+    required Offset centerLeft,
+    required Offset centerRight,
+    required double halfLineWidth,
+  }) {
+    if (style.borderRadius == 0) {
+      return Path()
+        // LEFT EDGE
+        ..addRect(
+          Rect.fromCenter(
+            center: centerLeft,
+            width: style.edgesSize,
+            height: size.height,
+          ),
+        )
+        // RIGTH EDGE
+        ..addRect(
+          Rect.fromCenter(
+            center: centerRight,
+            width: style.edgesSize,
+            height: size.height,
+          ),
+        );
+    }
+
+    final borderRadius = Radius.circular(style.borderRadius);
+
+    /// Return left and right edges, with a reversed border radius on the inside of the rect
+    return Path()
+      // LEFT EDGE
+      ..addPath(
+        Path.combine(
+          PathOperation.difference,
+          Path()
+            ..addRRect(
+              RRect.fromRectAndCorners(
+                Rect.fromLTWH(
+                  centerLeft.dx - style.lineWidth * 2,
+                  -style.lineWidth,
+                  style.edgeWidth + style.lineWidth * 2,
+                  size.height + style.lineWidth * 2,
+                ),
+                topLeft: borderRadius,
+                bottomLeft: borderRadius,
+              ),
+            ),
+          Path()
+            ..addRRect(
+              RRect.fromRectAndCorners(
+                Rect.fromLTWH(
+                  centerLeft.dx + halfLineWidth,
+                  0.0,
+                  style.borderRadius,
+                  size.height,
+                ),
+                topLeft: borderRadius,
+                bottomLeft: borderRadius,
+              ),
+            ),
+        ),
+        Offset.zero,
+      )
+      // RIGHT EDGE
+      ..addPath(
+        Path.combine(
+          PathOperation.difference,
+          Path()
+            ..addRRect(
+              RRect.fromRectAndCorners(
+                Rect.fromLTWH(
+                  centerRight.dx - style.lineWidth * 2 - halfLineWidth,
+                  -style.lineWidth,
+                  style.edgeWidth + style.lineWidth * 2,
+                  size.height + style.lineWidth * 2,
+                ),
+                topRight: borderRadius,
+                bottomRight: borderRadius,
+              ),
+            ),
+          Path()
+            ..addRRect(
+              RRect.fromRectAndCorners(
+                Rect.fromLTWH(
+                  centerRight.dx - halfLineWidth - style.borderRadius,
+                  0.0,
+                  style.borderRadius,
+                  size.height,
+                ),
+                topRight: borderRadius,
+                bottomRight: borderRadius,
+              ),
+            ),
+        ),
+        Offset.zero,
+      );
   }
 
   void paintCircle(
@@ -144,7 +225,16 @@ class TrimSliderPainter extends CustomPainter {
     required Offset centerRight,
   }) {
     // DRAW RECT BORDERS
-    canvas.drawRRect(rrect, line);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: rect.center,
+            width: rect.width + style.edgeWidth,
+            height: rect.height + style.edgeWidth,
+          ),
+          Radius.circular(style.borderRadius),
+        ),
+        line);
 
     paintIndicator(canvas, size);
 
@@ -153,7 +243,7 @@ class TrimSliderPainter extends CustomPainter {
     // RIGHT CIRCLE
     canvas.drawCircle(centerRight, style.edgesSize, edges);
 
-    paintIcons(canvas);
+    paintIcons(canvas, centerLeft: centerLeft, centerRight: centerRight);
   }
 
   void paintIndicator(Canvas canvas, Size size) {
@@ -165,8 +255,11 @@ class TrimSliderPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromPoints(
-          Offset(position - style.positionLineWidth / 2, -4),
-          Offset(position + style.positionLineWidth / 2, size.height + 4),
+          Offset(position - style.positionLineWidth / 2, -style.lineWidth * 2),
+          Offset(
+            position + style.positionLineWidth / 2,
+            size.height + style.lineWidth * 2,
+          ),
         ),
         Radius.circular(style.positionLineWidth),
       ),
@@ -174,43 +267,41 @@ class TrimSliderPainter extends CustomPainter {
     );
   }
 
-  void paintIcons(Canvas canvas) {
+  void paintIcons(
+    Canvas canvas, {
+    required Offset centerLeft,
+    required Offset centerRight,
+  }) {
+    final halfIconSize = Offset(style.iconSize / 2, style.iconSize / 2);
+
     // LEFT ICON
     if (style.leftIcon != null) {
       TextPainter leftArrow = TextPainter(textDirection: TextDirection.rtl);
       leftArrow.text = TextSpan(
-          text: String.fromCharCode(style.leftIcon!.codePoint),
-          style: TextStyle(
-              fontSize: style.iconSize,
-              fontFamily: style.leftIcon!.fontFamily,
-              color: style.iconColor));
-      leftArrow.layout();
-      leftArrow.paint(
-        canvas,
-        Offset(
-          rect.left - style.iconSize / 2,
-          rect.height / 2 - style.iconSize / 2,
+        text: String.fromCharCode(style.leftIcon!.codePoint),
+        style: TextStyle(
+          fontSize: style.iconSize,
+          fontFamily: style.leftIcon!.fontFamily,
+          color: style.iconColor,
         ),
       );
+      leftArrow.layout();
+      leftArrow.paint(canvas, centerLeft - halfIconSize);
     }
 
     // RIGHT ICON
     if (style.rightIcon != null) {
       TextPainter rightArrow = TextPainter(textDirection: TextDirection.rtl);
       rightArrow.text = TextSpan(
-          text: String.fromCharCode(style.rightIcon!.codePoint),
-          style: TextStyle(
-              fontSize: style.iconSize,
-              fontFamily: style.rightIcon!.fontFamily,
-              color: style.iconColor));
-      rightArrow.layout();
-      rightArrow.paint(
-        canvas,
-        Offset(
-          rect.right - style.iconSize / 2,
-          rect.height / 2 - style.iconSize / 2,
+        text: String.fromCharCode(style.rightIcon!.codePoint),
+        style: TextStyle(
+          fontSize: style.iconSize,
+          fontFamily: style.rightIcon!.fontFamily,
+          color: style.iconColor,
         ),
       );
+      rightArrow.layout();
+      rightArrow.paint(canvas, centerRight - halfIconSize);
     }
   }
 
