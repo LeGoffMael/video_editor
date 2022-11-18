@@ -90,6 +90,9 @@ class _TrimSliderState extends State<TrimSlider>
   /// The distance of rect right side to the right of the scroll view before bouncing
   double? _preSynchRight;
 
+  /// Save last [_scrollController] pixels position before the bounce animation starts
+  double? _lastScrollPixelsBeforeBounce;
+
   /// Save last [_scrollController] pixels position
   double? _lastScrollPixels;
 
@@ -107,14 +110,32 @@ class _TrimSliderState extends State<TrimSlider>
   }
 
   // Distance of sroll bounce on the right
-  double get _bounceRightOffset => (_scrollController.position.maxScrollExtent -
-          _scrollController.position.pixels)
-      .abs();
+  double get _bounceRightOffset =>
+      (_scrollController.position.maxScrollExtent - _scrollController.offset)
+          .abs();
 
   /// Scroll to update [_rect] and trim values on scroll
   /// Will fix [_rect] to the scroll view when it is bouncing
   void attachTrimToScroll() {
     if (_scrollController.position.outOfRange == false) {
+      // the last scroll position is ommited (when outOfRange == false)
+      // because of that the last rect position after bouncing is inaccurate
+      // it causes that minTrim 0.0 and maxTrim 1.0 are never reach
+      // adding to the rect the difference between current scroll position and the last one fixes it
+      if (_scrollController.offset == 0.0) {
+        _changeTrimRect(
+          left: _rect.left - (_lastScrollPixels?.abs() ?? 0),
+          updateTrim: false,
+        );
+      } else if (_scrollController.offset ==
+          _scrollController.position.maxScrollExtent) {
+        _changeTrimRect(
+          left: _rect.left +
+              ((_lastScrollPixels?.abs() ?? 0) - _scrollController.offset),
+          updateTrim: false,
+        );
+      }
+
       // update trim and video position when scrolled from [SingleChildScrollView]
       if (_boundary == null) {
         _boundary = _TrimBoundaries.inside;
@@ -123,9 +144,11 @@ class _TrimSliderState extends State<TrimSlider>
       }
       _preSynchLeft = null;
       _preSynchRight = null;
+      _lastScrollPixelsBeforeBounce = null;
       _lastScrollPixels = null;
       return;
     }
+    _lastScrollPixels = _scrollController.offset;
 
     /// is this call triggered by bouncing back scroll action
     final isBouncing = _scrollController.position.isScrollingNotifier.value;
@@ -133,7 +156,7 @@ class _TrimSliderState extends State<TrimSlider>
     // if is not bouncing save position
     if (!isBouncing) {
       // use last scroll position because isScrollingNotifier is updated after the max bounce position is set
-      _lastScrollPixels = _scrollController.position.pixels;
+      _lastScrollPixelsBeforeBounce = _scrollController.offset;
     } else {
       // on the left side
       if (_scrollController.position.extentBefore == 0.0 &&
@@ -142,20 +165,20 @@ class _TrimSliderState extends State<TrimSlider>
           0,
           _rect.left -
               _horizontalMargin -
-              (_lastScrollPixels ?? _scrollController.position.pixels).abs(),
+              (_lastScrollPixelsBeforeBounce ?? _scrollController.offset).abs(),
         );
         // on the right side
       } else if (_scrollController.position.extentAfter == 0.0 &&
           _preSynchRight == null) {
         final scrollOffset = (_scrollController.position.maxScrollExtent -
-                (_lastScrollPixels ?? _scrollController.position.pixels))
+                (_lastScrollPixelsBeforeBounce ?? _scrollController.offset))
             .abs();
         _preSynchRight = max(
           0,
           _trimLayout.width - (_rect.right - _horizontalMargin) - scrollOffset,
         );
       }
-      _lastScrollPixels = null;
+      _lastScrollPixelsBeforeBounce = null;
     }
 
     // distance of rect to right side
