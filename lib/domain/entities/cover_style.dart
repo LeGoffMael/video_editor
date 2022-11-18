@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 
 class CoverSelectionStyle {
-  ///Style for [CoverSelection]. It's use on VideoEditorController
-  CoverSelectionStyle({
-    Color? selectedBorderColor,
-    this.selectedBorderWidth = 2,
-    this.selectedIndicator,
-    this.selectedIndicatorAlign = Alignment.bottomRight,
-  }) : selectedBorderColor = selectedBorderColor ?? Colors.white;
+  /// Style for [CoverSelection]. It's use on VideoEditorController
+  const CoverSelectionStyle({
+    this.selectedBorderColor = Colors.white,
+    this.borderWidth = 2,
+    this.borderRadius = 5.0,
+  });
 
   /// The [selectedBorderColor] param specifies the color of the border around the selected cover thumbnail
-  /// The default value of this property is `Colors.white`
+  ///
+  /// Defaults to [Colors.white]
   final Color selectedBorderColor;
 
-  /// The [selectedBorderWidth] param specifies the width of the border around the selected cover thumbnail
-  final double selectedBorderWidth;
+  /// The [borderWidth] param specifies the width of the border around each cover thumbnails
+  ///
+  /// Defaults to `2`
+  final double borderWidth;
 
-  /// The [selectedIndicator] param specifies the [Widget] to show on top of the selected cover
-  final Widget? selectedIndicator;
-
-  /// The [selectedIndicatorAlign] param specifies where [selectedIndicator] should be shown in the [Stack]
-  final AlignmentGeometry selectedIndicatorAlign;
+  /// The [borderRadius] param specifies the border radius of each cover thumbnail
+  ///
+  /// Defaults to `5`
+  final double borderRadius;
 }

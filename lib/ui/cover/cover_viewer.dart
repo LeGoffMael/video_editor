@@ -28,26 +28,21 @@ class CoverViewer extends StatefulWidget {
 class _CoverViewerState extends State<CoverViewer> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
-      ValueNotifier<TransformData>(TransformData());
+      ValueNotifier<TransformData>(const TransformData());
 
   Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
 
-  late VideoEditorController _controller;
-
   @override
   void initState() {
-    _controller = widget.controller;
-    _controller.addListener(_scaleRect);
-
-    _checkIfCoverIsNull();
-
     super.initState();
+    widget.controller.addListener(_scaleRect);
+    _checkIfCoverIsNull();
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_scaleRect);
+    widget.controller.removeListener(_scaleRect);
     _transform.dispose();
     _rect.dispose();
     super.dispose();
@@ -59,7 +54,7 @@ class _CoverViewerState extends State<CoverViewer> {
       _rect.value,
       _layout,
       _viewerSize,
-      _controller,
+      widget.controller,
     );
 
     _checkIfCoverIsNull();
@@ -105,7 +100,7 @@ class _CoverViewerState extends State<CoverViewer> {
                                   size: Size.infinite,
                                   painter: CropGridPainter(
                                     value,
-                                    style: _controller.cropStyle,
+                                    style: widget.controller.cropStyle,
                                     showGrid: false,
                                     showCenterRects: false,
                                   ),

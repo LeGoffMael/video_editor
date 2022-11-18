@@ -32,7 +32,7 @@ class ThumbnailSlider extends StatefulWidget {
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
-      ValueNotifier<TransformData>(TransformData());
+      ValueNotifier<TransformData>(const TransformData());
 
   /// The max width of [ThumbnailSlider]
   double _sliderWidth = 1.0;

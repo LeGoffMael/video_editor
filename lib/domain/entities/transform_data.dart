@@ -5,7 +5,7 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/helpers.dart';
 
 class TransformData {
-  TransformData({
+  const TransformData({
     this.scale = 1.0,
     this.rotation = 0.0,
     this.translate = Offset.zero,
