@@ -92,6 +92,11 @@ class _TrimSliderState extends State<TrimSlider>
     super.dispose();
   }
 
+  // Distance of sroll bounce on the right
+  double get _bounceRightOffset => (_scrollController.position.maxScrollExtent -
+          _scrollController.position.pixels)
+      .abs();
+
   /// Scroll to update [_rect] and trim values on scroll
   /// Will fix [_rect] to the scroll view when it is bouncing
   void attachTrimToScroll() {
@@ -139,16 +144,13 @@ class _TrimSliderState extends State<TrimSlider>
       _lastScrollPixels = null;
     }
 
-    // distance of bounce on the right
-    final rightOffset = _scrollController.position.maxScrollExtent -
-        _scrollController.position.pixels;
     // distance of rect to right side
     final rectRightOffset =
         _trimLayout.width - (_rect.right - _horizontalMargin);
 
     // if view is bouncing on the right side
     if (_scrollController.position.extentAfter == 0.0 &&
-        (_preSynchRight != null || rightOffset.abs() > rectRightOffset)) {
+        (_preSynchRight != null || _bounceRightOffset > rectRightOffset)) {
       final right = _scrollController.position.maxScrollExtent -
           (_scrollController.position.pixels -
               _scrollController.position.maxScrollExtent -
@@ -156,7 +158,7 @@ class _TrimSliderState extends State<TrimSlider>
 
       _changeTrimRect(
         left: right - _rect.width + _horizontalMargin - (_preSynchRight ?? 0),
-        updateTrim: !isBouncing || _boundary == null,
+        updateTrim: false,
       );
       // if view is bouncing on the left side
     } else if (_scrollController.position.extentBefore == 0.0 &&
@@ -166,7 +168,7 @@ class _TrimSliderState extends State<TrimSlider>
         left: -_scrollController.position.pixels +
             _horizontalMargin +
             (_preSynchLeft ?? 0),
-        updateTrim: !isBouncing || _boundary == null,
+        updateTrim: false,
       );
     }
   }
@@ -266,24 +268,39 @@ class _TrimSliderState extends State<TrimSlider>
     width = width ?? _rect.width;
 
     bool shouldHaptic = false;
-    final isNotMin = _rect.left != _horizontalMargin;
-    final isNotMax = _rect.right != _trimLayout.width + _horizontalMargin;
+    if (!_scrollController.position.isScrollingNotifier.value) {
+      final isNotMin = _rect.left != _horizontalMargin &&
+          widget.controller.minTrim > 0.0 &&
+          (_boundary != _TrimBoundaries.inside ? left < _rect.left : true);
+      final isNotMax = _rect.right != _trimLayout.width + _horizontalMargin &&
+          widget.controller.maxTrim < 1.0 &&
+          (_boundary != _TrimBoundaries.inside
+              ? (left + width) > _rect.right
+              : true);
+      final isOnLeftEdge =
+          (_scrollController.offset.abs() + _horizontalMargin - left).abs() <
+              1.0;
+      final isOnRightEdge = (_bounceRightOffset +
+                  left +
+                  width -
+                  _trimLayout.width -
+                  _horizontalMargin)
+              .abs() <
+          1.0;
 
-    // if touch left edge, set left to minimum (UI can be not accurate)
-    if (isNotMin &&
-        left - _horizontalMargin < 1 &&
-        _scrollController.offset < _horizontalMargin) {
-      shouldHaptic = true;
-      width += left - _horizontalMargin; // to not affect width by changing left
-      left = _horizontalMargin;
-    }
-    // if touch right edge, set right to maximum (UI can be not accurate)
-    if (isNotMax &&
-        (_trimLayout.width + _horizontalMargin) - (left + width) < 1 &&
-        _scrollController.offset ==
-            _scrollController.position.maxScrollExtent) {
-      shouldHaptic = true;
-      width = _trimLayout.width + _horizontalMargin - left;
+      // if touch left edge, set left to minimum (UI can be not accurate)
+      if (isNotMin && isOnLeftEdge) {
+        shouldHaptic = true;
+        final newLeft = _horizontalMargin - _scrollController.offset;
+        width += left - newLeft; // to not affect width by changing left
+        left = newLeft;
+      }
+      // if touch right edge, set right to maximum (UI can be not accurate)
+      if (isNotMax && isOnRightEdge) {
+        shouldHaptic = true;
+        width =
+            _trimLayout.width + _horizontalMargin - left - _bounceRightOffset;
+      }
     }
 
     final Duration diff = _getDurationDiff(left, width);
