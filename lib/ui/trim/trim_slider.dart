@@ -8,6 +8,9 @@ import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 
 enum _TrimBoundaries { left, right, inside, progress }
 
+/// Spacing to touch detection, touch target should be minimum 12 x 12 dp
+const _touchMargin = 12.0;
+
 class TrimSlider extends StatefulWidget {
   /// Slider that trim video length.
   const TrimSlider({
@@ -53,13 +56,31 @@ class _TrimSliderState extends State<TrimSlider>
     with AutomaticKeepAliveClientMixin<TrimSlider> {
   _TrimBoundaries? _boundary;
 
+  /// Set to `true` if the video was playing before the gesture
+  bool _isVideoPlayerHold = false;
+
   Rect _rect = Rect.zero;
   Size _trimLayout = Size.zero;
   Size _fullLayout = Size.zero;
 
+  /// Horizontal margin around the [ThumbnailSlider]
+  late final double _horizontalMargin =
+      widget.horizontalMargin + widget.controller.trimStyle.edgeWidth;
+
   late final ratio = widget.controller.videoDuration.inMilliseconds /
       widget.controller.maxDuration.inMilliseconds;
   late final isExtendTrim = ratio > 1;
+
+  // Touch detection
+
+  // Edges touch margin come from it size, but minimum is [margin]
+  late final _edgesTouchMargin =
+      max(widget.controller.trimStyle.edgeWidth, _touchMargin);
+  // Position line touch margin come from it size, but minimum is [margin]
+  late final _positionTouchMargin =
+      max(widget.controller.trimStyle.positionLineWidth, _touchMargin);
+
+  // Scroll view
 
   final _scrollController = ScrollController();
 
@@ -71,13 +92,6 @@ class _TrimSliderState extends State<TrimSlider>
 
   /// Save last [_scrollController] pixels position
   double? _lastScrollPixels;
-
-  /// Set to `true` if the video was playing before the gesture
-  bool _isVideoPlayerHold = false;
-
-  /// Horizontal margin around the [ThumbnailSlider]
-  late final double _horizontalMargin =
-      widget.horizontalMargin + widget.controller.trimStyle.edgeWidth;
 
   @override
   void initState() {
@@ -180,30 +194,47 @@ class _TrimSliderState extends State<TrimSlider>
   //GESTURES//
   //--------//
   void _onHorizontalDragStart(DragStartDetails details) {
-    final double pos = details.localPosition.dx;
-    final double progressTrim = _getTrimPosition();
-    final List<double> minMargin = [
-      _rect.left - _horizontalMargin,
-      _rect.left + _horizontalMargin,
-    ];
-    final List<double> maxMargin = [
-      _rect.right - _horizontalMargin,
-      _rect.right + _horizontalMargin,
-    ];
+    final pos = details.localPosition;
+    final progressTrim = _getTrimPosition();
 
+    // Left, right and video progress indicator touch areas
+    Rect leftTouch = Rect.fromCenter(
+      center: Offset(_rect.left - _edgesTouchMargin / 2, _rect.height / 2),
+      width: _edgesTouchMargin,
+      height: _rect.height,
+    );
+    Rect rightTouch = Rect.fromCenter(
+      center: Offset(_rect.right + _edgesTouchMargin / 2, _rect.height / 2),
+      width: _edgesTouchMargin,
+      height: _rect.height,
+    );
+    final progressTouch = Rect.fromCenter(
+      center: Offset(progressTrim + _positionTouchMargin / 2, _rect.height / 2),
+      width: _positionTouchMargin,
+      height: _rect.height,
+    );
+
+    // if the scroll view is touched, it will be by default an inside gesture
     _boundary = _TrimBoundaries.inside;
 
     /// boundary should not be set to other that inside when scroll controller is moving
     /// it would lead to weird behavior to change position while scrolling
     if (!_scrollController.position.isScrollingNotifier.value) {
-      // TOUCH BOUNDARIES
-      if (pos >= minMargin[0] && pos <= minMargin[1]) {
-        _boundary = _TrimBoundaries.left;
-      } else if (pos >= maxMargin[0] && pos <= maxMargin[1]) {
-        _boundary = _TrimBoundaries.right;
-      } else if (pos >= progressTrim - _horizontalMargin &&
-          pos <= progressTrim + _horizontalMargin) {
+      if (progressTouch.contains(pos)) {
+        // video indicator should have the higher priority since it does not affect the trim param
         _boundary = _TrimBoundaries.progress;
+      } else {
+        // if video indicator is not touched, expand [leftTouch] and [rightTouch] on the inside
+        leftTouch = leftTouch.expandToInclude(
+            Rect.fromLTWH(_rect.left, 0, _edgesTouchMargin, 1));
+        rightTouch = rightTouch.expandToInclude(Rect.fromLTWH(
+            _rect.right - _edgesTouchMargin, 0, _edgesTouchMargin, 1));
+      }
+
+      if (leftTouch.contains(pos)) {
+        _boundary = _TrimBoundaries.left;
+      } else if (rightTouch.contains(pos)) {
+        _boundary = _TrimBoundaries.right;
       }
     }
 
