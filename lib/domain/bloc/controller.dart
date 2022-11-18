@@ -327,6 +327,10 @@ class VideoEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Returns the ffmpeg command to apply the trim start and end parameters
+  /// [see ffmpeg doc](https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections)
+  String get _trimCmd => "-ss $_trimStart -to $_trimEnd";
+
   /// Get the [isTrimmed]
   ///
   /// `true` if the trimmed value has beem changed
@@ -483,9 +487,6 @@ class VideoEditorController extends ChangeNotifier {
 
     // CALCULATE FILTERS
     final String gif = format != "gif" ? "" : "fps=10 -loop 0";
-    final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
-        ? "-ss $_trimStart -to $_trimEnd"
-        : "";
     final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
     final String rotation =
         _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
@@ -500,7 +501,9 @@ class VideoEditorController extends ChangeNotifier {
         : "";
     final String execute =
         // ignore: unnecessary_string_escapes
-        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y \"$outputPath\"";
+        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $_trimCmd -y \"$outputPath\"";
+
+    debugPrint('VideoEditor - run export video command : [$execute]');
 
     // PROGRESS CALLBACKS
     FFmpegKit.executeAsync(
@@ -659,6 +662,8 @@ class VideoEditorController extends ChangeNotifier {
         : "";
     // ignore: unnecessary_string_escapes
     final String execute = "-i \'$coverPath\' $filter -y $outputPath";
+
+    debugPrint('VideoEditor - run export cover command : [$execute]');
 
     // PROGRESS CALLBACKS
     FFmpegKit.executeAsync(
