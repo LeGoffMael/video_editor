@@ -8,8 +8,8 @@ import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 
 enum _TrimBoundaries { left, right, inside, progress }
 
-/// Spacing to touch detection, touch target should be minimum 12 x 12 dp
-const _touchMargin = 12.0;
+/// Spacing to touch detection, touch target should be minimum 24 x 24 dp
+const _touchMargin = 24.0;
 
 class TrimSlider extends StatefulWidget {
   /// Slider that trim video length.
@@ -165,13 +165,12 @@ class _TrimSliderState extends State<TrimSlider>
     // if view is bouncing on the right side
     if (_scrollController.position.extentAfter == 0.0 &&
         (_preSynchRight != null || _bounceRightOffset > rectRightOffset)) {
-      final right = _scrollController.position.maxScrollExtent -
-          (_scrollController.position.pixels -
-              _scrollController.position.maxScrollExtent -
-              _horizontalMargin);
-
       _changeTrimRect(
-        left: right - _rect.width + _horizontalMargin - (_preSynchRight ?? 0),
+        left: _trimLayout.width -
+            _bounceRightOffset -
+            _rect.width +
+            _horizontalMargin -
+            (_preSynchRight ?? 0),
         updateTrim: false,
       );
       // if view is bouncing on the left side
@@ -179,7 +178,7 @@ class _TrimSliderState extends State<TrimSlider>
         (_preSynchLeft != null ||
             _scrollController.offset.abs() + _horizontalMargin > _rect.left)) {
       _changeTrimRect(
-        left: -_scrollController.position.pixels +
+        left: -_scrollController.offset +
             _horizontalMargin +
             (_preSynchLeft ?? 0),
         updateTrim: false,
