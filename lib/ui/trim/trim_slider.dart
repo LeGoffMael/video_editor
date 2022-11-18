@@ -134,10 +134,8 @@ class _TrimSliderState extends State<TrimSlider>
               ((_lastScrollPixels?.abs() ?? 0) - _scrollController.offset),
           updateTrim: false,
         );
-      }
-
-      // update trim and video position when scrolled from [SingleChildScrollView]
-      if (_boundary == null) {
+      } else if (_boundary == null) {
+        // update trim and video position when scrolled from [SingleChildScrollView]
         _boundary = _TrimBoundaries.inside;
         _updateControllerTrim();
         _boundary = null;
