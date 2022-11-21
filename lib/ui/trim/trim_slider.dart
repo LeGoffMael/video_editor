@@ -508,13 +508,18 @@ class _TrimSliderState extends State<TrimSlider>
                   padding: EdgeInsets.symmetric(horizontal: _horizontalMargin),
                   child: Column(
                     children: [
-                      SizedBox(
-                        height: widget.height,
-                        width: _fullLayout.width,
-                        child: ThumbnailSlider(
-                          controller: widget.controller,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          widget.controller.trimStyle.borderRadius,
+                        ),
+                        child: SizedBox(
                           height: widget.height,
-                          quality: widget.quality,
+                          width: _fullLayout.width,
+                          child: ThumbnailSlider(
+                            controller: widget.controller,
+                            height: widget.height,
+                            quality: widget.quality,
+                          ),
                         ),
                       ),
                       if (widget.child != null)
