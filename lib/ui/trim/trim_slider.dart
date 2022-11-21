@@ -154,8 +154,6 @@ class _TrimSliderState extends State<TrimSlider>
           updateTrim: false,
         );
       }
-      // update trim and video position when scrolled from [SingleChildScrollView]
-      _boundary = _TrimBoundaries.inside;
       _updateControllerTrim();
       _preSynchLeft = null;
       _preSynchRight = null;
@@ -219,7 +217,6 @@ class _TrimSliderState extends State<TrimSlider>
       );
     }
 
-    _boundary ??= _TrimBoundaries.inside;
     // update trim and video position
     _updateControllerTrim();
     _lastScrollPixels = _scrollController.offset;
@@ -257,7 +254,8 @@ class _TrimSliderState extends State<TrimSlider>
 
     /// boundary should not be set to other that inside when scroll controller is moving
     /// it would lead to weird behavior to change position while scrolling
-    if (!isScrollBouncing) {
+    if (!isScrollBouncing &&
+        !_scrollController.position.isScrollingNotifier.value) {
       if (progressTouch.contains(pos)) {
         // video indicator should have the higher priority since it does not affect the trim param
         _boundary = _TrimBoundaries.progress;
@@ -321,8 +319,8 @@ class _TrimSliderState extends State<TrimSlider>
 
   void _onHorizontalDragEnd([_]) {
     _preComputedVideoPosition = null;
-    if (_boundary == null) return;
     _updateControllerIsTrimming(false);
+    if (_boundary == null) return;
     if (_boundary != _TrimBoundaries.progress) {
       _updateControllerTrim();
     }
@@ -400,10 +398,11 @@ class _TrimSliderState extends State<TrimSlider>
 
   /// Reset the video cursor position to fit the rect
   void _resetControllerPosition() async {
-    if (_boundary == _TrimBoundaries.progress || _boundary == null) return;
+    if (_boundary == _TrimBoundaries.progress) return;
 
     // if the left side changed and overtake the current postion
-    if (_boundary == _TrimBoundaries.inside ||
+    if (_boundary == null ||
+        _boundary == _TrimBoundaries.inside ||
         _boundary == _TrimBoundaries.left) {
       // reset position to startTrim
       _preComputedVideoPosition = _rect.left;
@@ -439,8 +438,6 @@ class _TrimSliderState extends State<TrimSlider>
   }
 
   void _updateControllerIsTrimming(bool value) {
-    if (_boundary == null) return;
-
     if (value && widget.controller.isPlaying) {
       _isVideoPlayerHold = true;
       widget.controller.video.pause();
@@ -494,8 +491,12 @@ class _TrimSliderState extends State<TrimSlider>
           child: Stack(children: [
             NotificationListener<ScrollNotification>(
               onNotification: (scrollNotification) {
-                if (scrollNotification is ScrollEndNotification) {
-                  _preComputedVideoPosition = null;
+                if (_boundary == null) {
+                  if (scrollNotification is ScrollStartNotification) {
+                    _updateControllerIsTrimming(true);
+                  } else if (scrollNotification is ScrollEndNotification) {
+                    _onHorizontalDragEnd();
+                  }
                 }
                 return true;
               },
