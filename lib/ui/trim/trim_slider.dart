@@ -99,7 +99,7 @@ class _TrimSliderState extends State<TrimSlider>
   double? _lastScrollPixelsBeforeBounce;
 
   /// Save last [_scrollController] pixels position
-  double? _lastScrollPixels;
+  double _lastScrollPixels = 0;
 
   @override
   void initState() {
@@ -119,18 +119,16 @@ class _TrimSliderState extends State<TrimSlider>
       (_scrollController.position.maxScrollExtent - _scrollController.offset)
           .abs();
 
-  /// Returns `true` if the scroll controller is currently bouncing back
+  /// Returns `false` if the scroll controller is currently bouncing back
   /// to reach either the min scroll extent or the max scroll extent
-  bool get isScrollBouncing {
+  bool get isNotScrollBouncingBack {
     final isBouncingFromLeft =
         _scrollController.offset < _scrollController.position.minScrollExtent &&
-            _scrollController.offset >
-                (_lastScrollPixels ?? _scrollController.offset);
+            _scrollController.offset > _lastScrollPixels;
     final isBouncingFromRight =
         _scrollController.offset > _scrollController.position.maxScrollExtent &&
-            _scrollController.offset <
-                (_lastScrollPixels ?? _scrollController.offset);
-    return isBouncingFromLeft || isBouncingFromRight;
+            _scrollController.offset < _lastScrollPixels;
+    return !(isBouncingFromLeft || isBouncingFromRight);
   }
 
   /// Scroll to update [_rect] and trim values on scroll
@@ -143,14 +141,14 @@ class _TrimSliderState extends State<TrimSlider>
       // adding to the rect the difference between current scroll position and the last one fixes it
       if (_scrollController.offset == 0.0) {
         _changeTrimRect(
-          left: _rect.left - (_lastScrollPixels?.abs() ?? 0),
+          left: _rect.left - _lastScrollPixels,
           updateTrim: false,
         );
       } else if (_scrollController.offset ==
           _scrollController.position.maxScrollExtent) {
         _changeTrimRect(
-          left: _rect.left +
-              ((_lastScrollPixels?.abs() ?? 0) - _scrollController.offset),
+          left:
+              _rect.left + (_lastScrollPixels.abs() - _scrollController.offset),
           updateTrim: false,
         );
       }
@@ -163,7 +161,7 @@ class _TrimSliderState extends State<TrimSlider>
     }
 
     // if is not bouncing save position
-    if (!isScrollBouncing) {
+    if (isNotScrollBouncingBack) {
       // use last scroll position because isScrollingNotifier is updated after the max bounce position is set
       _lastScrollPixelsBeforeBounce = _scrollController.offset;
     } else {
@@ -254,7 +252,7 @@ class _TrimSliderState extends State<TrimSlider>
 
     /// boundary should not be set to other that inside when scroll controller is moving
     /// it would lead to weird behavior to change position while scrolling
-    if (!isScrollBouncing &&
+    if (isNotScrollBouncingBack &&
         !_scrollController.position.isScrollingNotifier.value) {
       if (progressTouch.contains(pos)) {
         // video indicator should have the higher priority since it does not affect the trim param
@@ -334,15 +332,17 @@ class _TrimSliderState extends State<TrimSlider>
     width = width ?? _rect.width;
 
     bool shouldHaptic = false;
-    if (!isScrollBouncing) {
-      final isNotMin = _rect.left != _horizontalMargin &&
+    if (isNotScrollBouncingBack) {
+      final checkLastSize =
+          _boundary != null && _boundary != _TrimBoundaries.inside;
+      final isNotMin = _rect.left !=
+              (_horizontalMargin +
+                  (checkLastSize ? 0 : _lastScrollPixels.abs())) &&
           widget.controller.minTrim > 0.0 &&
-          (_boundary != _TrimBoundaries.inside ? left < _rect.left : true);
+          (checkLastSize ? left < _rect.left : true);
       final isNotMax = _rect.right != _trimLayout.width + _horizontalMargin &&
           widget.controller.maxTrim < 1.0 &&
-          (_boundary != _TrimBoundaries.inside
-              ? (left + width) > _rect.right
-              : true);
+          (checkLastSize ? (left + width) > _rect.right : true);
       final isOnLeftEdge =
           (_scrollController.offset.abs() + _horizontalMargin - left).abs() <
               1.0;
