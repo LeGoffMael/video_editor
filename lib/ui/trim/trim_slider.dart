@@ -114,6 +114,20 @@ class _TrimSliderState extends State<TrimSlider>
       (_scrollController.position.maxScrollExtent - _scrollController.offset)
           .abs();
 
+  /// Returns `true` if the scroll controller is currently bouncing back
+  /// to reach either the min scroll extent or the max scroll extent
+  bool get isScrollBouncing {
+    final isBouncingFromLeft =
+        _scrollController.offset < _scrollController.position.minScrollExtent &&
+            _scrollController.offset >
+                (_lastScrollPixels ?? _scrollController.offset);
+    final isBouncingFromRight =
+        _scrollController.offset > _scrollController.position.maxScrollExtent &&
+            _scrollController.offset <
+                (_lastScrollPixels ?? _scrollController.offset);
+    return isBouncingFromLeft || isBouncingFromRight;
+  }
+
   /// Scroll to update [_rect] and trim values on scroll
   /// Will fix [_rect] to the scroll view when it is bouncing
   void attachTrimToScroll() {
@@ -134,25 +148,19 @@ class _TrimSliderState extends State<TrimSlider>
               ((_lastScrollPixels?.abs() ?? 0) - _scrollController.offset),
           updateTrim: false,
         );
-      } else if (_boundary == null) {
-        // update trim and video position when scrolled from [SingleChildScrollView]
-        _boundary = _TrimBoundaries.inside;
-        _updateControllerTrim();
-        _boundary = null;
       }
+      // update trim and video position when scrolled from [SingleChildScrollView]
+      _boundary = _TrimBoundaries.inside;
+      _updateControllerTrim();
       _preSynchLeft = null;
       _preSynchRight = null;
       _lastScrollPixelsBeforeBounce = null;
-      _lastScrollPixels = null;
+      _lastScrollPixels = _scrollController.offset;
       return;
     }
-    _lastScrollPixels = _scrollController.offset;
-
-    /// is this call triggered by bouncing back scroll action
-    final isBouncing = _scrollController.position.isScrollingNotifier.value;
 
     // if is not bouncing save position
-    if (!isBouncing) {
+    if (!isScrollBouncing) {
       // use last scroll position because isScrollingNotifier is updated after the max bounce position is set
       _lastScrollPixelsBeforeBounce = _scrollController.offset;
     } else {
@@ -205,6 +213,11 @@ class _TrimSliderState extends State<TrimSlider>
         updateTrim: false,
       );
     }
+
+    _boundary ??= _TrimBoundaries.inside;
+    // update trim and video position
+    _updateControllerTrim();
+    _lastScrollPixels = _scrollController.offset;
   }
 
   @override
@@ -239,7 +252,7 @@ class _TrimSliderState extends State<TrimSlider>
 
     /// boundary should not be set to other that inside when scroll controller is moving
     /// it would lead to weird behavior to change position while scrolling
-    if (!_scrollController.position.isScrollingNotifier.value) {
+    if (!isScrollBouncing) {
       if (progressTouch.contains(pos)) {
         // video indicator should have the higher priority since it does not affect the trim param
         _boundary = _TrimBoundaries.progress;
@@ -286,8 +299,6 @@ class _TrimSliderState extends State<TrimSlider>
             _scrollController.offset - delta.dx,
             clamp: false,
           );
-          // update trim and video position
-          _updateControllerTrim();
         } else if (posLeft.dx > _horizontalMargin &&
             posRight.dx < _trimLayout.width + _horizontalMargin) {
           _changeTrimRect(left: posLeft.dx);
@@ -319,7 +330,7 @@ class _TrimSliderState extends State<TrimSlider>
     width = width ?? _rect.width;
 
     bool shouldHaptic = false;
-    if (!_scrollController.position.isScrollingNotifier.value) {
+    if (!isScrollBouncing) {
       final isNotMin = _rect.left != _horizontalMargin &&
           widget.controller.minTrim > 0.0 &&
           (_boundary != _TrimBoundaries.inside ? left < _rect.left : true);
