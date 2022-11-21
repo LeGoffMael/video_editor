@@ -342,6 +342,9 @@ class VideoEditorController extends ChangeNotifier {
   bool get isTrimming => _isTrimming;
   set isTrimming(bool value) {
     _isTrimming = value;
+    if (!value) {
+      _checkUpdateDefaultCover();
+    }
     notifyListeners();
   }
 
