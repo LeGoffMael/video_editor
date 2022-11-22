@@ -16,6 +16,7 @@ enum _CropBoundaries {
   centerRight,
   centerLeft,
   bottomCenter,
+  scale,
   none
 }
 
@@ -112,7 +113,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
           _preferredCropAspectRatio!,
         );
       }
-      _onPanEnd(force: true);
+      _onScaleEnd(force: true);
     });
   }
 
@@ -144,11 +145,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
         height: _rect.value.height + expandedPosition.height);
   }
 
-  void _onPanDown(DragDownDetails details) {
-    final Offset pos = details.localPosition;
+  void _onScaleStart(ScaleStartDetails details) {
+    final Offset pos = details.localFocalPoint;
     _boundary = _CropBoundaries.none;
 
-    if (_expandedRect().contains(pos)) {
+    if (details.pointerCount > 1) {
+      _boundary = _CropBoundaries.scale;
+    } else if (_expandedRect().contains(pos)) {
       if (_rect.value.contains(pos)) {
         _boundary = _CropBoundaries.inside;
       }
@@ -178,56 +181,66 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _controller.isCropping = true;
   }
 
-  void _onPanUpdate(DragUpdateDetails details) {
-    if (_boundary != _CropBoundaries.none) {
-      final Offset delta = details.delta;
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    if (_boundary == _CropBoundaries.none) return;
 
-      switch (_boundary) {
-        case _CropBoundaries.inside:
-          final Offset pos = _rect.value.topLeft + delta;
-          _rect.value = Rect.fromLTWH(
-              pos.dx.clamp(0, _layout.width - _rect.value.width),
-              pos.dy.clamp(0, _layout.height - _rect.value.height),
-              _rect.value.width,
-              _rect.value.height);
-          break;
-        //CORNERS
-        case _CropBoundaries.topLeft:
-          final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(left: pos.dx, top: pos.dy);
-          break;
-        case _CropBoundaries.topRight:
-          final Offset pos = _rect.value.topRight + delta;
-          _changeRect(right: pos.dx, top: pos.dy);
-          break;
-        case _CropBoundaries.bottomRight:
-          final Offset pos = _rect.value.bottomRight + delta;
-          _changeRect(right: pos.dx, bottom: pos.dy);
-          break;
-        case _CropBoundaries.bottomLeft:
-          final Offset pos = _rect.value.bottomLeft + delta;
-          _changeRect(left: pos.dx, bottom: pos.dy);
-          break;
-        //CENTERS
-        case _CropBoundaries.topCenter:
-          _changeRect(top: _rect.value.top + delta.dy);
-          break;
-        case _CropBoundaries.bottomCenter:
-          _changeRect(bottom: _rect.value.bottom + delta.dy);
-          break;
-        case _CropBoundaries.centerLeft:
-          _changeRect(left: _rect.value.left + delta.dx);
-          break;
-        case _CropBoundaries.centerRight:
-          _changeRect(right: _rect.value.right + delta.dx);
-          break;
-        case _CropBoundaries.none:
-          break;
-      }
+    final Offset delta = details.focalPointDelta;
+
+    switch (_boundary) {
+      case _CropBoundaries.inside:
+        final Offset pos = _rect.value.topLeft + delta;
+        _rect.value = Rect.fromLTWH(
+            pos.dx.clamp(0, _layout.width - _rect.value.width),
+            pos.dy.clamp(0, _layout.height - _rect.value.height),
+            _rect.value.width,
+            _rect.value.height);
+        break;
+      //CORNERS
+      case _CropBoundaries.topLeft:
+        final Offset pos = _rect.value.topLeft + delta;
+        _changeRect(left: pos.dx, top: pos.dy);
+        break;
+      case _CropBoundaries.topRight:
+        final Offset pos = _rect.value.topRight + delta;
+        _changeRect(right: pos.dx, top: pos.dy);
+        break;
+      case _CropBoundaries.bottomRight:
+        final Offset pos = _rect.value.bottomRight + delta;
+        _changeRect(right: pos.dx, bottom: pos.dy);
+        break;
+      case _CropBoundaries.bottomLeft:
+        final Offset pos = _rect.value.bottomLeft + delta;
+        _changeRect(left: pos.dx, bottom: pos.dy);
+        break;
+      //CENTERS
+      case _CropBoundaries.topCenter:
+        _changeRect(top: _rect.value.top + delta.dy);
+        break;
+      case _CropBoundaries.bottomCenter:
+        _changeRect(bottom: _rect.value.bottom + delta.dy);
+        break;
+      case _CropBoundaries.centerLeft:
+        _changeRect(left: _rect.value.left + delta.dx);
+        break;
+      case _CropBoundaries.centerRight:
+        _changeRect(right: _rect.value.right + delta.dx);
+        break;
+      case _CropBoundaries.scale:
+        final scale = details.scale.clamp(
+            0.975,
+            minOf3(
+              _layout.height / _rect.value.size.height,
+              _layout.width / _rect.value.size.width,
+              1.025,
+            ));
+        _changeRectFromRect(scaleRectInSize(_rect.value, scale, _layout));
+        break;
+      case _CropBoundaries.none:
+        break;
     }
   }
 
-  void _onPanEnd({bool force = false}) {
+  void _onScaleEnd({bool force = false}) {
     if (_boundary != _CropBoundaries.none || force) {
       final Rect rect = _rect.value;
       _controller.cacheMinCrop = Offset(
@@ -240,11 +253,15 @@ class _CropGridViewerState extends State<CropGridViewer> {
       );
       _controller.isCropping = false;
     }
+    _boundary = _CropBoundaries.none;
   }
 
   //-----------//
   //RECT CHANGE//
   //-----------//
+
+  void _changeRectFromRect(Rect rect) => _changeRect(
+      left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom);
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
   void _changeRect({double? left, double? top, double? right, double? bottom}) {
@@ -269,7 +286,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
             right = left + height * _preferredCropAspectRatio!;
             break;
           default:
-            assert(false);
+            break;
         }
       } else {
         switch (_boundary) {
@@ -282,7 +299,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
             bottom = top + width / _preferredCropAspectRatio!;
             break;
           default:
-            assert(false);
+            break;
         }
       }
     }
@@ -348,9 +365,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
                             builder: (_, Rect value, __) {
                               return widget.showGrid
                                   ? GestureDetector(
-                                      onPanDown: _onPanDown,
-                                      onPanUpdate: _onPanUpdate,
-                                      onPanEnd: (_) => _onPanEnd(),
+                                      onScaleStart: _onScaleStart,
+                                      onScaleUpdate: _onScaleUpdate,
+                                      onScaleEnd: (_) => _onScaleEnd(),
                                       child: _paint(value),
                                     )
                                   : _paint(value);

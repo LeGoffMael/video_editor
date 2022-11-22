@@ -79,3 +79,17 @@ bool isRectContained(Size size, Rect rect) =>
     rect.top >= 0 &&
     rect.right <= size.width &&
     rect.bottom <= size.height;
+
+/// Scale [rect] to [scale] and fit it into [size]
+Rect scaleRectInSize(Rect rect, double scale, Size size) =>
+    translateRectIntoBounds(
+      size,
+      Rect.fromCenter(
+        center: rect.center,
+        width: rect.width * scale,
+        height: rect.height * scale,
+      ),
+    );
+
+/// Returns the smallest number between [a], [b] and [c]
+double minOf3(double a, double b, double c) => min(a, min(b, c));

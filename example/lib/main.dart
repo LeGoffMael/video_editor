@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:helpers/helpers.dart'
-    show OpacityTransition, SwipeTransition, AnimatedInteractiveViewer;
+import 'package:helpers/helpers.dart' show OpacityTransition, SwipeTransition;
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
@@ -468,10 +467,9 @@ class CropScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 15),
             Expanded(
-              child: AnimatedInteractiveViewer(
-                maxScale: 2.4,
-                child: CropGridViewer(
-                    controller: controller, horizontalMargin: 60),
+              child: CropGridViewer(
+                controller: controller,
+                horizontalMargin: 60,
               ),
             ),
             const SizedBox(height: 15),
