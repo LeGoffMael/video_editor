@@ -71,3 +71,11 @@ Rect translateRectIntoBounds(Size layout, Rect rect) {
 /// Return the scale for [rect] to fit [layout]
 double scaleToSize(Size layout, Rect rect) =>
     min(layout.width / rect.width, layout.height / rect.height);
+
+/// Returns `true` if [rect] is left and top are bigger than 0
+/// and if right and bottom are smaller than [size] width and height
+bool isRectContained(Size size, Rect rect) =>
+    rect.left >= 0 &&
+    rect.top >= 0 &&
+    rect.right <= size.width &&
+    rect.bottom <= size.height;

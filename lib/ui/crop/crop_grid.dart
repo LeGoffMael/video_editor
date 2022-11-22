@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
@@ -24,11 +22,11 @@ enum _CropBoundaries {
 class CropGridViewer extends StatefulWidget {
   /// It is the viewer that allows you to crop the video
   const CropGridViewer({
-    Key? key,
+    super.key,
     required this.controller,
     this.showGrid = true,
     this.horizontalMargin = 0.0,
-  }) : super(key: key);
+  });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
   final VideoEditorController controller;
@@ -146,9 +144,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
         height: _rect.value.height + expandedPosition.height);
   }
 
-  void _onPanStart(DragStartDetails details) {
+  void _onPanDown(DragDownDetails details) {
     final Offset pos = details.localPosition;
-
     _boundary = _CropBoundaries.none;
 
     if (_expandedRect().contains(pos)) {
@@ -251,14 +248,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
   void _changeRect({double? left, double? top, double? right, double? bottom}) {
-    top = (top ?? _rect.value.top)
-        .clamp(0, max(0.0, _rect.value.bottom - minRectSize));
-    left = (left ?? _rect.value.left)
-        .clamp(0, max(0.0, _rect.value.right - minRectSize));
-    right = (right ?? _rect.value.right)
-        .clamp(_rect.value.left + minRectSize, _layout.width);
-    bottom = (bottom ?? _rect.value.bottom)
-        .clamp(_rect.value.top + minRectSize, _layout.height);
+    top = top ?? _rect.value.top;
+    left = left ?? _rect.value.left;
+    right = right ?? _rect.value.right;
+    bottom = bottom ?? _rect.value.bottom;
 
     // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {
@@ -294,7 +287,14 @@ class _CropGridViewerState extends State<CropGridViewer> {
       }
     }
 
-    _rect.value = Rect.fromLTRB(left, top, right, bottom);
+    final newRect = Rect.fromLTRB(left, top, right, bottom);
+
+    // don't apply changes if out of bounds
+    if (newRect.width < minRectSize ||
+        newRect.height < minRectSize ||
+        !isRectContained(_layout, newRect)) return;
+
+    _rect.value = newRect;
   }
 
   /// Calculate crop [Rect] area
@@ -346,24 +346,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
                         return ValueListenableBuilder(
                             valueListenable: _rect,
                             builder: (_, Rect value, __) {
-                              final Rect gestureArea = _expandedRect();
                               return widget.showGrid
-                                  ? Stack(children: [
-                                      _paint(value),
-                                      GestureDetector(
-                                          onPanEnd: (_) => _onPanEnd(),
-                                          onPanStart: _onPanStart,
-                                          onPanUpdate: _onPanUpdate,
-                                          child: Container(
-                                            margin: EdgeInsets.only(
-                                              left: max(0.0, gestureArea.left),
-                                              top: max(0.0, gestureArea.top),
-                                            ),
-                                            color: Colors.transparent,
-                                            width: gestureArea.width,
-                                            height: gestureArea.height,
-                                          )),
-                                    ])
+                                  ? GestureDetector(
+                                      onPanDown: _onPanDown,
+                                      onPanUpdate: _onPanUpdate,
+                                      onPanEnd: (_) => _onPanEnd(),
+                                      child: _paint(value),
+                                    )
                                   : _paint(value);
                             });
                       }),
