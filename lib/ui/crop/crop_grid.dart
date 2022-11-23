@@ -22,12 +22,17 @@ enum CropBoundaries {
 
 class CropGridViewer extends StatefulWidget {
   /// It is the viewer that allows you to crop the video
-  const CropGridViewer({
+  const CropGridViewer.preview({
     super.key,
     required this.controller,
-    this.showGrid = true,
-    this.horizontalMargin = 0.0,
-  });
+  })  : showGrid = false,
+        margin = EdgeInsets.zero;
+
+  const CropGridViewer.edit({
+    super.key,
+    required this.controller,
+    this.margin = const EdgeInsets.symmetric(horizontal: 20),
+  }) : showGrid = true;
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
   final VideoEditorController controller;
@@ -36,9 +41,9 @@ class CropGridViewer extends StatefulWidget {
   /// Set this param to `false` to display the preview of the cropped video
   final bool showGrid;
 
-  /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view,
+  /// The amount of space by which to inset the crop view, not used in preview mode
   /// so in case of a change the new layout can be computed properly (i.e after a rotation)
-  final double horizontalMargin;
+  final EdgeInsets margin;
 
   @override
   State<CropGridViewer> createState() => _CropGridViewerState();
@@ -145,14 +150,18 @@ class _CropGridViewerState extends State<CropGridViewer> {
         height: _rect.value.height + expandedPosition.height);
   }
 
+  /// Returns the [Offset] to shift [_rect] with to centered in the view
+  Offset get gestureOffset => Offset(
+        (_viewerSize.width / 2) - (_layout.width / 2),
+        (_viewerSize.height / 2) - (_layout.height / 2),
+      );
+
   void _onPanDown(DragDownDetails details) {
-    final Offset pos = details.localPosition;
+    final Offset pos = details.localPosition - gestureOffset;
     _boundary = CropBoundaries.none;
 
     if (_expandedRect().contains(pos)) {
-      if (_rect.value.contains(pos)) {
-        _boundary = CropBoundaries.inside;
-      }
+      _boundary = CropBoundaries.inside;
 
       // CORNERS
       if (_expandedPosition(_rect.value.topLeft).contains(pos)) {
@@ -318,50 +327,91 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _viewerSize = constraints.biggest;
 
       return ValueListenableBuilder(
-        valueListenable: _transform,
-        builder: (_, TransformData transform, __) => Center(
-            child: Container(
-                // when widget.showGrid is true, the layout size should never be bigger than the screen size
-                constraints: BoxConstraints(
-                    maxHeight: ((_controller.rotation == 90 ||
-                                _controller.rotation == 270)) &&
-                            widget.showGrid
-                        ? MediaQuery.of(context).size.width -
-                            widget.horizontalMargin
-                        : Size.infinite.height),
-                child: CropTransform(
-                    transform: transform,
-                    child: VideoViewer(
-                      controller: _controller,
-                      child: LayoutBuilder(builder: (_, constraints) {
-                        Size size = constraints.biggest;
-                        if (_layout != size) {
-                          _layout = size;
-                          if (widget.showGrid) {
-                            // need to recompute crop if layout size changed, (i.e after rotation)
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              _calculatePreferedCrop();
-                            });
-                          } else {
-                            _rect.value = _calculateCropRect();
-                          }
-                        }
-                        return ValueListenableBuilder(
-                            valueListenable: _rect,
-                            builder: (_, Rect value, __) {
-                              return widget.showGrid
-                                  ? GestureDetector(
-                                      onPanDown: _onPanDown,
-                                      onPanUpdate: _onPanUpdate,
-                                      onPanEnd: (_) => _onPanEnd(),
-                                      child: _paint(value),
-                                    )
-                                  : _paint(value);
-                            });
-                      }),
-                    )))),
-      );
+          valueListenable: _transform,
+          builder: (_, TransformData transform, __) {
+            // return crop view without the grid
+            if (widget.showGrid == false) {
+              return _buildCropView(constraints, transform);
+            }
+
+            // return the crop view with a [GestureDetector] on top to be able to edit the crop parameters
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildCropView(constraints, transform),
+                // for development only (rotation not applied)
+                // Positioned.fromRect(
+                //   rect: _expandedRect().shift(gestureOffset),
+                //   child: DecoratedBox(
+                //     decoration: BoxDecoration(
+                //       color: Colors.greenAccent.withOpacity(0.4),
+                //     ),
+                //   ),
+                // ),
+                Transform.rotate(
+                  angle: transform.rotation,
+                  child: GestureDetector(
+                    onPanDown: _onPanDown,
+                    onPanUpdate: _onPanUpdate,
+                    onPanEnd: (_) => _onPanEnd(),
+                    onTapUp: (_) => _onPanEnd(),
+                    child: const SizedBox.expand(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                            // color: Colors.redAccent.withOpacity(0.4), // dev only
+                            ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          });
     });
+  }
+
+  /// Returns the [VideoViewer] tranformed with editing view
+  /// Paint rect on top of the video area outside of the crop rect
+  Widget _buildCropView(BoxConstraints constraints, TransformData transform) {
+    return Padding(
+      padding: widget.margin,
+      child: Center(
+        child: Container(
+          // when widget.showGrid is true, the layout size should never be bigger than the screen size
+          constraints: BoxConstraints(
+            maxHeight:
+                ((_controller.rotation == 90 || _controller.rotation == 270)) &&
+                        widget.showGrid
+                    ? constraints.maxWidth - widget.margin.horizontal
+                    : Size.infinite.height,
+          ),
+          child: CropTransform(
+            transform: transform,
+            child: VideoViewer(
+              controller: _controller,
+              child: LayoutBuilder(builder: (_, constraints) {
+                Size size = constraints.biggest;
+                if (_layout != size) {
+                  _layout = size;
+                  if (widget.showGrid) {
+                    // need to recompute crop if layout size changed, (i.e after rotation)
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _calculatePreferedCrop();
+                    });
+                  } else {
+                    _rect.value = _calculateCropRect();
+                  }
+                }
+                return ValueListenableBuilder(
+                  valueListenable: _rect,
+                  builder: (_, Rect value, __) => _paint(value),
+                );
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Build [Widget] that hides the cropped area and show the crop grid if widget.showGris is true

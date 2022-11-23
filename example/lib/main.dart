@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:helpers/helpers.dart'
-    show OpacityTransition, SwipeTransition, AnimatedInteractiveViewer;
+import 'package:helpers/helpers.dart' show OpacityTransition, SwipeTransition;
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
@@ -112,6 +111,7 @@ class _VideoEditorState extends State<VideoEditor> {
     // Trim duration will be limited to 30 seconds
     // The cropped area will be initialized to the center of the video with a 9/16 ratio
     _controller = VideoEditorController.file(widget.file,
+        cropStyle: CropGridStyle(selectedBoundariesColor: Colors.redAccent),
         maxDuration: const Duration(seconds: 30))
       ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
     super.initState();
@@ -215,10 +215,7 @@ class _VideoEditorState extends State<VideoEditor> {
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
                               Stack(alignment: Alignment.center, children: [
-                                CropGridViewer(
-                                  controller: _controller,
-                                  showGrid: false,
-                                ),
+                                CropGridViewer.preview(controller: _controller),
                                 AnimatedBuilder(
                                   animation: _controller.video,
                                   builder: (_, __) => OpacityTransition(
@@ -448,7 +445,7 @@ class CropScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(30),
+          padding: const EdgeInsets.symmetric(vertical: 30),
           child: Column(children: [
             Row(children: [
               Expanded(
@@ -468,10 +465,9 @@ class CropScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 15),
             Expanded(
-              child: AnimatedInteractiveViewer(
-                maxScale: 2.4,
-                child: CropGridViewer(
-                    controller: controller, horizontalMargin: 60),
+              child: CropGridViewer.edit(
+                controller: controller,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
             ),
             const SizedBox(height: 15),
