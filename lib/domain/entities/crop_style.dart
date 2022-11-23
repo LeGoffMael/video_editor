@@ -9,6 +9,7 @@ class CropGridStyle {
     this.gridLineWidth = 1,
     this.gridSize = 3,
     this.boundariesColor = Colors.white,
+    this.selectedBoundariesColor = Colors.white,
     this.boundariesLength = 20,
     this.boundariesWidth = 5,
   }) : croppingBackground =
@@ -32,6 +33,10 @@ class CropGridStyle {
 
   /// The [boundariesColor] param specifies the color of the crop area's corner
   final Color boundariesColor;
+
+  /// The [boundariesColor] param specifies the color of the crop area's corner
+  /// when is it selected
+  final Color selectedBoundariesColor;
 
   /// The [boundariesLength] param specifies the length of the crop area's corner
   final double boundariesLength;

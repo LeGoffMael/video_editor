@@ -6,7 +6,8 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/video_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
 
-enum _CropBoundaries {
+@protected
+enum CropBoundaries {
   topLeft,
   topRight,
   bottomLeft,
@@ -50,7 +51,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
-  _CropBoundaries _boundary = _CropBoundaries.none;
+  CropBoundaries _boundary = CropBoundaries.none;
 
   double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
@@ -146,89 +147,89 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   void _onPanDown(DragDownDetails details) {
     final Offset pos = details.localPosition;
-    _boundary = _CropBoundaries.none;
+    _boundary = CropBoundaries.none;
 
     if (_expandedRect().contains(pos)) {
       if (_rect.value.contains(pos)) {
-        _boundary = _CropBoundaries.inside;
+        _boundary = CropBoundaries.inside;
       }
 
       // CORNERS
       if (_expandedPosition(_rect.value.topLeft).contains(pos)) {
-        _boundary = _CropBoundaries.topLeft;
+        _boundary = CropBoundaries.topLeft;
       } else if (_expandedPosition(_rect.value.topRight).contains(pos)) {
-        _boundary = _CropBoundaries.topRight;
+        _boundary = CropBoundaries.topRight;
       } else if (_expandedPosition(_rect.value.bottomRight).contains(pos)) {
-        _boundary = _CropBoundaries.bottomRight;
+        _boundary = CropBoundaries.bottomRight;
       } else if (_expandedPosition(_rect.value.bottomLeft).contains(pos)) {
-        _boundary = _CropBoundaries.bottomLeft;
+        _boundary = CropBoundaries.bottomLeft;
       } else if (_controller.preferredCropAspectRatio == null) {
         // CENTERS
         if (_expandedPosition(_rect.value.centerLeft).contains(pos)) {
-          _boundary = _CropBoundaries.centerLeft;
+          _boundary = CropBoundaries.centerLeft;
         } else if (_expandedPosition(_rect.value.topCenter).contains(pos)) {
-          _boundary = _CropBoundaries.topCenter;
+          _boundary = CropBoundaries.topCenter;
         } else if (_expandedPosition(_rect.value.centerRight).contains(pos)) {
-          _boundary = _CropBoundaries.centerRight;
+          _boundary = CropBoundaries.centerRight;
         } else if (_expandedPosition(_rect.value.bottomCenter).contains(pos)) {
-          _boundary = _CropBoundaries.bottomCenter;
+          _boundary = CropBoundaries.bottomCenter;
         }
       }
+      setState(() {}); // to update selected boundary color
+      _controller.isCropping = true;
     }
-    _controller.isCropping = true;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    if (_boundary != _CropBoundaries.none) {
-      final Offset delta = details.delta;
+    if (_boundary == CropBoundaries.none) return;
+    final Offset delta = details.delta;
 
-      switch (_boundary) {
-        case _CropBoundaries.inside:
-          final Offset pos = _rect.value.topLeft + delta;
-          _rect.value = Rect.fromLTWH(
-              pos.dx.clamp(0, _layout.width - _rect.value.width),
-              pos.dy.clamp(0, _layout.height - _rect.value.height),
-              _rect.value.width,
-              _rect.value.height);
-          break;
-        //CORNERS
-        case _CropBoundaries.topLeft:
-          final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(left: pos.dx, top: pos.dy);
-          break;
-        case _CropBoundaries.topRight:
-          final Offset pos = _rect.value.topRight + delta;
-          _changeRect(right: pos.dx, top: pos.dy);
-          break;
-        case _CropBoundaries.bottomRight:
-          final Offset pos = _rect.value.bottomRight + delta;
-          _changeRect(right: pos.dx, bottom: pos.dy);
-          break;
-        case _CropBoundaries.bottomLeft:
-          final Offset pos = _rect.value.bottomLeft + delta;
-          _changeRect(left: pos.dx, bottom: pos.dy);
-          break;
-        //CENTERS
-        case _CropBoundaries.topCenter:
-          _changeRect(top: _rect.value.top + delta.dy);
-          break;
-        case _CropBoundaries.bottomCenter:
-          _changeRect(bottom: _rect.value.bottom + delta.dy);
-          break;
-        case _CropBoundaries.centerLeft:
-          _changeRect(left: _rect.value.left + delta.dx);
-          break;
-        case _CropBoundaries.centerRight:
-          _changeRect(right: _rect.value.right + delta.dx);
-          break;
-        case _CropBoundaries.none:
-          break;
-      }
+    switch (_boundary) {
+      case CropBoundaries.inside:
+        final Offset pos = _rect.value.topLeft + delta;
+        _rect.value = Rect.fromLTWH(
+            pos.dx.clamp(0, _layout.width - _rect.value.width),
+            pos.dy.clamp(0, _layout.height - _rect.value.height),
+            _rect.value.width,
+            _rect.value.height);
+        break;
+      //CORNERS
+      case CropBoundaries.topLeft:
+        final Offset pos = _rect.value.topLeft + delta;
+        _changeRect(left: pos.dx, top: pos.dy);
+        break;
+      case CropBoundaries.topRight:
+        final Offset pos = _rect.value.topRight + delta;
+        _changeRect(right: pos.dx, top: pos.dy);
+        break;
+      case CropBoundaries.bottomRight:
+        final Offset pos = _rect.value.bottomRight + delta;
+        _changeRect(right: pos.dx, bottom: pos.dy);
+        break;
+      case CropBoundaries.bottomLeft:
+        final Offset pos = _rect.value.bottomLeft + delta;
+        _changeRect(left: pos.dx, bottom: pos.dy);
+        break;
+      //CENTERS
+      case CropBoundaries.topCenter:
+        _changeRect(top: _rect.value.top + delta.dy);
+        break;
+      case CropBoundaries.bottomCenter:
+        _changeRect(bottom: _rect.value.bottom + delta.dy);
+        break;
+      case CropBoundaries.centerLeft:
+        _changeRect(left: _rect.value.left + delta.dx);
+        break;
+      case CropBoundaries.centerRight:
+        _changeRect(right: _rect.value.right + delta.dx);
+        break;
+      case CropBoundaries.none:
+        break;
     }
   }
 
   void _onPanEnd({bool force = false}) {
-    if (_boundary != _CropBoundaries.none || force) {
+    if (_boundary != CropBoundaries.none || force) {
       final Rect rect = _rect.value;
       _controller.cacheMinCrop = Offset(
         rect.left / _layout.width,
@@ -239,6 +240,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
         rect.bottom / _layout.height,
       );
       _controller.isCropping = false;
+      // to update selected boundary color
+      setState(() => _boundary = CropBoundaries.none);
     }
   }
 
@@ -260,12 +263,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
       if (width / height > _preferredCropAspectRatio!) {
         switch (_boundary) {
-          case _CropBoundaries.topLeft:
-          case _CropBoundaries.bottomLeft:
+          case CropBoundaries.topLeft:
+          case CropBoundaries.bottomLeft:
             left = right - height * _preferredCropAspectRatio!;
             break;
-          case _CropBoundaries.topRight:
-          case _CropBoundaries.bottomRight:
+          case CropBoundaries.topRight:
+          case CropBoundaries.bottomRight:
             right = left + height * _preferredCropAspectRatio!;
             break;
           default:
@@ -273,12 +276,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
         }
       } else {
         switch (_boundary) {
-          case _CropBoundaries.topLeft:
-          case _CropBoundaries.topRight:
+          case CropBoundaries.topLeft:
+          case CropBoundaries.topRight:
             top = bottom - width / _preferredCropAspectRatio!;
             break;
-          case _CropBoundaries.bottomLeft:
-          case _CropBoundaries.bottomRight:
+          case CropBoundaries.bottomLeft:
+          case CropBoundaries.bottomRight:
             bottom = top + width / _preferredCropAspectRatio!;
             break;
           default:
@@ -368,6 +371,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       painter: CropGridPainter(
         value,
         style: _controller.cropStyle,
+        boundary: _boundary,
         showGrid: widget.showGrid,
         showCenterRects: _controller.preferredCropAspectRatio == null,
       ),
