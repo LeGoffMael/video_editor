@@ -84,6 +84,7 @@ class _CoverViewerState extends State<CoverViewer> {
               selectedCover?.thumbData == null
                   ? Center(child: Text(widget.noCoverText))
                   : CropTransformWithAnimation(
+                      shouldAnimate: _layout != Size.zero,
                       transform: transform,
                       child: ImageViewer(
                         controller: widget.controller,

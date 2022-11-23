@@ -29,47 +29,36 @@ class CropTransform extends StatelessWidget {
 }
 
 /// [CropTransform] with rotation animation
-class CropTransformWithAnimation extends StatefulWidget {
+class CropTransformWithAnimation extends StatelessWidget {
   const CropTransformWithAnimation({
     super.key,
     required this.transform,
     required this.child,
+    this.shouldAnimate = true,
   });
 
   final Widget child;
   final TransformData transform;
 
-  @override
-  State<CropTransformWithAnimation> createState() =>
-      _CropTransformWithAnimationState();
-}
-
-class _CropTransformWithAnimationState
-    extends State<CropTransformWithAnimation> {
-  bool _isInit = true;
-
-  @override
-  void didUpdateWidget(covariant CropTransformWithAnimation oldWidget) {
-    // to avoid animation on initialization
-    if (oldWidget.transform.rotation != 0.0) {
-      _isInit = false;
-    }
-    super.didUpdateWidget(oldWidget);
-  }
+  final bool shouldAnimate;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedRotation(
-      // convert rad to turns
-      turns: widget.transform.rotation * (57.29578 / 360),
-      curve: Curves.easeInOut,
-      duration: _isInit ? Duration.zero : const Duration(milliseconds: 300),
-      child: ClipRRect(
+    if (shouldAnimate == false) {
+      return CropTransform(transform: transform, child: child);
+    }
+
+    return ClipRRect(
+      child: AnimatedRotation(
+        // convert rad to turns
+        turns: transform.rotation * (57.29578 / 360),
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 300),
         child: Transform.scale(
-          scale: widget.transform.scale,
+          scale: transform.scale,
           child: Transform.translate(
-            offset: widget.transform.translate,
-            child: widget.child,
+            offset: transform.translate,
+            child: child,
           ),
         ),
       ),

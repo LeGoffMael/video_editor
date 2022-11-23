@@ -315,6 +315,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
                             widget.horizontalMargin
                         : Size.infinite.height),
                 child: CropTransformWithAnimation(
+                    shouldAnimate: _layout != Size.zero,
                     transform: transform,
                     child: VideoViewer(
                       controller: _controller,
