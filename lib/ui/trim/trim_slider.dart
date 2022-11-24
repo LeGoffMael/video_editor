@@ -21,6 +21,7 @@ class TrimSlider extends StatefulWidget {
     this.horizontalMargin = 0.0,
     this.child,
     this.hasHaptic = true,
+    this.canExtendTrim = true,
   });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
@@ -45,8 +46,15 @@ class TrimSlider extends StatefulWidget {
   /// The [child] param can be specify to display a widget below this one (e.g: [TrimTimeline])
   final Widget? child;
 
-  //// Should haptic feed back be triggered when the trim touch an edge (left or right)
+  //// The [hasHaptic] param specifies if haptic feed back can be triggered when the trim touch an edge (left or right)
+  ///
+  /// Defaults to `true`
   final bool hasHaptic;
+
+  /// The [canExtendTrim] param specifies if the the trimmer view can extend out of sight
+  ///
+  /// Defaults to `true`
+  final bool canExtendTrim;
 
   @override
   State<TrimSlider> createState() => _TrimSliderState();
@@ -72,8 +80,10 @@ class _TrimSliderState extends State<TrimSlider>
   late final double _horizontalMargin =
       widget.horizontalMargin + widget.controller.trimStyle.edgeWidth;
 
-  late final ratio = widget.controller.videoDuration.inMilliseconds /
-      widget.controller.maxDuration.inMilliseconds;
+  late final ratio = widget.canExtendTrim == false
+      ? 1
+      : widget.controller.videoDuration.inMilliseconds /
+          widget.controller.maxDuration.inMilliseconds;
   late final isExtendTrim = ratio > 1;
 
   // Touch detection
