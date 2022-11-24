@@ -21,7 +21,7 @@ class TrimSlider extends StatefulWidget {
     this.horizontalMargin = 0.0,
     this.child,
     this.hasHaptic = true,
-    this.canExtendTrim = true,
+    this.maxViewportRatio = 2.5,
   });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
@@ -51,10 +51,14 @@ class TrimSlider extends StatefulWidget {
   /// Defaults to `true`
   final bool hasHaptic;
 
-  /// The [canExtendTrim] param specifies if the the trimmer view can extend out of sight
+  /// The [maxViewportRatio] param specifies the upper limit of the view ratio
+  /// This param is useful to avoid having a trimmer way too wide, which is not usuable and performances consuming
   ///
-  /// Defaults to `true`
-  final bool canExtendTrim;
+  /// The default view port value equals to `controller.videoDuration / controller.maxDuration`
+  /// To disable the extended trimmer view, [maxViewportRatio] should be set to `3`
+  ///
+  /// Defaults to `2.5`
+  final double maxViewportRatio;
 
   @override
   State<TrimSlider> createState() => _TrimSliderState();
@@ -80,11 +84,12 @@ class _TrimSliderState extends State<TrimSlider>
   late final double _horizontalMargin =
       widget.horizontalMargin + widget.controller.trimStyle.edgeWidth;
 
-  late final ratio = widget.canExtendTrim == false
-      ? 1
-      : widget.controller.videoDuration.inMilliseconds /
-          widget.controller.maxDuration.inMilliseconds;
-  late final isExtendTrim = ratio > 1;
+  late final _viewportRatio = min(
+    widget.maxViewportRatio,
+    widget.controller.videoDuration.inMilliseconds /
+        widget.controller.maxDuration.inMilliseconds,
+  );
+  late final _isExtendTrim = _viewportRatio > 1;
 
   // Touch detection
 
@@ -114,12 +119,12 @@ class _TrimSliderState extends State<TrimSlider>
   @override
   void initState() {
     super.initState();
-    if (isExtendTrim) _scrollController.addListener(attachTrimToScroll);
+    if (_isExtendTrim) _scrollController.addListener(attachTrimToScroll);
   }
 
   @override
   void dispose() {
-    if (isExtendTrim) _scrollController.removeListener(attachTrimToScroll);
+    if (_isExtendTrim) _scrollController.removeListener(attachTrimToScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -305,7 +310,7 @@ class _TrimSliderState extends State<TrimSlider>
         }
         break;
       case _TrimBoundaries.inside:
-        if (isExtendTrim) {
+        if (_isExtendTrim) {
           _scrollController.position.moveTo(
             _scrollController.offset - delta.dx,
             clamp: false,
@@ -488,7 +493,7 @@ class _TrimSliderState extends State<TrimSlider>
         contrainst.maxHeight,
       );
       _fullLayout = Size(
-        trimLayout.width * (isExtendTrim ? ratio : 1),
+        trimLayout.width * (_isExtendTrim ? _viewportRatio : 1),
         contrainst.maxHeight,
       );
       if (_trimLayout != trimLayout) {
