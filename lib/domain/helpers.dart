@@ -105,10 +105,10 @@ bool isNumberAlmost(double a, int b) => nearEqual(a, b.toDouble(), 0.01);
 ///
 /// ```
 /// i.e = max=4, length=11
-/// index=0 => = 0
-/// index=1 => = 3
-/// index=2 => = 6
-/// index=3 => = 9
+/// index=0 => 1
+/// index=1 => 4
+/// index=2 => 7
+/// index=3 => 9
 /// ```
 int getBestIndex(int max, int length, int index) =>
-    max >= length || max == 0 ? index : (index * (length / max).round());
+    max >= length || max == 0 ? index : 1 + (index * (length / max)).round();
