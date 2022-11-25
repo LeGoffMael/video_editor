@@ -248,7 +248,7 @@ class _VideoEditorState extends State<VideoEditor> {
                                             _coverSelection(),
                                           ],
                                         ),
-                                      )
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -258,16 +258,11 @@ class _VideoEditorState extends State<VideoEditor> {
                                       OpacityTransition(
                                     visible: export,
                                     child: AlertDialog(
-                                      // backgroundColor: Colors.white,
                                       title: ValueListenableBuilder(
                                         valueListenable: _exportingProgress,
                                         builder: (_, double value, __) => Text(
                                           "Exporting video ${(value * 100).ceil()}%",
-                                          style: const TextStyle(
-                                            // color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
+                                          style: const TextStyle(fontSize: 12),
                                         ),
                                       ),
                                     ),

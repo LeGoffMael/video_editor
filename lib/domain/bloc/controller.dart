@@ -106,12 +106,6 @@ class VideoEditorController extends ChangeNotifier {
   final ValueNotifier<CoverData?> _selectedCover =
       ValueNotifier<CoverData?>(null);
 
-  /// This is the width of the [file] video
-  double _videoWidth = 0;
-
-  /// This is the heigth of the [file] video
-  double _videoHeight = 0;
-
   /// Get the [VideoPlayerController]
   VideoPlayerController get video => _video;
 
@@ -130,9 +124,10 @@ class VideoEditorController extends ChangeNotifier {
   /// Get the [VideoPlayerController.value.duration]
   Duration get videoDuration => _video.value.duration;
 
-  /// Get the [Size] of the video
-  Size get videoDimension =>
-      Size(_videoWidth.toDouble(), _videoHeight.toDouble());
+  /// Get the [VideoPlayerController.value.size]
+  Size get videoDimension => _video.value.size;
+  double get videoWidth => videoDimension.width;
+  double get videoHeight => videoDimension.height;
 
   /// The [minTrim] param is the minimum position of the trimmed area on the slider
   ///
@@ -202,19 +197,18 @@ class VideoEditorController extends ChangeNotifier {
     preferredCropAspectRatio = value;
 
     if (value != null) {
-      final newSize =
-          computeSizeWithRatio(Size(_videoWidth, _videoHeight), value);
+      final newSize = computeSizeWithRatio(videoDimension, value);
 
       Rect centerCrop = Rect.fromCenter(
-        center: Offset(_videoWidth / 2, _videoHeight / 2),
+        center: Offset(videoWidth / 2, videoHeight / 2),
         width: newSize.width,
         height: newSize.height,
       );
 
       minCrop =
-          Offset(centerCrop.left / _videoWidth, centerCrop.top / _videoHeight);
+          Offset(centerCrop.left / videoWidth, centerCrop.top / videoHeight);
       maxCrop = Offset(
-          centerCrop.right / _videoWidth, centerCrop.bottom / _videoHeight);
+          centerCrop.right / videoWidth, centerCrop.bottom / videoHeight);
       notifyListeners();
     }
   }
@@ -228,10 +222,8 @@ class VideoEditorController extends ChangeNotifier {
   /// Generate the default cover [_selectedCover]
   /// Initialize [minCrop] & [maxCrop] values based on [aspectRatio]
   Future<void> initialize({double? aspectRatio}) async {
-    await _video.initialize().then((_) {
-      _videoWidth = _video.value.size.width;
-      _videoHeight = _video.value.size.height;
-    });
+    await _video.initialize();
+
     _video.addListener(_videoListener);
     _video.setLooping(true);
 
@@ -279,13 +271,13 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// The result is in the format `crop=w:h:x,y`
   String _getCrop() {
-    int enddx = (_videoWidth * maxCrop.dx).floor();
-    int enddy = (_videoHeight * maxCrop.dy).floor();
-    int startdx = (_videoWidth * minCrop.dx).floor();
-    int startdy = (_videoHeight * minCrop.dy).floor();
+    int enddx = (videoWidth * maxCrop.dx).floor();
+    int enddy = (videoHeight * maxCrop.dy).floor();
+    int startdx = (videoWidth * minCrop.dx).floor();
+    int startdy = (videoHeight * minCrop.dy).floor();
 
-    if (enddx > _videoWidth) enddx = _videoWidth.floor();
-    if (enddy > _videoHeight) enddy = _videoHeight.floor();
+    if (enddx > videoWidth) enddx = videoWidth.floor();
+    if (enddy > videoHeight) enddy = videoHeight.floor();
     if (startdx < 0) startdx = 0;
     if (startdy < 0) startdy = 0;
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
