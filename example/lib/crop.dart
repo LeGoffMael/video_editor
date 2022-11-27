@@ -34,12 +34,9 @@ class CropScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 15),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: CropGridViewer.edit(
-                  controller: controller,
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                ),
+              child: CropGridViewer.edit(
+                controller: controller,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
             ),
             const SizedBox(height: 15),
