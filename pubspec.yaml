@@ -16,6 +16,7 @@ dependencies:
   video_player: ^2.4.7
   video_thumbnail: ^0.5.3
   path: ^1.8.0 # update to `1.8.1` causes #79
+  transparent_image: ^2.0.0 # show fade-in placeholder in thumbnails generation
 
 dev_dependencies:
   flutter_test:

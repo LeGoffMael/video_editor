@@ -52,7 +52,7 @@ class CropGridViewer extends StatefulWidget {
 class _CropGridViewerState extends State<CropGridViewer> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
-      ValueNotifier<TransformData>(TransformData());
+      ValueNotifier<TransformData>(const TransformData());
 
   Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
@@ -105,9 +105,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
     // set cached crop values to adjust it later
-    _rect.value = _calculateCropRect(
-      _controller.cacheMinCrop,
-      _controller.cacheMaxCrop,
+    _rect.value = calculateCroppedRect(
+      _controller,
+      _layout,
+      min: _controller.cacheMinCrop,
+      max: _controller.cacheMaxCrop,
     );
 
     setState(() {
@@ -123,7 +125,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
   }
 
   void _scaleRect() {
-    _rect.value = _calculateCropRect();
+    _rect.value = calculateCroppedRect(_controller, _layout);
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
@@ -309,18 +311,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _rect.value = newRect;
   }
 
-  /// Calculate crop [Rect] area
-  /// depending of [_controller] min and max crop values and the size of the layout
-  Rect _calculateCropRect([Offset? min, Offset? max]) {
-    final Offset minCrop = min ?? _controller.minCrop;
-    final Offset maxCrop = max ?? _controller.maxCrop;
-
-    return Rect.fromPoints(
-      Offset(minCrop.dx * _layout.width, minCrop.dy * _layout.height),
-      Offset(maxCrop.dx * _layout.width, maxCrop.dy * _layout.height),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, constraints) {
@@ -379,11 +369,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
         child: Container(
           // when widget.showGrid is true, the layout size should never be bigger than the screen size
           constraints: BoxConstraints(
-            maxHeight:
-                ((_controller.rotation == 90 || _controller.rotation == 270)) &&
-                        widget.showGrid
-                    ? constraints.maxWidth - widget.margin.horizontal
-                    : Size.infinite.height,
+            maxHeight: _controller.isRotated && widget.showGrid
+                ? constraints.maxWidth - widget.margin.horizontal
+                : Size.infinite.height,
           ),
           child: CropTransform(
             transform: transform,
@@ -399,7 +387,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
                       _calculatePreferedCrop();
                     });
                   } else {
-                    _rect.value = _calculateCropRect();
+                    _rect.value = calculateCroppedRect(_controller, _layout);
                   }
                 }
                 return ValueListenableBuilder(

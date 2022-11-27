@@ -1,6 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
+import 'package:video_editor/video_editor.dart';
+
+const kDefaultSelectedColor = Color(0xffffcc00);
 
 /// Returns a desired dimension of [layout] that respect [r] aspect ratio
 Size computeSizeWithRatio(Size layout, double r) {
@@ -71,6 +75,43 @@ Rect translateRectIntoBounds(Size layout, Rect rect) {
 /// Return the scale for [rect] to fit [layout]
 double scaleToSize(Size layout, Rect rect) =>
     min(layout.width / rect.width, layout.height / rect.height);
+
+/// Return the scale for [rect] to not be smaller [layout]
+double scaleToSizeMax(Size layout, Rect rect) =>
+    max(layout.width / rect.width, layout.height / rect.height);
+
+/// Calculate crop [Rect] area
+/// depending of [controller] min and max crop values and the size of the layout
+Rect calculateCroppedRect(
+  VideoEditorController controller,
+  Size layout, {
+  Offset? min,
+  Offset? max,
+}) {
+  final Offset minCrop = min ?? controller.minCrop;
+  final Offset maxCrop = max ?? controller.maxCrop;
+
+  return Rect.fromPoints(
+    Offset(minCrop.dx * layout.width, minCrop.dy * layout.height),
+    Offset(maxCrop.dx * layout.width, maxCrop.dy * layout.height),
+  );
+}
+
+/// Return `true` if the difference between [a] and [b] is less than `0.001`
+bool isNumberAlmost(double a, int b) => nearEqual(a, b.toDouble(), 0.01);
+
+/// Return the best index to spread among the list [length] when limited to a [max] value
+/// When [max] is 0 or smaller than [length], returns [index]
+///
+/// ```
+/// i.e = max=4, length=11
+/// index=0 => 1
+/// index=1 => 4
+/// index=2 => 7
+/// index=3 => 9
+/// ```
+int getBestIndex(int max, int length, int index) =>
+    max >= length || max == 0 ? index : 1 + (index * (length / max)).round();
 
 /// Returns `true` if [rect] is left and top are bigger than 0
 /// and if right and bottom are smaller than [size] width and height

@@ -4,31 +4,49 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
+import 'package:video_editor/domain/helpers.dart';
+import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
+import 'package:video_editor/ui/image_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 
 class CoverSelection extends StatefulWidget {
   /// Slider that allow to select a generated cover
   const CoverSelection({
-    Key? key,
+    super.key,
     required this.controller,
-    this.height = 60,
+    this.size = 60,
     this.quality = 10,
     this.quantity = 5,
-  }) : super(key: key);
+    this.wrap,
+    this.selectedCoverBuilder,
+  });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the cover selection view
   final VideoEditorController controller;
 
-  /// The [height] param specifies the height of the generated thumbnails
-  final double height;
+  /// The [size] param specifies the size to display the generated thumbnails
+  ///
+  /// Defaults to `60`
+  final double size;
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail))
+  ///
+  /// Defaults to `10`
   final int quality;
 
   /// The [quantity] param specifies the quantity of thumbnails to generate
+  ///
+  /// Default to `5`
   final int quantity;
+
+  /// Specifies a [wrap] param to change how should be displayed the covers thumbnails
+  /// the `children` param will be ommited
+  final Wrap? wrap;
+
+  /// Returns how the selected cover should be displayed
+  final Widget Function(Widget selectedCover, Size)? selectedCoverBuilder;
 
   @override
   State<CoverSelection> createState() => _CoverSelectionState();
@@ -36,16 +54,22 @@ class CoverSelection extends StatefulWidget {
 
 class _CoverSelectionState extends State<CoverSelection>
     with AutomaticKeepAliveClientMixin {
-  double _aspect = 1.0, _width = 1.0;
   Duration? _startTrim, _endTrim;
 
-  Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
   final ValueNotifier<TransformData> _transform =
-      ValueNotifier<TransformData>(TransformData());
+      ValueNotifier<TransformData>(const TransformData());
 
-  late Stream<List<CoverData>> _stream = (() => _generateThumbnails())();
+  late Stream<List<CoverData>> _stream = (() => _generateCoverThumbnails())();
+
+  @override
+  void initState() {
+    super.initState();
+    _startTrim = widget.controller.startTrim;
+    _endTrim = widget.controller.endTrim;
+    widget.controller.addListener(_scaleRect);
+  }
 
   @override
   void dispose() {
@@ -56,37 +80,17 @@ class _CoverSelectionState extends State<CoverSelection>
   }
 
   @override
-  void initState() {
-    super.initState();
-    _aspect = widget.controller.preferredCropAspectRatio ??
-        widget.controller.video.value.aspectRatio;
-    _startTrim = widget.controller.startTrim;
-    _endTrim = widget.controller.endTrim;
-    widget.controller.addListener(_scaleRect);
-
-    // init the widget with controller values
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scaleRect();
-    });
-  }
-
-  @override
   bool get wantKeepAlive => true;
 
   void _scaleRect() {
-    _rect.value = _calculateCoverRect();
+    _rect.value = calculateCroppedRect(widget.controller, _layout);
+
     _transform.value = TransformData.fromRect(
       _rect.value,
       _layout,
-      _viewerSize,
-      widget.controller,
+      Size.square(widget.size), // the maximum size to show the thumb
+      null, // controller rotation should not affect this widget
     );
-
-    if (widget.controller.preferredCropAspectRatio != null &&
-        _aspect != widget.controller.preferredCropAspectRatio) {
-      _aspect = widget.controller.preferredCropAspectRatio!;
-      _layout = _calculateLayout();
-    }
 
     // if trim values changed generate new thumbnails
     if (!widget.controller.isTrimming &&
@@ -94,105 +98,82 @@ class _CoverSelectionState extends State<CoverSelection>
             _endTrim != widget.controller.endTrim)) {
       _startTrim = widget.controller.startTrim;
       _endTrim = widget.controller.endTrim;
-      setState(() {
-        _stream = _generateThumbnails();
-      });
+      setState(() => _stream = _generateCoverThumbnails());
     }
   }
 
-  Stream<List<CoverData>> _generateThumbnails() async* {
-    final int duration = widget.controller.isTrimmmed
-        ? (widget.controller.endTrim - widget.controller.startTrim)
-            .inMilliseconds
-        : widget.controller.videoDuration.inMilliseconds;
-    final double eachPart = duration / widget.quantity;
-    List<CoverData> byteList = [];
-    for (int i = 0; i < widget.quantity; i++) {
-      try {
-        final CoverData bytes = await widget.controller.generateCoverThumbnail(
-            timeMs: (widget.controller.isTrimmmed
-                    ? (eachPart * i) +
-                        widget.controller.startTrim.inMilliseconds
-                    : (eachPart * i))
-                .toInt(),
-            quality: widget.quality);
+  Stream<List<CoverData>> _generateCoverThumbnails() => generateCoverThumbnails(
+        widget.controller,
+        quantity: widget.quantity,
+        quality: widget.quality,
+      );
 
-        if (bytes.thumbData != null) {
-          byteList.add(bytes);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-
-      yield byteList;
-    }
-  }
-
-  Rect _calculateCoverRect() {
-    final Offset min = widget.controller.minCrop;
-    final Offset max = widget.controller.maxCrop;
-    return Rect.fromPoints(
-      Offset(
-        min.dx * _layout.width,
-        min.dy * _layout.height,
-      ),
-      Offset(
-        max.dx * _layout.width,
-        max.dy * _layout.height,
-      ),
-    );
-  }
-
-  Size _calculateLayout() {
-    return _aspect < 1.0
-        ? Size(widget.height * _aspect, widget.height)
-        : Size(widget.height, widget.height / _aspect);
+  /// Returns the max size the layout should take with the rect value
+  Size _calculateMaxLayout() {
+    final ratio = _rect.value == Rect.zero
+        ? widget.controller.video.value.aspectRatio
+        : _rect.value.size.aspectRatio;
+    return ratio < 1.0
+        ? Size(widget.size * ratio, widget.size)
+        : Size(widget.size, widget.size / ratio);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return LayoutBuilder(builder: (_, box) {
-      _viewerSize = box.biggest;
-      final double width = box.maxWidth;
-      if (_width != width) {
-        _width = width;
-        _layout = _calculateLayout();
-        _rect.value = _calculateCoverRect();
-      }
+    final wrap = widget.wrap ?? Wrap();
 
-      return StreamBuilder(
-          stream: _stream,
-          builder: (_, AsyncSnapshot<List<CoverData>> snapshot) {
-            final data = snapshot.data;
-            return snapshot.hasData
-                ? Wrap(
-                    runSpacing: 10.0,
-                    spacing: 10.0,
-                    children: data!
-                        .map((coverData) => ValueListenableBuilder(
-                            valueListenable: _transform,
-                            builder: (_, TransformData transform, __) {
-                              return ValueListenableBuilder(
-                                valueListenable:
-                                    widget.controller.selectedCoverNotifier,
-                                builder:
-                                    (context, CoverData? selectedCover, __) =>
-                                        _buildSingleCover(
+    return StreamBuilder<List<CoverData>>(
+        stream: _stream,
+        builder: (_, snapshot) {
+          return snapshot.hasData
+              ? ValueListenableBuilder<TransformData>(
+                  valueListenable: _transform,
+                  builder: (_, transform, __) => Wrap(
+                    direction: wrap.direction,
+                    alignment: wrap.alignment,
+                    spacing: widget.wrap?.spacing ?? 10.0,
+                    runSpacing: widget.wrap?.runSpacing ?? 10.0,
+                    runAlignment: wrap.runAlignment,
+                    crossAxisAlignment: wrap.crossAxisAlignment,
+                    textDirection: wrap.textDirection,
+                    verticalDirection: wrap.verticalDirection,
+                    clipBehavior: wrap.clipBehavior,
+                    children: snapshot.data!
+                        .map(
+                          (coverData) => ValueListenableBuilder<CoverData?>(
+                              valueListenable:
+                                  widget.controller.selectedCoverNotifier,
+                              builder: (context, selectedCover, __) {
+                                final isSelected = coverData.sameTime(
+                                    widget.controller.selectedCoverVal!);
+                                final coverThumbnail = _buildSingleCover(
                                   coverData,
                                   transform,
                                   widget.controller.coverStyle,
-                                  isSelected: coverData.sameTime(
-                                      widget.controller.selectedCoverVal!),
-                                ),
-                              );
-                            }))
+                                  isSelected: isSelected,
+                                );
+
+                                if (isSelected &&
+                                    widget.selectedCoverBuilder != null) {
+                                  final size = _calculateMaxLayout();
+                                  return widget.selectedCoverBuilder!(
+                                    coverThumbnail,
+                                    widget.controller.isRotated
+                                        ? size.flipped
+                                        : size,
+                                  );
+                                }
+
+                                return coverThumbnail;
+                              }),
+                        )
                         .toList()
                         .cast<Widget>(),
-                  )
-                : const SizedBox();
-          });
-    });
+                  ),
+                )
+              : const SizedBox();
+        });
   }
 
   Widget _buildSingleCover(
@@ -201,51 +182,60 @@ class _CoverSelectionState extends State<CoverSelection>
     CoverSelectionStyle coverStyle, {
     required bool isSelected,
   }) {
-    return InkWell(
-      onTap: () => widget.controller.updateSelectedCover(cover),
-      child: Stack(
-        alignment: coverStyle.selectedIndicatorAlign,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? coverStyle.selectedBorderColor
-                    : Colors.transparent,
-                width: coverStyle.selectedBorderWidth,
-              ),
-            ),
-            child: CropTransform(
-              transform: transform,
-              child: Container(
-                alignment: Alignment.center,
-                height: _layout.height,
-                width: _layout.width,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image(
-                      image: MemoryImage(cover.thumbData!),
-                      width: _layout.width,
-                      height: _layout.height,
-                    ),
-                    CustomPaint(
-                      size: _layout,
+    // here the rotation should affect the dimension of the widget
+    // it is better to use [RotatedBox] instead of [Tranform.rotate]
+    return RotatedBox(
+      quarterTurns: widget.controller.rotation ~/ -90,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(coverStyle.borderRadius),
+        onTap: () => widget.controller.updateSelectedCover(cover),
+        child: SizedBox.fromSize(
+          size: _calculateMaxLayout(),
+          child: Stack(
+            children: [
+              CropTransform(
+                transform: transform,
+                child: ImageViewer(
+                  controller: widget.controller,
+                  bytes: cover.thumbData!,
+                  child: LayoutBuilder(builder: (_, constraints) {
+                    Size size = constraints.biggest;
+                    if (_layout != size) {
+                      _layout = size;
+                      // init the widget with controller values
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _scaleRect());
+                    }
+
+                    return CustomPaint(
+                      size: Size.infinite,
                       painter: CropGridPainter(
                         _rect.value,
+                        radius: coverStyle.borderRadius / 2,
                         showGrid: false,
                         style: widget.controller.cropStyle,
                       ),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
               ),
-            ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        BorderRadius.circular(coverStyle.borderRadius),
+                    border: Border.all(
+                      color: isSelected
+                          ? coverStyle.selectedBorderColor
+                          : Colors.transparent,
+                      width: coverStyle.borderWidth,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          isSelected && coverStyle.selectedIndicator != null
-              ? coverStyle.selectedIndicator!
-              : const SizedBox.shrink(),
-        ],
+        ),
       ),
     );
   }

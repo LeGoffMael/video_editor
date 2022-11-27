@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
@@ -8,6 +7,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/helpers.dart';
+import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -75,8 +75,8 @@ class VideoEditorController extends ChangeNotifier {
           Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
         )),
         _maxDuration = maxDuration ?? Duration.zero,
-        cropStyle = cropStyle ?? CropGridStyle(),
-        coverStyle = coverStyle ?? CoverSelectionStyle(),
+        cropStyle = cropStyle ?? const CropGridStyle(),
+        coverStyle = coverStyle ?? const CoverSelectionStyle(),
         trimStyle = trimStyle ?? TrimSliderStyle();
 
   int _rotation = 0;
@@ -273,12 +273,13 @@ class VideoEditorController extends ChangeNotifier {
     final executions = await FFmpegKit.listSessions();
     if (executions.isNotEmpty) await FFmpegKit.cancel();
     _video.dispose();
+    _selectedCover.dispose();
     super.dispose();
   }
 
   void _videoListener() {
     final position = videoPosition;
-    if (position < _trimStart || position >= _trimEnd) {
+    if (position < _trimStart || position > _trimEnd) {
       _video.seekTo(_trimStart);
     }
   }
@@ -343,7 +344,7 @@ class VideoEditorController extends ChangeNotifier {
   /// Get the [isTrimmed]
   ///
   /// `true` if the trimmed value has beem changed
-  bool get isTrimmmed => _isTrimmed;
+  bool get isTrimmed => _isTrimmed;
 
   /// Get the [isTrimming]
   ///
@@ -386,24 +387,11 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Generate cover at [startTrim] time in milliseconds
   void generateDefaultCoverThumbnail() async {
-    final defaultCover =
-        await generateCoverThumbnail(timeMs: startTrim.inMilliseconds);
-    updateSelectedCover(defaultCover);
-  }
-
-  /// Generate a cover at [timeMs] in video
-  ///
-  /// return [CoverData] depending on [timeMs] milliseconds
-  Future<CoverData> generateCoverThumbnail(
-      {int timeMs = 0, int quality = 10}) async {
-    final Uint8List? thumbData = await VideoThumbnail.thumbnailData(
-      imageFormat: ImageFormat.JPEG,
-      video: file.path,
-      timeMs: timeMs,
-      quality: quality,
+    final defaultCover = await generateSingleCoverThumbnail(
+      file.path,
+      timeMs: startTrim.inMilliseconds,
     );
-
-    return CoverData(thumbData: thumbData, timeMs: timeMs);
+    updateSelectedCover(defaultCover);
   }
 
   /// Get the [selectedCover] notifier
@@ -430,6 +418,8 @@ class VideoEditorController extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  bool get isRotated => rotation == 90 || rotation == 270;
 
   /// Convert the [_rotation] value into a [String]
   /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#transpose-1))

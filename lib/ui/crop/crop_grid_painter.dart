@@ -7,6 +7,7 @@ class CropGridPainter extends CustomPainter {
     this.rect, {
     required this.style,
     this.boundary,
+    this.radius = 0,
     this.showGrid = false,
     this.showCenterRects = true,
   });
@@ -14,6 +15,7 @@ class CropGridPainter extends CustomPainter {
   final Rect rect;
   final CropBoundaries? boundary;
   final CropGridStyle style;
+  final double radius;
   final bool showGrid, showCenterRects;
 
   @override
@@ -41,7 +43,7 @@ class CropGridPainter extends CustomPainter {
           ..addRect(Rect.fromLTWH(-margin, -margin, size.width + margin * 2,
               size.height + margin * 2)),
         Path()
-          ..addRect(rect)
+          ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)))
           ..close(),
       ),
       paint,
