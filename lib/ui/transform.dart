@@ -3,10 +3,10 @@ import 'package:video_editor/domain/entities/transform_data.dart';
 
 class CropTransform extends StatelessWidget {
   const CropTransform({
-    Key? key,
+    super.key,
     required this.transform,
     required this.child,
-  }) : super(key: key);
+  });
 
   final Widget child;
   final TransformData transform;
@@ -16,6 +16,44 @@ class CropTransform extends StatelessWidget {
     return ClipRRect(
       child: Transform.rotate(
         angle: transform.rotation,
+        child: Transform.scale(
+          scale: transform.scale,
+          child: Transform.translate(
+            offset: transform.translate,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// [CropTransform] with rotation animation
+class CropTransformWithAnimation extends StatelessWidget {
+  const CropTransformWithAnimation({
+    super.key,
+    required this.transform,
+    required this.child,
+    this.shouldAnimate = true,
+  });
+
+  final Widget child;
+  final TransformData transform;
+
+  final bool shouldAnimate;
+
+  @override
+  Widget build(BuildContext context) {
+    if (shouldAnimate == false) {
+      return CropTransform(transform: transform, child: child);
+    }
+
+    return ClipRRect(
+      child: AnimatedRotation(
+        // convert rad to turns
+        turns: transform.rotation * (57.29578 / 360),
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 300),
         child: Transform.scale(
           scale: transform.scale,
           child: Transform.translate(

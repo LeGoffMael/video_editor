@@ -115,9 +115,6 @@ class VideoEditorController extends ChangeNotifier {
   /// Get the [VideoPlayerController]
   VideoPlayerController get video => _video;
 
-  /// Get the rotation of the video
-  int get rotation => _rotation;
-
   /// Get the [VideoPlayerController.value.initialized]
   bool get initialized => _video.value.isInitialized;
 
@@ -293,6 +290,8 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// The result is in the format `crop=w:h:x,y`
   String _getCrop() {
+    if (minCrop <= _min || maxCrop >= _max) return "";
+
     int enddx = (_videoWidth * maxCrop.dx).floor();
     int enddy = (_videoHeight * maxCrop.dy).floor();
     int startdx = (_videoWidth * minCrop.dx).floor();
@@ -404,16 +403,21 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO ROTATE//
   //------------//
 
+  /// Get the rotation of the video, value should be a multiple of `90`
+  int get cacheRotation => _rotation;
+
+  /// Get the rotation of the video,
+  /// possible values are: `0`, `90`, `180` and `270`
+  int get rotation => (_rotation ~/ 90 % 4) * 90;
+
   /// Rotate the video by 90 degrees in the [direction] provided
   void rotate90Degrees([RotateDirection direction = RotateDirection.right]) {
     switch (direction) {
       case RotateDirection.left:
         _rotation += 90;
-        if (_rotation >= 360) _rotation = _rotation - 360;
         break;
       case RotateDirection.right:
         _rotation -= 90;
-        if (_rotation <= 0) _rotation = 360 + _rotation;
         break;
     }
     notifyListeners();
@@ -421,13 +425,16 @@ class VideoEditorController extends ChangeNotifier {
 
   bool get isRotated => rotation == 90 || rotation == 270;
 
-  /// Convert the [_rotation] value into a [String]
+  /// Convert the [rotation] value into a [String]
   /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#transpose-1))
   ///
   /// The result is in the format `transpose=2` (repeated for every 90 degrees rotations)
   String _getRotation() {
+    final count = rotation / 90;
+    if (count <= 0 || count >= 4) return "";
+
     List<String> transpose = [];
-    for (int i = 0; i < _rotation / 90; i++) {
+    for (int i = 0; i < rotation / 90; i++) {
       transpose.add("transpose=2");
     }
     return transpose.isNotEmpty ? transpose.join(',') : "";
@@ -500,14 +507,16 @@ class VideoEditorController extends ChangeNotifier {
     final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
         ? "-ss $_trimStart -to $_trimEnd"
         : "";
-    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
-    final String rotation =
-        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
         scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
     // VALIDATE FILTERS
-    final List<String> filters = [crop, scaleInstruction, rotation, gif];
+    final List<String> filters = [
+      _getCrop(),
+      scaleInstruction,
+      _getRotation(),
+      gif
+    ];
     filters.removeWhere((item) => item.isEmpty);
     final String filter = filters.isNotEmpty && isFiltersEnabled
         ? "-filter:v ${filters.join(",")}"
@@ -659,14 +668,11 @@ class VideoEditorController extends ChangeNotifier {
     final String outputPath = "$tempPath/${name}_$epoch.$format";
 
     // CALCULATE FILTERS
-    final String crop = minCrop >= _min && maxCrop <= _max ? _getCrop() : "";
-    final String rotation =
-        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
     final String scaleInstruction =
         scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
     // VALIDATE FILTERS
-    final List<String> filters = [crop, scaleInstruction, rotation];
+    final List<String> filters = [_getCrop(), scaleInstruction, _getRotation()];
     filters.removeWhere((item) => item.isEmpty);
     final String filter = filters.isNotEmpty && isFiltersEnabled
         ? "-filter:v ${filters.join(",")}"
