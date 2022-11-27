@@ -36,9 +36,9 @@ class CropScreen extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: CropGridViewer(
+                child: CropGridViewer.edit(
                   controller: controller,
-                  horizontalMargin: 60,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
                 ),
               ),
             ),

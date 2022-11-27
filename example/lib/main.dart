@@ -91,6 +91,7 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     super.initState();
     _controller = VideoEditorController.file(widget.file,
+        cropStyle: CropGridStyle(selectedBoundariesColor: Colors.redAccent),
         maxDuration: const Duration(seconds: 10))
       ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
   }
@@ -172,10 +173,8 @@ class _VideoEditorState extends State<VideoEditor> {
                                       Stack(
                                         alignment: Alignment.center,
                                         children: [
-                                          CropGridViewer(
-                                            controller: _controller,
-                                            showGrid: false,
-                                          ),
+                                          CropGridViewer.preview(
+                                              controller: _controller),
                                           AnimatedBuilder(
                                             animation: _controller.video,
                                             builder: (_, __) =>
@@ -391,7 +390,7 @@ class _VideoEditorState extends State<VideoEditor> {
           horizontalMargin: height / 4,
           child: TrimTimeline(
             controller: _controller,
-            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.only(top: 10),
           ),
         ),
       )

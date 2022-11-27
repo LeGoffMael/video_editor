@@ -141,4 +141,36 @@ void main() {
     test('centered 9/16 rect', () => expect(scaleToSize(maxSize, const Rect.fromLTRB(128.2, 0.0, 246.8, 210.9)), maxSize.height / 210.9));
     test('centered 1/1 rect', () => expect(scaleToSize(maxSize, const Rect.fromLTRB(51.4, 28.6, 314.7, 176.7)), maxSize.width / 263.3));
   });
+
+  group('getBestIndex', () {
+    test('max=4, length=11', () {
+      expect(getBestIndex(4, 11, 0), 1);
+      expect(getBestIndex(4, 11, 1), 4);
+      expect(getBestIndex(4, 11, 2), 7);
+      expect(getBestIndex(4, 11, 3), 9);
+    });
+
+    test('max=10, length=20', () {
+      expect(getBestIndex(10, 20, 0), 1);
+      expect(getBestIndex(10, 20, 1), 3);
+      expect(getBestIndex(10, 20, 2), 5);
+      expect(getBestIndex(10, 20, 3), 7);
+      expect(getBestIndex(10, 20, 4), 9);
+      expect(getBestIndex(10, 20, 5), 11);
+      expect(getBestIndex(10, 20, 6), 13);
+      expect(getBestIndex(10, 20, 7), 15);
+      expect(getBestIndex(10, 20, 8), 17);
+      expect(getBestIndex(10, 20, 9), 19);
+    });
+
+    test('max=120, length=213', () {
+      expect(getBestIndex(120, 213, 0), 1);
+      expect(getBestIndex(120, 213, 19), 35);
+      expect(getBestIndex(120, 213, 39), 70);
+      expect(getBestIndex(120, 213, 59), 106);
+      expect(getBestIndex(120, 213, 79), 141);
+      expect(getBestIndex(120, 213, 99), 177);
+      expect(getBestIndex(120, 213, 119), 212);
+    });
+  });
 }

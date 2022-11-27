@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/crop_style.dart';
+import 'package:video_editor/ui/crop/crop_grid.dart';
 
 class CropGridPainter extends CustomPainter {
   CropGridPainter(
     this.rect, {
-    this.style,
+    required this.style,
+    this.boundary,
     this.radius = 0,
     this.showGrid = false,
     this.showCenterRects = true,
   });
 
   final Rect rect;
+  final CropBoundaries? boundary;
+  final CropGridStyle style;
   final double radius;
-  final CropGridStyle? style;
   final bool showGrid, showCenterRects;
 
   @override
@@ -26,7 +29,7 @@ class CropGridPainter extends CustomPainter {
 
   void _drawBackground(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = showGrid ? style!.croppingBackground : style!.background;
+      ..color = showGrid ? style.croppingBackground : style.background;
 
     // when scaling, the positions might not be exactly accurates
     // so add an extra margin to be sure to overlay all video
@@ -48,10 +51,10 @@ class CropGridPainter extends CustomPainter {
   }
 
   void _drawGrid(Canvas canvas, Size size) {
-    final int gridSize = style!.gridSize;
+    final int gridSize = style.gridSize;
     final Paint paint = Paint()
-      ..strokeWidth = style!.gridLineWidth
-      ..color = style!.gridLineColor;
+      ..strokeWidth = style.gridLineWidth
+      ..color = style.gridLineColor;
 
     for (int i = 1; i < gridSize; i++) {
       double rowDy = rect.topLeft.dy + (rect.height / gridSize) * i;
@@ -69,10 +72,16 @@ class CropGridPainter extends CustomPainter {
     }
   }
 
+  Paint getPaintFromBoundary(CropBoundaries offset) {
+    return Paint()
+      ..color = (boundary == CropBoundaries.inside || offset == boundary)
+          ? style.selectedBoundariesColor
+          : style.boundariesColor;
+  }
+
   void _drawBoundaries(Canvas canvas, Size size) {
-    final double width = style!.boundariesWidth;
-    final double length = style!.boundariesLength;
-    final Paint paint = Paint()..color = style!.boundariesColor;
+    final double width = style.boundariesWidth;
+    final double length = style.boundariesLength;
 
     //----//
     //EDGE//
@@ -83,14 +92,14 @@ class CropGridPainter extends CustomPainter {
         rect.topLeft,
         rect.topLeft + Offset(width, length),
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.topLeft),
     );
     canvas.drawRect(
       Rect.fromPoints(
         rect.topLeft,
         rect.topLeft + Offset(length, width),
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.topLeft),
     );
 
     // TOP RIGHT -|
@@ -99,14 +108,14 @@ class CropGridPainter extends CustomPainter {
         rect.topRight - Offset(length, 0.0),
         rect.topRight + Offset(0.0, width),
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.topRight),
     );
     canvas.drawRect(
       Rect.fromPoints(
         rect.topRight,
         rect.topRight - Offset(width, -length),
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.topRight),
     );
 
     // BOTTOM RIGHT _|
@@ -115,14 +124,14 @@ class CropGridPainter extends CustomPainter {
         rect.bottomRight - Offset(width, length),
         rect.bottomRight,
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.bottomRight),
     );
     canvas.drawRect(
       Rect.fromPoints(
         rect.bottomRight,
         rect.bottomRight - Offset(length, width),
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.bottomRight),
     );
 
     // BOTTOM LEFT |_
@@ -131,14 +140,14 @@ class CropGridPainter extends CustomPainter {
         rect.bottomLeft - Offset(-width, length),
         rect.bottomLeft,
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.bottomLeft),
     );
     canvas.drawRect(
       Rect.fromPoints(
         rect.bottomLeft,
         rect.bottomLeft + Offset(length, -width),
       ),
-      paint,
+      getPaintFromBoundary(CropBoundaries.bottomLeft),
     );
 
     //------//
@@ -151,7 +160,7 @@ class CropGridPainter extends CustomPainter {
           rect.topCenter + Offset(-length / 2, 0.0),
           rect.topCenter + Offset(length / 2, width),
         ),
-        paint,
+        getPaintFromBoundary(CropBoundaries.topCenter),
       );
 
       //BOTTOMCENTER
@@ -160,7 +169,7 @@ class CropGridPainter extends CustomPainter {
           rect.bottomCenter + Offset(-length / 2, 0.0),
           rect.bottomCenter + Offset(length / 2, -width),
         ),
-        paint,
+        getPaintFromBoundary(CropBoundaries.bottomCenter),
       );
 
       //CENTERLEFT
@@ -169,7 +178,7 @@ class CropGridPainter extends CustomPainter {
           rect.centerLeft + Offset(0.0, -length / 2),
           rect.centerLeft + Offset(width, length / 2),
         ),
-        paint,
+        getPaintFromBoundary(CropBoundaries.centerLeft),
       );
 
       //CENTERRIGHT
@@ -178,7 +187,7 @@ class CropGridPainter extends CustomPainter {
           rect.centerRight + Offset(-width, -length / 2),
           rect.centerRight + Offset(0.0, length / 2),
         ),
-        paint,
+        getPaintFromBoundary(CropBoundaries.centerRight),
       );
     }
   }
