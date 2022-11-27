@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:video_editor/video_editor.dart';
 
+const kDefaultSelectedColor = Color(0xffffcc00);
+
 /// Returns a desired dimension of [layout] that respect [r] aspect ratio
 Size computeSizeWithRatio(Size layout, double r) {
   if (layout.aspectRatio == r) {
@@ -103,10 +105,18 @@ bool isNumberAlmost(double a, int b) => nearEqual(a, b.toDouble(), 0.01);
 ///
 /// ```
 /// i.e = max=4, length=11
-/// index=0 => = 0
-/// index=1 => = 3
-/// index=2 => = 6
-/// index=3 => = 9
+/// index=0 => 1
+/// index=1 => 4
+/// index=2 => 7
+/// index=3 => 9
 /// ```
 int getBestIndex(int max, int length, int index) =>
-    max >= length || max == 0 ? index : (index * (length / max).round());
+    max >= length || max == 0 ? index : 1 + (index * (length / max)).round();
+
+/// Returns `true` if [rect] is left and top are bigger than 0
+/// and if right and bottom are smaller than [size] width and height
+bool isRectContained(Size size, Rect rect) =>
+    rect.left >= 0 &&
+    rect.top >= 0 &&
+    rect.right <= size.width &&
+    rect.bottom <= size.height;

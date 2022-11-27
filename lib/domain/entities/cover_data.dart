@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 class CoverData {
-  CoverData({
+  const CoverData({
     this.thumbData,
     required this.timeMs,
   });
