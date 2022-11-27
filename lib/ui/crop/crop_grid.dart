@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
@@ -8,7 +6,8 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/video_viewer.dart';
 import 'package:video_editor/ui/transform.dart';
 
-enum _CropBoundaries {
+@protected
+enum CropBoundaries {
   topLeft,
   topRight,
   bottomLeft,
@@ -23,12 +22,17 @@ enum _CropBoundaries {
 
 class CropGridViewer extends StatefulWidget {
   /// It is the viewer that allows you to crop the video
-  const CropGridViewer({
-    Key? key,
+  const CropGridViewer.preview({
+    super.key,
     required this.controller,
-    this.showGrid = true,
-    this.horizontalMargin = 0.0,
-  }) : super(key: key);
+  })  : showGrid = false,
+        margin = EdgeInsets.zero;
+
+  const CropGridViewer.edit({
+    super.key,
+    required this.controller,
+    this.margin = const EdgeInsets.symmetric(horizontal: 20),
+  }) : showGrid = true;
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
   final VideoEditorController controller;
@@ -37,9 +41,9 @@ class CropGridViewer extends StatefulWidget {
   /// Set this param to `false` to display the preview of the cropped video
   final bool showGrid;
 
-  /// The [horizontalMargin] param need to be specify when there is a margin outside the crop view,
+  /// The amount of space by which to inset the crop view, not used in preview mode
   /// so in case of a change the new layout can be computed properly (i.e after a rotation)
-  final double horizontalMargin;
+  final EdgeInsets margin;
 
   @override
   State<CropGridViewer> createState() => _CropGridViewerState();
@@ -52,7 +56,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   Size _viewerSize = Size.zero;
   Size _layout = Size.zero;
-  _CropBoundaries _boundary = _CropBoundaries.none;
+  CropBoundaries _boundary = CropBoundaries.none;
 
   double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
@@ -148,92 +152,95 @@ class _CropGridViewerState extends State<CropGridViewer> {
         height: _rect.value.height + expandedPosition.height);
   }
 
-  void _onPanStart(DragStartDetails details) {
-    final Offset pos = details.localPosition;
+  /// Returns the [Offset] to shift [_rect] with to centered in the view
+  Offset get gestureOffset => Offset(
+        (_viewerSize.width / 2) - (_layout.width / 2),
+        (_viewerSize.height / 2) - (_layout.height / 2),
+      );
 
-    _boundary = _CropBoundaries.none;
+  void _onPanDown(DragDownDetails details) {
+    final Offset pos = details.localPosition - gestureOffset;
+    _boundary = CropBoundaries.none;
 
     if (_expandedRect().contains(pos)) {
-      if (_rect.value.contains(pos)) {
-        _boundary = _CropBoundaries.inside;
-      }
+      _boundary = CropBoundaries.inside;
 
       // CORNERS
       if (_expandedPosition(_rect.value.topLeft).contains(pos)) {
-        _boundary = _CropBoundaries.topLeft;
+        _boundary = CropBoundaries.topLeft;
       } else if (_expandedPosition(_rect.value.topRight).contains(pos)) {
-        _boundary = _CropBoundaries.topRight;
+        _boundary = CropBoundaries.topRight;
       } else if (_expandedPosition(_rect.value.bottomRight).contains(pos)) {
-        _boundary = _CropBoundaries.bottomRight;
+        _boundary = CropBoundaries.bottomRight;
       } else if (_expandedPosition(_rect.value.bottomLeft).contains(pos)) {
-        _boundary = _CropBoundaries.bottomLeft;
+        _boundary = CropBoundaries.bottomLeft;
       } else if (_controller.preferredCropAspectRatio == null) {
         // CENTERS
         if (_expandedPosition(_rect.value.centerLeft).contains(pos)) {
-          _boundary = _CropBoundaries.centerLeft;
+          _boundary = CropBoundaries.centerLeft;
         } else if (_expandedPosition(_rect.value.topCenter).contains(pos)) {
-          _boundary = _CropBoundaries.topCenter;
+          _boundary = CropBoundaries.topCenter;
         } else if (_expandedPosition(_rect.value.centerRight).contains(pos)) {
-          _boundary = _CropBoundaries.centerRight;
+          _boundary = CropBoundaries.centerRight;
         } else if (_expandedPosition(_rect.value.bottomCenter).contains(pos)) {
-          _boundary = _CropBoundaries.bottomCenter;
+          _boundary = CropBoundaries.bottomCenter;
         }
       }
+      setState(() {}); // to update selected boundary color
+      _controller.isCropping = true;
     }
-    _controller.isCropping = true;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    if (_boundary != _CropBoundaries.none) {
-      final Offset delta = details.delta;
+    if (_boundary == CropBoundaries.none) return;
+    final Offset delta = details.delta;
 
-      switch (_boundary) {
-        case _CropBoundaries.inside:
-          final Offset pos = _rect.value.topLeft + delta;
-          _rect.value = Rect.fromLTWH(
-              pos.dx.clamp(0, _layout.width - _rect.value.width),
-              pos.dy.clamp(0, _layout.height - _rect.value.height),
-              _rect.value.width,
-              _rect.value.height);
-          break;
-        //CORNERS
-        case _CropBoundaries.topLeft:
-          final Offset pos = _rect.value.topLeft + delta;
-          _changeRect(left: pos.dx, top: pos.dy);
-          break;
-        case _CropBoundaries.topRight:
-          final Offset pos = _rect.value.topRight + delta;
-          _changeRect(right: pos.dx, top: pos.dy);
-          break;
-        case _CropBoundaries.bottomRight:
-          final Offset pos = _rect.value.bottomRight + delta;
-          _changeRect(right: pos.dx, bottom: pos.dy);
-          break;
-        case _CropBoundaries.bottomLeft:
-          final Offset pos = _rect.value.bottomLeft + delta;
-          _changeRect(left: pos.dx, bottom: pos.dy);
-          break;
-        //CENTERS
-        case _CropBoundaries.topCenter:
-          _changeRect(top: _rect.value.top + delta.dy);
-          break;
-        case _CropBoundaries.bottomCenter:
-          _changeRect(bottom: _rect.value.bottom + delta.dy);
-          break;
-        case _CropBoundaries.centerLeft:
-          _changeRect(left: _rect.value.left + delta.dx);
-          break;
-        case _CropBoundaries.centerRight:
-          _changeRect(right: _rect.value.right + delta.dx);
-          break;
-        case _CropBoundaries.none:
-          break;
-      }
+    switch (_boundary) {
+      case CropBoundaries.inside:
+        final Offset pos = _rect.value.topLeft + delta;
+        _rect.value = Rect.fromLTWH(
+            pos.dx.clamp(0, _layout.width - _rect.value.width),
+            pos.dy.clamp(0, _layout.height - _rect.value.height),
+            _rect.value.width,
+            _rect.value.height);
+        break;
+      //CORNERS
+      case CropBoundaries.topLeft:
+        final Offset pos = _rect.value.topLeft + delta;
+        _changeRect(left: pos.dx, top: pos.dy);
+        break;
+      case CropBoundaries.topRight:
+        final Offset pos = _rect.value.topRight + delta;
+        _changeRect(right: pos.dx, top: pos.dy);
+        break;
+      case CropBoundaries.bottomRight:
+        final Offset pos = _rect.value.bottomRight + delta;
+        _changeRect(right: pos.dx, bottom: pos.dy);
+        break;
+      case CropBoundaries.bottomLeft:
+        final Offset pos = _rect.value.bottomLeft + delta;
+        _changeRect(left: pos.dx, bottom: pos.dy);
+        break;
+      //CENTERS
+      case CropBoundaries.topCenter:
+        _changeRect(top: _rect.value.top + delta.dy);
+        break;
+      case CropBoundaries.bottomCenter:
+        _changeRect(bottom: _rect.value.bottom + delta.dy);
+        break;
+      case CropBoundaries.centerLeft:
+        _changeRect(left: _rect.value.left + delta.dx);
+        break;
+      case CropBoundaries.centerRight:
+        _changeRect(right: _rect.value.right + delta.dx);
+        break;
+      case CropBoundaries.none:
+        break;
     }
   }
 
   void _onPanEnd({bool force = false}) {
-    if (_boundary != _CropBoundaries.none || force) {
+    if (_boundary != CropBoundaries.none || force) {
       final Rect rect = _rect.value;
       _controller.cacheMinCrop = Offset(
         rect.left / _layout.width,
@@ -244,6 +251,8 @@ class _CropGridViewerState extends State<CropGridViewer> {
         rect.bottom / _layout.height,
       );
       _controller.isCropping = false;
+      // to update selected boundary color
+      setState(() => _boundary = CropBoundaries.none);
     }
   }
 
@@ -253,14 +262,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
   void _changeRect({double? left, double? top, double? right, double? bottom}) {
-    top = (top ?? _rect.value.top)
-        .clamp(0, max(0.0, _rect.value.bottom - minRectSize));
-    left = (left ?? _rect.value.left)
-        .clamp(0, max(0.0, _rect.value.right - minRectSize));
-    right = (right ?? _rect.value.right)
-        .clamp(_rect.value.left + minRectSize, _layout.width);
-    bottom = (bottom ?? _rect.value.bottom)
-        .clamp(_rect.value.top + minRectSize, _layout.height);
+    top = top ?? _rect.value.top;
+    left = left ?? _rect.value.left;
+    right = right ?? _rect.value.right;
+    bottom = bottom ?? _rect.value.bottom;
 
     // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {
@@ -269,12 +274,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
       if (width / height > _preferredCropAspectRatio!) {
         switch (_boundary) {
-          case _CropBoundaries.topLeft:
-          case _CropBoundaries.bottomLeft:
+          case CropBoundaries.topLeft:
+          case CropBoundaries.bottomLeft:
             left = right - height * _preferredCropAspectRatio!;
             break;
-          case _CropBoundaries.topRight:
-          case _CropBoundaries.bottomRight:
+          case CropBoundaries.topRight:
+          case CropBoundaries.bottomRight:
             right = left + height * _preferredCropAspectRatio!;
             break;
           default:
@@ -282,12 +287,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
         }
       } else {
         switch (_boundary) {
-          case _CropBoundaries.topLeft:
-          case _CropBoundaries.topRight:
+          case CropBoundaries.topLeft:
+          case CropBoundaries.topRight:
             top = bottom - width / _preferredCropAspectRatio!;
             break;
-          case _CropBoundaries.bottomLeft:
-          case _CropBoundaries.bottomRight:
+          case CropBoundaries.bottomLeft:
+          case CropBoundaries.bottomRight:
             bottom = top + width / _preferredCropAspectRatio!;
             break;
           default:
@@ -296,7 +301,14 @@ class _CropGridViewerState extends State<CropGridViewer> {
       }
     }
 
-    _rect.value = Rect.fromLTRB(left, top, right, bottom);
+    final newRect = Rect.fromLTRB(left, top, right, bottom);
+
+    // don't apply changes if out of bounds
+    if (newRect.width < minRectSize ||
+        newRect.height < minRectSize ||
+        !isRectContained(_layout, newRect)) return;
+
+    _rect.value = newRect;
   }
 
   @override
@@ -305,60 +317,89 @@ class _CropGridViewerState extends State<CropGridViewer> {
       _viewerSize = constraints.biggest;
 
       return ValueListenableBuilder(
-        valueListenable: _transform,
-        builder: (_, TransformData transform, __) => Center(
-            child: Container(
-                // when widget.showGrid is true, the layout size should never be bigger than the screen size
-                constraints: BoxConstraints(
-                    maxHeight: _controller.isRotated && widget.showGrid
-                        ? MediaQuery.of(context).size.width -
-                            widget.horizontalMargin
-                        : Size.infinite.height),
-                child: CropTransform(
-                    transform: transform,
-                    child: VideoViewer(
-                      controller: _controller,
-                      child: LayoutBuilder(builder: (_, constraints) {
-                        Size size = constraints.biggest;
-                        if (_layout != size) {
-                          _layout = size;
-                          if (widget.showGrid) {
-                            // need to recompute crop if layout size changed, (i.e after rotation)
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              _calculatePreferedCrop();
-                            });
-                          } else {
-                            _rect.value =
-                                calculateCroppedRect(_controller, _layout);
-                          }
-                        }
-                        return ValueListenableBuilder(
-                            valueListenable: _rect,
-                            builder: (_, Rect value, __) {
-                              final Rect gestureArea = _expandedRect();
-                              return widget.showGrid
-                                  ? Stack(children: [
-                                      _paint(value),
-                                      GestureDetector(
-                                          onPanEnd: (_) => _onPanEnd(),
-                                          onPanStart: _onPanStart,
-                                          onPanUpdate: _onPanUpdate,
-                                          child: Container(
-                                            margin: EdgeInsets.only(
-                                              left: max(0.0, gestureArea.left),
-                                              top: max(0.0, gestureArea.top),
-                                            ),
-                                            color: Colors.transparent,
-                                            width: gestureArea.width,
-                                            height: gestureArea.height,
-                                          )),
-                                    ])
-                                  : _paint(value);
-                            });
-                      }),
-                    )))),
-      );
+          valueListenable: _transform,
+          builder: (_, TransformData transform, __) {
+            // return crop view without the grid
+            if (widget.showGrid == false) {
+              return _buildCropView(constraints, transform);
+            }
+
+            // return the crop view with a [GestureDetector] on top to be able to edit the crop parameters
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildCropView(constraints, transform),
+                // for development only (rotation not applied)
+                // Positioned.fromRect(
+                //   rect: _expandedRect().shift(gestureOffset),
+                //   child: DecoratedBox(
+                //     decoration: BoxDecoration(
+                //       color: Colors.greenAccent.withOpacity(0.4),
+                //     ),
+                //   ),
+                // ),
+                Transform.rotate(
+                  angle: transform.rotation,
+                  child: GestureDetector(
+                    onPanDown: _onPanDown,
+                    onPanUpdate: _onPanUpdate,
+                    onPanEnd: (_) => _onPanEnd(),
+                    onTapUp: (_) => _onPanEnd(),
+                    child: const SizedBox.expand(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                            // color: Colors.redAccent.withOpacity(0.4), // dev only
+                            ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          });
     });
+  }
+
+  /// Returns the [VideoViewer] tranformed with editing view
+  /// Paint rect on top of the video area outside of the crop rect
+  Widget _buildCropView(BoxConstraints constraints, TransformData transform) {
+    return Padding(
+      padding: widget.margin,
+      child: Center(
+        child: Container(
+          // when widget.showGrid is true, the layout size should never be bigger than the screen size
+          constraints: BoxConstraints(
+            maxHeight: _controller.isRotated && widget.showGrid
+                ? constraints.maxWidth - widget.margin.horizontal
+                : Size.infinite.height,
+          ),
+          child: CropTransform(
+            transform: transform,
+            child: VideoViewer(
+              controller: _controller,
+              child: LayoutBuilder(builder: (_, constraints) {
+                Size size = constraints.biggest;
+                if (_layout != size) {
+                  _layout = size;
+                  if (widget.showGrid) {
+                    // need to recompute crop if layout size changed, (i.e after rotation)
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _calculatePreferedCrop();
+                    });
+                  } else {
+                    _rect.value = calculateCroppedRect(_controller, _layout);
+                  }
+                }
+                return ValueListenableBuilder(
+                  valueListenable: _rect,
+                  builder: (_, Rect value, __) => _paint(value),
+                );
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Build [Widget] that hides the cropped area and show the crop grid if widget.showGris is true
@@ -368,6 +409,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       painter: CropGridPainter(
         value,
         style: _controller.cropStyle,
+        boundary: _boundary,
         showGrid: widget.showGrid,
         showCenterRects: _controller.preferredCropAspectRatio == null,
       ),

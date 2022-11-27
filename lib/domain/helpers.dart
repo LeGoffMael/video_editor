@@ -112,3 +112,11 @@ bool isNumberAlmost(double a, int b) => nearEqual(a, b.toDouble(), 0.01);
 /// ```
 int getBestIndex(int max, int length, int index) =>
     max >= length || max == 0 ? index : 1 + (index * (length / max)).round();
+
+/// Returns `true` if [rect] is left and top are bigger than 0
+/// and if right and bottom are smaller than [size] width and height
+bool isRectContained(Size size, Rect rect) =>
+    rect.left >= 0 &&
+    rect.top >= 0 &&
+    rect.right <= size.width &&
+    rect.bottom <= size.height;

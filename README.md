@@ -5,7 +5,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/seel-channel/video_editor?style=social)](https://github.com/seel-channel/video_editor/stargazers)
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
-The changes are then exported using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library.
+
+The exportation is made using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library, which does not support all platforms (only iOS, Android & macOS).
 
 ## 📖 Installation
 
@@ -15,7 +16,7 @@ Following steps will help you add this library as a dependency in your flutter p
 
 ```yaml
 dependencies:
-  video_editor: ^1.5.1
+  video_editor: ^1.5.2
 ```
 
 - Run the following command to install the package:
@@ -39,12 +40,14 @@ Those Android API level and iOS deployment target are required to uses this pack
 <tr>
 <th align="center">Android<br>API Level</th>
 <th align="center">iOS Minimum<br>Deployment Target</th>
+<th align="center">macOS Minimum<br>Deployment Target</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td align="center">24</td>
 <td align="center">12.1</td>
+<td align="center">10.15</td>
 </tr>
 </tbody>
 </table>
@@ -66,9 +69,11 @@ Those Android API level and iOS deployment target are required to uses this pack
 
 | Function                         | Description                       |
 | -------------------------------- | --------------------------------- |
-| initialize()                     | Init the `controller` parameters, the video, the trim and the cover |
+| initialize(aspectRatio)          | Init the `controller` parameters, the video, the trim and the cover, call `cropAspectRatio` |
 | rotate90Degrees(RotateDirection) | Rotate the video by 90 degrees in the direction provided            |
 | preferredCropAspectRatio         | Update the aspect ratio of the crop area                            |
+| setPreferredRatioFromCrop        | Update the aspect ratio to the current crop area ratio              |
+| cropAspectRatio                  | Update the aspect ratio + update the crop area to the center of the video size |
 | updateCrop                       | Update the controller crop min and max values                       |
 | getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
 | exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |

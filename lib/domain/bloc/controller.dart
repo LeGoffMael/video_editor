@@ -188,11 +188,25 @@ class VideoEditorController extends ChangeNotifier {
     }
   }
 
+  /// Get the [Size] of the [videoDimension] cropped by the points [minCrop] & [maxCrop]
+  Size get croppedArea => Rect.fromLTWH(
+        0,
+        0,
+        _videoWidth * (maxCrop.dx - minCrop.dx),
+        _videoHeight * (maxCrop.dy - minCrop.dy),
+      ).size;
+
   /// The [preferredCropAspectRatio] param is the selected aspect ratio (9:16, 3:4, 1:1, ...)
   double? get preferredCropAspectRatio => _preferredCropAspectRatio;
   set preferredCropAspectRatio(double? value) {
     if (preferredCropAspectRatio == value) return;
     _preferredCropAspectRatio = value;
+    notifyListeners();
+  }
+
+  /// Set [preferredCropAspectRatio] to the current cropped area ratio
+  void setPreferredRatioFromCrop() {
+    _preferredCropAspectRatio = croppedArea.aspectRatio;
     notifyListeners();
   }
 
