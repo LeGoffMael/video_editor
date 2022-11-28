@@ -160,9 +160,9 @@ class TrimSliderPainter extends CustomPainter {
             ..addRRect(
               RRect.fromRectAndCorners(
                 Rect.fromLTWH(
-                  centerLeft.dx - style.lineWidth * 2,
+                  centerLeft.dx - halfLineWidth,
                   -style.lineWidth,
-                  style.edgeWidth + style.lineWidth * 2,
+                  style.edgeWidth + style.borderRadius,
                   size.height + style.lineWidth * 2,
                 ),
                 topLeft: borderRadius,
@@ -193,9 +193,9 @@ class TrimSliderPainter extends CustomPainter {
             ..addRRect(
               RRect.fromRectAndCorners(
                 Rect.fromLTWH(
-                  centerRight.dx - style.lineWidth * 2 - halfLineWidth,
+                  centerRight.dx - halfLineWidth - style.borderRadius,
                   -style.lineWidth,
-                  style.edgeWidth + style.lineWidth * 2,
+                  style.edgeWidth + style.borderRadius,
                   size.height + style.lineWidth * 2,
                 ),
                 topRight: borderRadius,
