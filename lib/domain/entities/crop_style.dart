@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/helpers.dart';
 
 class CropGridStyle {
   ///Style for [CropGridViewer]. It's use on VideoEditorController
@@ -9,7 +10,7 @@ class CropGridStyle {
     this.gridLineWidth = 1,
     this.gridSize = 3,
     this.boundariesColor = Colors.white,
-    this.selectedBoundariesColor = Colors.white,
+    this.selectedBoundariesColor = kDefaultSelectedColor,
     this.boundariesLength = 20,
     this.boundariesWidth = 5,
   });
@@ -46,6 +47,8 @@ class CropGridStyle {
 
   /// The [boundariesColor] param specifies the color of the crop area's corner
   /// when is it selected
+  ///
+  /// Defaults to [kDefaultSelectedColor]
   final Color selectedBoundariesColor;
 
   /// The [boundariesLength] param specifies the length of the crop area's corner

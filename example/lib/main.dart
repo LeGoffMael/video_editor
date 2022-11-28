@@ -91,7 +91,6 @@ class _VideoEditorState extends State<VideoEditor> {
   void initState() {
     super.initState();
     _controller = VideoEditorController.file(widget.file,
-        cropStyle: CropGridStyle(selectedBoundariesColor: Colors.redAccent),
         maxDuration: const Duration(seconds: 10))
       ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
   }
