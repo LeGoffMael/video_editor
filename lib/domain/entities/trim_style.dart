@@ -70,7 +70,6 @@ class TrimSliderStyle {
   final TrimSliderEdgesType edgesType;
 
   /// The [edgesSize] param specifies the size of the edges behind the icons
-  /// used only if [edgesType] equals [TrimSliderEdgesType.circle]
   ///
   /// If [edgesType] equals [TrimSliderEdgesType.bar] defaults to `10`
   /// If [edgesType] equals [TrimSliderEdgesType.circle] defaults to `8`

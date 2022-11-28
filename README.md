@@ -6,26 +6,22 @@
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
 
-The exportation is made using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library, which does not support all platforms (only iOS, Android & macOS).
+The exportation is made using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library.
+
+This library is written in Dart only but uses external packages such as [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) and [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now.
 
 ## 📖 Installation
 
 Following steps will help you add this library as a dependency in your flutter project.
 
-- In the `pubspec.yaml` file in the root of your project
+- Run `flutter pub add video_editor`, or add video_editor to `pubspec.yaml` file manually.
 
 ```yaml
 dependencies:
   video_editor: ^1.5.2
 ```
 
-- Run the following command to install the package:
-
-```bash
-$ flutter packages get
-```
-
-- Import the package in your project file:
+- Import the package in your code:
 
 ```dart
 import 'package:video_editor/video_editor.dart';
@@ -40,14 +36,12 @@ Those Android API level and iOS deployment target are required to uses this pack
 <tr>
 <th align="center">Android<br>API Level</th>
 <th align="center">iOS Minimum<br>Deployment Target</th>
-<th align="center">macOS Minimum<br>Deployment Target</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td align="center">24</td>
 <td align="center">12.1</td>
-<td align="center">10.15</td>
 </tr>
 </tbody>
 </table>
@@ -75,9 +69,26 @@ Those Android API level and iOS deployment target are required to uses this pack
 | setPreferredRatioFromCrop        | Update the aspect ratio to the current crop area ratio              |
 | cropAspectRatio                  | Update the aspect ratio + update the crop area to the center of the video size |
 | updateCrop                       | Update the controller crop min and max values                       |
+| updateTrim                       | Update the controller trim min and max values                       |
 | getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
 | exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
 | extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  |
+
+| Getter                           | Description                       |
+| -------------------------------- | --------------------------------- |
+| Duration startTrim               | The start value of the trimmed area |
+| Duration endTrim                 | The end value of the trimmed area |
+| bool isTrimmed                   | Set to `true` when the trimmed values are not the default video duration |
+| bool isTrimming                  | Set to `true` when startTrim or endTrim is changing |
+| Duration maxDuration             | The different between endTrim & startTrim |
+| Offset minCrop                   | The top left position of the crop area (between `0.0` and `1.0`) |
+| Offset maxCrop                   | The bottom right position of the crop area (between `0.0` and `1.0`) |
+| Size croppedArea                 | The actual Size of the crop area |
+| double? preferredCropAspectRatio | The preferred crop aspect ratio selected |
+| bool isRotated                   | Set to `true` when the rotation is different to `0` |
+| int rotation                     | The rotation angle set `0`, `90`, `180` and `270` |
+| int cacheRotation                | The sum of all the rotation applied in the editor |
+| CoverData? selectedCoverVal      | The selected cover thumbnail that will be used to export the final cover |
 
 ### Widgets
 
@@ -87,13 +98,12 @@ Those Android API level and iOS deployment target are required to uses this pack
 ####  Crop
 ##### 1. CropGridViewer
 
-This widget is used to enable the crop actions on top of the video, or only to preview the cropped result.
+This widget is used to enable the crop actions on top of the video (CropGridViewer.edit), or only to preview the cropped result (CropGridViewer.preview).
 
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the crop view |
-| bool showGrid = true | The `showGrid` param specifies whether the crop action can be triggered and if the crop grid is shown, set this param to `false` to display the preview of the cropped video |
-| double horizontalMargin = 0.0 | The `horizontalMargin` param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly (i.e after a rotation) |
+| EdgeInsets margin | The amount of space by which to inset the crop view, not used in preview mode |
 
 #### Trimmer
 
@@ -108,6 +118,8 @@ Display the trimmer containing video thumbnails with rotation and crop parameter
 | double quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
 | double horizontalMargin = 0.0 | The `horizontalMargin` param specifies the horizontal space to set around the slider. It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`) |
 | Widget? child | The `child` param can be specify to display a widget below this one (e.g: TrimTimeline) |
+| bool hasHaptic = true | The `hasHaptic` param specifies if haptic feed back can be triggered when the trim touch an edge (left or right) |
+| double maxViewportRatioo = 2.5 | The `maxViewportRatio` param specifies the upper limit of the view ratio |
 
 ##### 2. TrimTimeline
 
@@ -116,8 +128,10 @@ Display the video timeline.
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so depending on the `controller.maxDuration`, the generated timeline will be different |
-| double secondGap = 5 | The `secondGap` param specifies time gap in second between every points of the timeline |
-| EdgeInsets margin = EdgeInsets.zero | The `margin` param specifies the space surrounding the timeline |
+| double quantity = 8 | Expected `quantity` of elements shown in the timeline |
+| EdgeInsets padding = EdgeInsets.zero | The `padding` param specifies the space surrounding the timeline |
+| String localSeconds = 's' | The String to represents the seconds to show next to each timeline element |
+| TextStyle? textStyle | The TextStyle to use to style the timeline text |
 
 #### Cover
 ##### 1. CoverSelection
@@ -127,10 +141,12 @@ Display a couple of generated covers with rotation and crop parameters to update
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the cover selection view |
-| double height = 0.0 | The `height` param specifies the height of the generated thumbnails |
+| double size = 0.0 | The `size` param specifies the max size of the generated thumbnails |
 | double quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
 | double horizontalMargin = 0.0 | The `horizontalMargin` param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly. |
 | int quantity = 5 | The `quantity` param specifies the quantity of thumbnails to generate |
+| Wrap? wrap | The `wrap` widget to use to customize the thumbnails wrapper |
+| Function? selectedCoverBuilder | To returns how the selected cover should be displayed |
 
 ##### 2. CoverViewer
 
@@ -160,6 +176,7 @@ You can create your own CropStyle class to customize the CropGridViewer apparean
 | Color gridLineColor = Colors.white | The `gridLineColor` param specifies the color of the crop lines |
 | int gridSize = 3 | The `gridSize` param specifies the quantity of columns and rows in the crop view |
 | Color boundariesColor = Colors.white | The `boundariesColor` param specifies the color of the crop area's corner |
+| Color selectedBoundariesColor = kDefaultSelectedColor | The `selectedBoundariesColor` param specifies the color of the selected crop area's corner |
 | double boundariesLength = 20 | The `boundariesLength` param specifies the length of the crop area's corner |
 | double boundariesWidth = 5 | The `boundariesWidth` param specifies the width of the crop area's corner |
 
@@ -173,9 +190,13 @@ You can create your own TrimStyle class to customize the TrimSlider appareance.
 | Color positionLineColor = Colors.red | The `positionLineColor` param specifies the color of the line showing the video position |
 | double positionLineWidth = 2 | The `positionLineWidth` param specifies the width  of the line showing the video position |
 | Color lineColor = Colors.white | The `lineColor` param specifies the color of the borders around the trimmed area |
+| Color onTrimmingColor = kDefaultSelectedColor | The `onTrimmingColor` param specifies the color of the borders around the trimmed area while it is getting trimmed |
+| Color onTrimmedColor = kDefaultSelectedColor | The `onTrimmedColor` param specifies the color of the borders around the trimmed area when the trimmed parameters are not default values |
 | double lineWidth = 2 | The `lineWidth` param specifies the width of the borders around the trimmed area |
+| TrimSliderEdgesType borderRadius = 5 | The `borderRadius` param specifies the border radius around the trimmer |
+| double edgesType = TrimSliderEdgesType.bar | The `edgesType` param specifies the style to apply to the edges (left & right) of the trimmer |
+| double edgesSize | The `edgesSize` param specifies the size of the edges behind the icons |
 | Color iconColor = Colors.black | The `iconColor` param specifies the color of the icons on the trimmed area's edges |
-| double circleSize = 8 | The `circleSize` param specifies the size of the circle behind the icons on the trimmed area's edges |
 | double iconSize = 25 | The `iconSize` param specifies the size of the icon on the trimmed area's edges |
 | IconData? leftIcon = Icons.arrow_left | The `leftIcon` param specifies the icon to show on the left edge of the trimmed area |
 | IconData? rightIcon = Icons.arrow_right | The `rightIcon` param specifies the icon to show on the right edge of the trimmed area |
@@ -187,13 +208,12 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | Color selectedBorderColor = Colors.white | The `selectedBorderColor` param specifies the color of the border around the selected cover thumbnail |
-| double selectedBorderWidth = 2 | The `selectedBorderWidth` param specifies the width of the border around the selected cover thumbnail |
-| Widget? selectedIndicator | The `selectedIndicator` param specifies the `Widget` to show on top of the selected cover |
-| AlignmentGeometry selectedIndicatorAlign = Alignment.bottomRight | The `selectedIndicatorAlign` param specifies where `selectedIndicator` should be shown in the `Stack` |
+| double borderWidth = 2 | The `borderWidth` param specifies the width of the border around each cover thumbnails |
+| double borderRadius = 5.0 | The `borderRadius` param specifies the border radius of each cover thumbnail |
 
 </details>
 
-## FAQ
+## 💭 FAQ
 
 ### 1. How to use FFmpeg LTS release
 
@@ -214,11 +234,6 @@ On Android, if it gives a `minSdkVersion` error, try adding the following in `/a
 </manifest>
 ```
 
-## ✨ Main contributors
+## ✨ Credit
 
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/LeGoffMael"><img src="https://avatars.githubusercontent.com/u/22376981?v=4?s=200" width="100px;" alt=""/><br/><sub><b>Le Goff Maël</b></sub></a></td>
-  </tr>
-</table>
-<br/>
+Many thanks to [seel-channel](https://github.com/seel-channel) who is the original creator of this library.
