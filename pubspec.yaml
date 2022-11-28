@@ -1,7 +1,7 @@
 name: video_editor
 version: 1.5.2
 description: A video editor that allows to trim, crop, rotate and scale video with a very flexible UI Design.
-repository: https://github.com/seel-channel/video_editor
+repository: https://github.com/LeGoffMael/video_editor
 
 environment:
   flutter: ">=3.0.0"
