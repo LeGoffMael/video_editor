@@ -1,3 +1,16 @@
+## [2.0.0]
+
+- New trimmer gesture [#124](https://github.com/LeGoffMael/video_editor/pull/124)
+- New animation during rotation [#123](https://github.com/LeGoffMael/video_editor/pull/123)
+- Better trimmer [#122](https://github.com/LeGoffMael/video_editor/pull/122)
+- Better crop boundaries touch detection [#121](https://github.com/LeGoffMael/video_editor/pull/121)
+- New style parameters
+- New thumbnails fadein animation at generation
+- Video cursor position updated better while trimming
+- Fix scale issue in thumbnails
+
+Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migration-to-2.0.0).
+
 ## [1.5.2]
 
 - Fix scale issue when video is rotated
