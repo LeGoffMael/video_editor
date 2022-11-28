@@ -10,10 +10,10 @@ import 'package:video_editor/ui/transform.dart';
 class CoverViewer extends StatefulWidget {
   /// It is the viewer that show the selected cover
   const CoverViewer({
-    Key? key,
+    super.key,
     required this.controller,
     this.noCoverText = 'No selection',
-  }) : super(key: key);
+  });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate the crop parameters in the cover view
   final VideoEditorController controller;

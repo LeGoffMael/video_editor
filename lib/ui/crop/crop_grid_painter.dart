@@ -3,7 +3,7 @@ import 'package:video_editor/domain/entities/crop_style.dart';
 import 'package:video_editor/ui/crop/crop_grid.dart';
 
 class CropGridPainter extends CustomPainter {
-  CropGridPainter(
+  const CropGridPainter(
     this.rect, {
     required this.style,
     this.boundary,

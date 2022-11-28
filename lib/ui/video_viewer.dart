@@ -3,11 +3,7 @@ import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatelessWidget {
-  const VideoViewer({
-    Key? key,
-    required this.controller,
-    this.child,
-  }) : super(key: key);
+  const VideoViewer({super.key, required this.controller, this.child});
 
   final VideoEditorController controller;
   final Widget? child;

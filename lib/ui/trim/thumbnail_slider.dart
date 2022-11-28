@@ -11,11 +11,11 @@ import 'package:video_editor/ui/transform.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   const ThumbnailSlider({
-    Key? key,
+    super.key,
     required this.controller,
     this.height = 60,
     this.quality = 10,
-  }) : super(key: key);
+  });
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;

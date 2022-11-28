@@ -6,12 +6,12 @@ import 'package:video_editor/domain/bloc/controller.dart';
 
 class ImageViewer extends StatelessWidget {
   const ImageViewer({
-    Key? key,
+    super.key,
     required this.controller,
     required this.bytes,
     this.child,
     this.fadeIn = true,
-  }) : super(key: key);
+  });
 
   final VideoEditorController controller;
   final Uint8List bytes;

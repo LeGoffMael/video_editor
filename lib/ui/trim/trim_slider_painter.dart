@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
 
 class TrimSliderPainter extends CustomPainter {
-  TrimSliderPainter(
+  const TrimSliderPainter(
     this.rect,
     this.position,
     this.style, {
