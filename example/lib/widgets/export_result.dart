@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:fraction/fraction.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoResultPopup extends StatefulWidget {
@@ -53,7 +54,10 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
                   'Video path': widget.video.path,
                   'Video duration':
                       '${(_controller.value.duration.inMilliseconds / 1000).toStringAsFixed(2)}s',
-                  'Video ratio': _controller.value.aspectRatio.toString(),
+                  'Video ratio':
+                      Fraction.fromDouble(_controller.value.aspectRatio)
+                          .reduce()
+                          .toString(),
                   'Video size': _controller.value.size.toString(),
                 },
               ),
@@ -105,6 +109,10 @@ class _CoverResultPopupState extends State<CoverResultPopup> {
               child: FileDescription(
                 description: {
                   'Cover path': widget.cover.path,
+                  'Cover ratio':
+                      Fraction.fromDouble(_fileSize?.aspectRatio ?? 0)
+                          .reduce()
+                          .toString(),
                   'Cover size': _fileSize.toString(),
                 },
               ),
