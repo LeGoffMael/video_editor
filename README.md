@@ -49,9 +49,9 @@ Those Android API level and iOS deployment target are required to uses this pack
 ## 📸 Screenshots
 (The UI Design is fully customizable on the [example](https://pub.dev/packages/video_editor/example))
 
-| Example app running on an Iphone 11 pro   | Customization example, light mode     |
-| ----------------------------------------- | ------------------------------------- |
-|  <video src="./assets/readme/demo.mp4" /> | ![](./assets/readme/light_editor.png) |
+| Example app running on an Iphone 11 pro | Customization example, light mode     |
+| --------------------------------------- | ------------------------------------- |
+| ![](./assets/readme/demo.gif)           | ![](./assets/readme/light_editor.png) |
 
 ## 👀 Usage
 
