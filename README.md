@@ -49,13 +49,9 @@ Those Android API level and iOS deployment target are required to uses this pack
 ## 📸 Screenshots
 (The UI Design is fully customizable on the [example](https://pub.dev/packages/video_editor/example))
 
-| Crop Video                          | Rotate Video                          | Video cover (selection, viewer)       |
-| ----------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![](./assets/readme/crop_video.gif) | ![](./assets/readme/rotate_video.gif) | ![](./assets/readme/cover_viewer.gif) |
-
-| Trim video                              | Trimmer customization                       |
-| --------------------------------------- |  ------------------------------------------ |
-| ![](./assets/readme/new_trim_video.gif) | ![](./assets/readme/new_trimmer_icons.gif)  |
+| Example app running on an Iphone 11 pro   | Customization example, light mode     |
+| ----------------------------------------- | ------------------------------------- |
+|  <video src="./assets/readme/demo.mp4" /> | ![](./assets/readme/light_editor.png) |
 
 ## 👀 Usage
 
