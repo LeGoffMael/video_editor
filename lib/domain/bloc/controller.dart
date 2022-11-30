@@ -453,9 +453,47 @@ class VideoEditorController extends ChangeNotifier {
     });
   }
 
-  //------------//
-  //VIDEO EXPORT//
-  //------------//
+  //--------//
+  // EXPORT //
+  //--------//
+
+  /// Returns the output path of the exported file
+  Future<String> _getOutputPath({
+    required String filePath,
+    String? name,
+    String? outputDirectory,
+    required String format,
+  }) async {
+    final String tempPath =
+        outputDirectory ?? (await getTemporaryDirectory()).path;
+    name ??= path.basenameWithoutExtension(filePath);
+    final int epoch = DateTime.now().millisecondsSinceEpoch;
+    return "$tempPath/${name}_$epoch.$format";
+  }
+
+  /// Returns the `-filter:v` command to use in ffmpeg execution
+  String _getExportFilters({
+    String? videoFormat,
+    double scale = 1.0,
+    bool isFiltersEnabled = true,
+  }) {
+    if (!isFiltersEnabled) return "";
+
+    // CALCULATE FILTERS
+    final String gif = videoFormat != "gif" ? "" : "fps=10 -loop 0";
+    final String scaleInstruction =
+        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+
+    // VALIDATE FILTERS
+    final List<String> filters = [
+      _getCrop(),
+      scaleInstruction,
+      _getRotation(),
+      gif
+    ];
+    filters.removeWhere((item) => item.isEmpty);
+    return filters.isNotEmpty ? "-filter:v ${filters.join(",")}" : "";
+  }
 
   /// Export the video using this edition parameters and return a `File`.
   ///
@@ -495,28 +533,18 @@ class VideoEditorController extends ChangeNotifier {
     VideoExportPreset preset = VideoExportPreset.none,
     bool isFiltersEnabled = true,
   }) async {
-    final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     final String videoPath = file.path;
-    name ??= path.basenameWithoutExtension(videoPath);
-    final int epoch = DateTime.now().millisecondsSinceEpoch;
-    final String outputPath = "$tempPath/${name}_$epoch.$format";
-
-    // CALCULATE FILTERS
-    final String gif = format != "gif" ? "" : "fps=10 -loop 0";
-    final String scaleInstruction =
-        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
-
-    // VALIDATE FILTERS
-    final List<String> filters = [
-      _getCrop(),
-      scaleInstruction,
-      _getRotation(),
-      gif
-    ];
-    filters.removeWhere((item) => item.isEmpty);
-    final String filter = filters.isNotEmpty && isFiltersEnabled
-        ? "-filter:v ${filters.join(",")}"
-        : "";
+    final String outputPath = await _getOutputPath(
+      filePath: videoPath,
+      name: name,
+      outputDirectory: outDir,
+      format: format,
+    );
+    final String filter = _getExportFilters(
+      videoFormat: format,
+      scale: scale,
+      isFiltersEnabled: isFiltersEnabled,
+    );
     final String execute =
         // ignore: unnecessary_string_escapes
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $_trimCmd -y \"$outputPath\"";
@@ -598,10 +626,6 @@ class VideoEditorController extends ChangeNotifier {
     return newPreset.isEmpty ? "" : "-preset $newPreset";
   }
 
-  //------------//
-  //COVER EXPORT//
-  //------------//
-
   /// Generate this selected cover image as a JPEG [File]
   ///
   /// If this [selectedCoverVal] is `null`, then it return the first frame of this video.
@@ -649,7 +673,6 @@ class VideoEditorController extends ChangeNotifier {
     void Function(Statistics)? onProgress,
     bool isFiltersEnabled = true,
   }) async {
-    final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
     // file generated from the thumbnail library or video source
     final String? coverPath = await _generateCoverFile(quality: quality);
     if (coverPath == null) {
@@ -661,20 +684,14 @@ class VideoEditorController extends ChangeNotifier {
       }
       return;
     }
-    name ??= path.basenameWithoutExtension(file.path);
-    final int epoch = DateTime.now().millisecondsSinceEpoch;
-    final String outputPath = "$tempPath/${name}_$epoch.$format";
-
-    // CALCULATE FILTERS
-    final String scaleInstruction =
-        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
-
-    // VALIDATE FILTERS
-    final List<String> filters = [_getCrop(), scaleInstruction, _getRotation()];
-    filters.removeWhere((item) => item.isEmpty);
-    final String filter = filters.isNotEmpty && isFiltersEnabled
-        ? "-filter:v ${filters.join(",")}"
-        : "";
+    final String outputPath = await _getOutputPath(
+      filePath: coverPath,
+      name: name,
+      outputDirectory: outDir,
+      format: format,
+    );
+    final String filter =
+        _getExportFilters(scale: scale, isFiltersEnabled: isFiltersEnabled);
     // ignore: unnecessary_string_escapes
     final String execute = "-i \'$coverPath\' $filter -y $outputPath";
 
