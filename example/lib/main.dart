@@ -85,14 +85,22 @@ class _VideoEditorState extends State<VideoEditor> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  late VideoEditorController _controller;
+  late final VideoEditorController _controller = VideoEditorController.file(
+    widget.file,
+    minDuration: const Duration(seconds: 10),
+    maxDuration: const Duration(seconds: 1),
+  );
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoEditorController.file(widget.file,
-        maxDuration: const Duration(seconds: 10))
-      ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
+    _controller
+        .initialize(aspectRatio: 9 / 16)
+        .then((_) => setState(() {}))
+        .catchError((error) {
+      // handle minumum duration bigger than video duration error
+      Navigator.pop(context);
+    }, test: (e) => e is VideoMinDurationError);
   }
 
   @override

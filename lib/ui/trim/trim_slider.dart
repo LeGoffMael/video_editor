@@ -385,7 +385,8 @@ class _TrimSliderState extends State<TrimSlider>
     }
 
     final Duration diff = _getDurationDiff(left, width);
-    if (diff <= widget.controller.maxDuration) {
+    if (diff >= widget.controller.minDuration &&
+        diff <= widget.controller.maxDuration) {
       if (updateTrim) {
         _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
         _updateControllerTrim();
