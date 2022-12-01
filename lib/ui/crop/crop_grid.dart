@@ -136,14 +136,9 @@ class _CropGridViewerState extends State<CropGridViewer> {
     );
   }
 
-  /// Return [Rect] expanded position to improve grab facility, the size will be equal to a single grid square
-  Rect _expandedPosition(Offset position) => Rect.fromCenter(
-        center: position,
-        // the width of one grid square
-        width: (_rect.value.width / _controller.cropStyle.gridSize),
-        // the height of one grid square
-        height: (_rect.value.height / _controller.cropStyle.gridSize),
-      );
+  /// Return [Rect] expanded position to improve touch detection
+  Rect _expandedPosition(Offset position) =>
+      Rect.fromCenter(center: position, width: 48, height: 48);
 
   /// Return expanded [Rect] to includes all corners [_expandedPosition]
   Rect _expandedRect() {
