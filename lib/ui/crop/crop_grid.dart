@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
@@ -262,10 +264,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Update [Rect] crop from incoming values, while respecting [_preferredCropAspectRatio]
   void _changeRect({double? left, double? top, double? right, double? bottom}) {
-    top = top ?? _rect.value.top;
-    left = left ?? _rect.value.left;
-    right = right ?? _rect.value.right;
-    bottom = bottom ?? _rect.value.bottom;
+    top = max(0, top ?? _rect.value.top);
+    left = max(0, left ?? _rect.value.left);
+    right = min(_layout.width, right ?? _rect.value.right);
+    bottom = min(_layout.height, bottom ?? _rect.value.bottom);
 
     // update crop height or width to adjust to the selected aspect ratio
     if (_preferredCropAspectRatio != null) {

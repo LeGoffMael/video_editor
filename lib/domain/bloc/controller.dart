@@ -156,6 +156,9 @@ class VideoEditorController extends ChangeNotifier {
   /// The [endTrim] param is the maximum position of the trimmed area in video position in [Duration] value
   Duration get endTrim => _trimEnd;
 
+  /// The [Duration] of the selected trimmed area, it is the difference of [endTrim] and [startTrim]
+  Duration get trimmedDuration => endTrim - startTrim;
+
   /// The [minCrop] param is the [Rect.topLeft] position of the crop area
   ///
   /// The minimum value of this param is `0.0`
@@ -280,19 +283,15 @@ class VideoEditorController extends ChangeNotifier {
   /// Convert the [minCrop] and [maxCrop] param in to a [String]
   /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#crop))
   ///
-  /// The result is in the format `crop=w:h:x,y`
+  /// The result is in the format `crop=w:h:x:y`
   String _getCrop() {
-    if (minCrop <= _min || maxCrop >= _max) return "";
+    if (minCrop <= _min && maxCrop >= _max) return "";
 
-    int enddx = (videoWidth * maxCrop.dx).floor();
-    int enddy = (videoHeight * maxCrop.dy).floor();
-    int startdx = (videoWidth * minCrop.dx).floor();
-    int startdy = (videoHeight * minCrop.dy).floor();
+    final enddx = videoWidth * maxCrop.dx;
+    final enddy = videoHeight * maxCrop.dy;
+    final startdx = videoWidth * minCrop.dx;
+    final startdy = videoHeight * minCrop.dy;
 
-    if (enddx > videoWidth) enddx = videoWidth.floor();
-    if (enddy > videoHeight) enddy = videoHeight.floor();
-    if (startdx < 0) startdx = 0;
-    if (startdy < 0) startdy = 0;
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
   }
 
@@ -492,7 +491,7 @@ class VideoEditorController extends ChangeNotifier {
       gif
     ];
     filters.removeWhere((item) => item.isEmpty);
-    return filters.isNotEmpty ? "-filter:v ${filters.join(",")}" : "";
+    return filters.isNotEmpty ? "-vf '${filters.join(",")}'" : "";
   }
 
   /// Export the video using this edition parameters and return a `File`.
@@ -577,7 +576,7 @@ class VideoEditorController extends ChangeNotifier {
           ? (stats) {
               // Progress value of encoded video
               double progressValue =
-                  stats.getTime() / (_trimEnd - _trimStart).inMilliseconds;
+                  stats.getTime() / trimmedDuration.inMilliseconds;
               onProgress(stats, progressValue.clamp(0.0, 1.0));
             }
           : null,
