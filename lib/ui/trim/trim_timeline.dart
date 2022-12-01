@@ -42,9 +42,10 @@ class TrimTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, contrainst) {
-      int count =
-          max(1, (contrainst.maxWidth ~/ MediaQuery.of(context).size.width)) *
-              min(quantity, controller.videoDuration.inMilliseconds ~/ 100);
+      final int count =
+          (max(1, (contrainst.maxWidth / MediaQuery.of(context).size.width)) *
+                  min(quantity, controller.videoDuration.inMilliseconds ~/ 100))
+              .toInt();
       final gap = controller.videoDuration.inMilliseconds ~/ (count - 1);
 
       return Padding(
@@ -55,15 +56,8 @@ class TrimTimeline extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(count, (i) {
               final t = Duration(milliseconds: i * gap);
-              final String text;
-
-              if (gap < 1000) {
-                text = (t.inMilliseconds / 1000)
-                    .toStringAsFixed(1)
-                    .padLeft(2, '0');
-              } else {
-                text = '${t.inSeconds}';
-              }
+              final text =
+                  (t.inMilliseconds / 1000).toStringAsFixed(1).padLeft(2, '0');
 
               return Text(
                 '$text$localSeconds',
