@@ -85,14 +85,22 @@ class _VideoEditorState extends State<VideoEditor> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  late VideoEditorController _controller;
+  late final VideoEditorController _controller = VideoEditorController.file(
+    widget.file,
+    minDuration: const Duration(seconds: 1),
+    maxDuration: const Duration(seconds: 10),
+  );
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoEditorController.file(widget.file,
-        maxDuration: const Duration(seconds: 10))
-      ..initialize(aspectRatio: 9 / 16).then((_) => setState(() {}));
+    _controller
+        .initialize(aspectRatio: 9 / 16)
+        .then((_) => setState(() {}))
+        .catchError((error) {
+      // handle minumum duration bigger than video duration error
+      Navigator.pop(context);
+    }, test: (e) => e is VideoMinDurationError);
   }
 
   @override
@@ -360,8 +368,6 @@ class _VideoEditorState extends State<VideoEditor> {
         builder: (_, __) {
           final duration = _controller.videoDuration.inSeconds;
           final pos = _controller.trimPosition * duration;
-          final start = _controller.minTrim * duration;
-          final end = _controller.maxTrim * duration;
 
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: height / 4),
@@ -371,9 +377,9 @@ class _VideoEditorState extends State<VideoEditor> {
               OpacityTransition(
                 visible: _controller.isTrimming,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(formatter(Duration(seconds: start.toInt()))),
+                  Text(formatter(_controller.startTrim)),
                   const SizedBox(width: 10),
-                  Text(formatter(Duration(seconds: end.toInt()))),
+                  Text(formatter(_controller.endTrim)),
                 ]),
               ),
             ]),

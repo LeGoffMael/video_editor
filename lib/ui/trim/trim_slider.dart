@@ -156,7 +156,7 @@ class _TrimSliderState extends State<TrimSlider>
       // adding to the rect the difference between current scroll position and the last one fixes it
       if (_scrollController.offset == 0.0) {
         _changeTrimRect(
-          left: _rect.left - _lastScrollPixels,
+          left: _rect.left - _lastScrollPixels.abs(),
           updateTrim: false,
         );
       } else if (_scrollController.offset ==
@@ -385,7 +385,8 @@ class _TrimSliderState extends State<TrimSlider>
     }
 
     final Duration diff = _getDurationDiff(left, width);
-    if (diff <= widget.controller.maxDuration) {
+    if (diff >= widget.controller.minDuration &&
+        diff <= widget.controller.maxDuration) {
       if (updateTrim) {
         _rect = Rect.fromLTWH(left, _rect.top, width, _rect.height);
         _updateControllerTrim();

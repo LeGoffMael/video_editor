@@ -17,6 +17,17 @@ import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+class VideoMinDurationError extends Error {
+  final Duration minDuration;
+  final Duration videoDuration;
+
+  VideoMinDurationError(this.minDuration, this.videoDuration);
+
+  @override
+  String toString() =>
+      "Invalid argument (minDuration): The minimum duration ($minDuration) cannot be bigger than the duration of the video file ($videoDuration)";
+}
+
 enum RotateDirection { left, right }
 
 /// A preset is a collection of options that will provide a certain encoding speed to compression ratio.
@@ -66,18 +77,18 @@ class VideoEditorController extends ChangeNotifier {
   /// The [file] argument must not be null.
   VideoEditorController.file(
     this.file, {
-    Duration? maxDuration,
+    this.maxDuration = Duration.zero,
+    this.minDuration = Duration.zero,
+    this.coverStyle = const CoverSelectionStyle(),
+    this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
-    CoverSelectionStyle? coverStyle,
-    CropGridStyle? cropStyle,
   })  : _video = VideoPlayerController.file(File(
           // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
           Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
         )),
-        _maxDuration = maxDuration ?? Duration.zero,
-        cropStyle = cropStyle ?? const CropGridStyle(),
-        coverStyle = coverStyle ?? const CoverSelectionStyle(),
-        trimStyle = trimStyle ?? TrimSliderStyle();
+        trimStyle = trimStyle ?? TrimSliderStyle(),
+        assert(maxDuration > minDuration,
+            'The maximum duration must be bigger than the minimum duration');
 
   int _rotation = 0;
   bool _isTrimming = false;
@@ -98,9 +109,6 @@ class VideoEditorController extends ChangeNotifier {
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
   final VideoPlayerController _video;
-
-  /// The max duration to trim the [file] video
-  Duration _maxDuration;
 
   // Selected cover value
   final ValueNotifier<CoverData?> _selectedCover =
@@ -232,22 +240,37 @@ class VideoEditorController extends ChangeNotifier {
   //----------------//
 
   /// Attempts to open the given video [File] and load metadata about the video.
+  ///
   /// Update the trim position depending on the [maxDuration] param
   /// Generate the default cover [_selectedCover]
-  /// Initialize [minCrop] & [maxCrop] values based on [aspectRatio]
+  /// Initialize [minCrop] & [maxCrop] values base on [aspectRatio]
+  ///
+  /// Throw a [VideoMinDurationError] error if the [minDuration] is bigger than [videoDuration], the error should be handled as such:
+  /// ```dart
+  ///  controller
+  ///     .initialize()
+  ///     .then((_) => setState(() {}))
+  ///     .catchError((error) {
+  ///   // NOTE : handle the error here
+  /// }, test: (e) => e is VideoMinDurationError);
+  /// ```
   Future<void> initialize({double? aspectRatio}) async {
     await _video.initialize();
+
+    if (minDuration > videoDuration) {
+      throw VideoMinDurationError(minDuration, videoDuration);
+    }
 
     _video.addListener(_videoListener);
     _video.setLooping(true);
 
     // if no [maxDuration] param given, maxDuration is the videoDuration
-    _maxDuration = _maxDuration == Duration.zero ? videoDuration : _maxDuration;
+    maxDuration = maxDuration == Duration.zero ? videoDuration : maxDuration;
 
     // Trim straight away when maxDuration is lower than video duration
-    if (_maxDuration < videoDuration) {
+    if (maxDuration < videoDuration) {
       updateTrim(
-          0.0, _maxDuration.inMilliseconds / videoDuration.inMilliseconds);
+          0.0, maxDuration.inMilliseconds / videoDuration.inMilliseconds);
     } else {
       _updateTrimRange();
     }
@@ -354,8 +377,14 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Get the [maxDuration] param
   ///
-  /// if no [maxDuration] param given in VideoEditorController constructor, maxDuration is equal to the videoDuration
-  Duration get maxDuration => _maxDuration;
+  /// if no [maxDuration] param given in VideoEditorController constructor, maxDuration is equals to the videoDuration
+  Duration maxDuration;
+
+  /// Get the [minDuration] param
+  ///
+  /// if no [minDuration] param given in VideoEditorController constructor, minDuration is equals to [Duration.zero]
+  /// throw a [VideoMinDurationError] error at initialization if the [minDuration] is bigger then [videoDuration]
+  Duration minDuration;
 
   /// Get the [trimPosition], which is the videoPosition in the trim slider
   ///
