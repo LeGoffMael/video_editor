@@ -237,9 +237,20 @@ class VideoEditorController extends ChangeNotifier {
   //----------------//
 
   /// Attempts to open the given video [File] and load metadata about the video.
+  ///
   /// Update the trim position depending on the [maxDuration] param
   /// Generate the default cover [_selectedCover]
-  /// Initialize [minCrop] & [maxCrop] values based on [aspectRatio]
+  /// Initialize [minCrop] & [maxCrop] values base on [aspectRatio]
+  ///
+  /// Throw a [VideoMinDurationError] error if the [minDuration] is bigger than [videoDuration], the error should be handled as such:
+  /// ```dart
+  ///  controller
+  ///     .initialize()
+  ///     .then((_) => setState(() {}))
+  ///     .catchError((error) {
+  ///   // NOTE : handle the error here
+  /// }, test: (e) => e is VideoMinDurationError);
+  /// ```
   Future<void> initialize({double? aspectRatio}) async {
     await _video.initialize();
 
@@ -373,6 +384,7 @@ class VideoEditorController extends ChangeNotifier {
   /// Get the [minDuration] param
   ///
   /// if no [minDuration] param given in VideoEditorController constructor, minDuration is equals to [Duration.zero]
+  /// throw a [VideoMinDurationError] error at initialization if the [minDuration] is bigger then [videoDuration]
   Duration minDuration;
 
   /// Get the [trimPosition], which is the videoPosition in the trim slider

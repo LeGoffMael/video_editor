@@ -76,7 +76,8 @@ Those Android API level and iOS deployment target are required to uses this pack
 | Duration endTrim                 | The end value of the trimmed area |
 | bool isTrimmed                   | Set to `true` when the trimmed values are not the default video duration |
 | bool isTrimming                  | Set to `true` when startTrim or endTrim is changing |
-| Duration maxDuration             | The different between endTrim & startTrim |
+| Duration maxDuration             | The maxDuration possible for the trimmed area |
+| Duration minDuration             | The minDuration possible for the trimmed area |
 | Offset minCrop                   | The top left position of the crop area (between `0.0` and `1.0`) |
 | Offset maxCrop                   | The bottom right position of the crop area (between `0.0` and `1.0`) |
 | Size croppedArea                 | The actual Size of the crop area |
