@@ -257,7 +257,7 @@ class _TrimSliderState extends State<TrimSlider>
       height: _rect.height,
     );
     final progressTouch = Rect.fromCenter(
-      center: Offset(progressTrim + _positionTouchMargin / 2, _rect.height / 2),
+      center: Offset(progressTrim, _rect.height / 2),
       width: _positionTouchMargin,
       height: _rect.height,
     );
@@ -319,14 +319,24 @@ class _TrimSliderState extends State<TrimSlider>
         } else {
           // avoid rect to be out of bounds
           _changeTrimRect(
-              left: posLeft.dx.clamp(_horizontalMargin,
-                  _trimLayout.width + _horizontalMargin - _rect.width));
+            left: posLeft.dx.clamp(
+              _horizontalMargin,
+              _trimLayout.width + _horizontalMargin - _rect.width,
+            ),
+          );
         }
         break;
       case _TrimBoundaries.progress:
-        final double pos = details.localPosition.dx;
-        if (pos >= _rect.left - _horizontalMargin &&
-            pos <= _rect.right + _horizontalMargin) _controllerSeekTo(pos);
+        final pos = details.localPosition.dx;
+        // postion of pos on the layout width between 0 and 1
+        final localRatio = pos / (_trimLayout.width + _horizontalMargin * 2);
+        // because the video progress cursor is on a different layout context (horizontal margin are not applied)
+        // the gesture offset must be adjusted (remove margin when localRatio < 0.5 and add margin when localRatio > 0.5)
+        final localAdjust = (localRatio - 0.5) * (_horizontalMargin * 2);
+        _controllerSeekTo((pos + localAdjust).clamp(
+          _rect.left - _horizontalMargin,
+          _rect.right + _horizontalMargin,
+        ));
         break;
       default:
         break;
