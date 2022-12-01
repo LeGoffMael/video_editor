@@ -1,3 +1,12 @@
+## [2.1.0]
+
+- Trim values are now more accurate for exportation [#127](https://github.com/LeGoffMael/video_editor/pull/127)
+- New `minDuration` argument in controller [#126](https://github.com/LeGoffMael/video_editor/pull/126)
+  - Timeline shows milliseconds
+- Crop values are now more accurate for exportation [#125](https://github.com/LeGoffMael/video_editor/pull/125)
+  - Fix issue were crop were not applied on export
+  - New `trimmedDuration` getter
+
 ## [2.0.0]
 
 - New trimmer gesture [#124](https://github.com/LeGoffMael/video_editor/pull/124)
