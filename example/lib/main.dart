@@ -368,8 +368,6 @@ class _VideoEditorState extends State<VideoEditor> {
         builder: (_, __) {
           final duration = _controller.videoDuration.inSeconds;
           final pos = _controller.trimPosition * duration;
-          final start = _controller.minTrim * duration;
-          final end = _controller.maxTrim * duration;
 
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: height / 4),
@@ -379,9 +377,9 @@ class _VideoEditorState extends State<VideoEditor> {
               OpacityTransition(
                 visible: _controller.isTrimming,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(formatter(Duration(seconds: start.toInt()))),
+                  Text(formatter(_controller.startTrim)),
                   const SizedBox(width: 10),
-                  Text(formatter(Duration(seconds: end.toInt()))),
+                  Text(formatter(_controller.endTrim)),
                 ]),
               ),
             ]),
