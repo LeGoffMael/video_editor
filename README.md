@@ -74,6 +74,7 @@ Those Android API level and iOS deployment target are required to uses this pack
 | -------------------------------- | --------------------------------- |
 | Duration startTrim               | The start value of the trimmed area |
 | Duration endTrim                 | The end value of the trimmed area |
+| Duration trimmedDuration         | The duration of the selected trimmed area |
 | bool isTrimmed                   | Set to `true` when the trimmed values are not the default video duration |
 | bool isTrimming                  | Set to `true` when startTrim or endTrim is changing |
 | Duration maxDuration             | The maxDuration possible for the trimmed area |
