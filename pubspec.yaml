@@ -1,5 +1,5 @@
 name: video_editor
-version: 2.0.0
+version: 2.1.0
 description: A flutter package for editing video written in pure Dart with fully customizable UI. Supports crop, trim, rotation and cover selection.
 repository: https://github.com/LeGoffMael/video_editor
 
