@@ -39,7 +39,7 @@ Stream<List<CoverData>> generateCoverThumbnails(
   int quality = 10,
 }) async* {
   final int duration = controller.isTrimmed
-      ? (controller.endTrim - controller.startTrim).inMilliseconds
+      ? controller.trimmedDuration.inMilliseconds
       : controller.videoDuration.inMilliseconds;
   final double eachPart = duration / quantity;
   List<CoverData> byteList = [];
