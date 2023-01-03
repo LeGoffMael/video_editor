@@ -81,12 +81,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
-
-      // init the crop area with preferredCropAspectRatio
-      WidgetsBinding.instance.addPostFrameCallback((_) => _updateRect());
-    } else {
-      // init the widget with controller values if it is not the croping screen
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
     }
 
     super.initState();
@@ -112,12 +106,12 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Size computeLayout() {
     if (_viewerSize == Size.zero) return Size.zero;
     final videoRatio = _controller.video.value.aspectRatio;
+    final size = Size(_viewerSize.width - widget.margin.horizontal,
+        _viewerSize.height - widget.margin.vertical);
     if (_controller.isRotated && widget.showGrid) {
-      final size = Size(
-          _viewerSize.width - widget.margin.horizontal, _viewerSize.height);
       return computeSizeWithRatio(size, getOppositeRatio(videoRatio)).flipped;
     }
-    return computeSizeWithRatio(_viewerSize, videoRatio);
+    return computeSizeWithRatio(size, videoRatio);
   }
 
   /// Update crop [Rect] after change in [_controller] such as change of aspect ratio
@@ -338,7 +332,17 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, constraints) {
-      _viewerSize = constraints.biggest;
+      final size = constraints.biggest;
+      if (size != _viewerSize) {
+        _viewerSize = constraints.biggest;
+        if (widget.showGrid) {
+          // init the crop area with preferredCropAspectRatio
+          WidgetsBinding.instance.addPostFrameCallback((_) => _updateRect());
+        } else {
+          // init the widget with controller values if it is not the croping screen
+          _scaleRect();
+        }
+      }
 
       return ValueListenableBuilder(
           valueListenable: _transform,
@@ -389,23 +393,21 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Widget _buildCropView(BoxConstraints constraints, TransformData transform) {
     return Padding(
       padding: widget.margin,
-      child: Center(
-        child: Container(
-          // when widget.showGrid is true, the layout size should never be bigger than the screen size
-          constraints: BoxConstraints(
-            maxHeight: _controller.isRotated && widget.showGrid
-                ? constraints.maxWidth - widget.margin.horizontal
-                : Size.infinite.height,
-          ),
-          child: CropTransformWithAnimation(
-            shouldAnimate: _layout != Size.zero,
-            transform: transform,
-            child: VideoViewer(
-              controller: _controller,
-              child: ValueListenableBuilder(
-                valueListenable: _rect,
-                builder: (_, Rect value, __) => _paint(value),
-              ),
+      child: ConstrainedBox(
+        // when widget.showGrid is true, the layout size should never be bigger than the screen size
+        constraints: BoxConstraints(
+          maxHeight: _controller.isRotated && widget.showGrid
+              ? constraints.maxWidth - widget.margin.horizontal
+              : Size.infinite.height,
+        ),
+        child: CropTransformWithAnimation(
+          shouldAnimate: _layout != Size.zero,
+          transform: transform,
+          child: VideoViewer(
+            controller: _controller,
+            child: ValueListenableBuilder(
+              valueListenable: _rect,
+              builder: (_, Rect value, __) => _paint(value),
             ),
           ),
         ),
