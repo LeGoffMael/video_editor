@@ -69,20 +69,16 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   void initState() {
     _controller = widget.controller;
-    _controller.addListener(!widget.showGrid ? _scaleRect : _updateRect);
+    _controller.addListener(widget.showGrid ? _updateRect : _scaleRect);
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
 
       // init the crop area with preferredCropAspectRatio
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateRect();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateRect());
     } else {
       // init the widget with controller values if it is not the croping screen
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scaleRect();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
     }
 
     super.initState();
@@ -90,14 +86,28 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   @override
   void dispose() {
-    _controller.removeListener(!widget.showGrid ? _scaleRect : _updateRect);
+    _controller.removeListener(widget.showGrid ? _updateRect : _scaleRect);
     _transform.dispose();
     _rect.dispose();
     super.dispose();
   }
 
+  /// Returns the size of the max crop dimension based on available space and
+  /// original video aspect ratio
+  Size computeLayout() {
+    if (_viewerSize == Size.zero) return Size.zero;
+    final videoRatio = _controller.video.value.aspectRatio;
+    if (_controller.isRotated && widget.showGrid) {
+      final size = Size(
+          _viewerSize.width - widget.margin.horizontal, _viewerSize.height);
+      return computeSizeWithRatio(size, getOppositeRatio(videoRatio)).flipped;
+    }
+    return computeSizeWithRatio(_viewerSize, videoRatio);
+  }
+
   /// Update crop [Rect] after change in [_controller] such as change of aspect ratio
   void _updateRect() {
+    _layout = computeLayout();
     _transform.value = TransformData.fromController(_controller);
     _calculatePreferedCrop();
   }
@@ -107,26 +117,28 @@ class _CropGridViewerState extends State<CropGridViewer> {
     _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
 
     // set cached crop values to adjust it later
-    _rect.value = calculateCroppedRect(
+    Rect newRect = calculateCroppedRect(
       _controller,
       _layout,
       min: _controller.cacheMinCrop,
       max: _controller.cacheMaxCrop,
     );
+    if (_preferredCropAspectRatio != null) {
+      newRect = resizeCropToRatio(
+        _layout,
+        newRect,
+        _preferredCropAspectRatio!,
+      );
+    }
 
     setState(() {
-      if (_preferredCropAspectRatio != null) {
-        _rect.value = resizeCropToRatio(
-          _layout,
-          _rect.value,
-          _preferredCropAspectRatio!,
-        );
-      }
+      _rect.value = newRect;
       _onPanEnd(force: true);
     });
   }
 
   void _scaleRect() {
+    _layout = computeLayout();
     _rect.value = calculateCroppedRect(_controller, _layout);
     _transform.value = TransformData.fromRect(
       _rect.value,
@@ -142,7 +154,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Return expanded [Rect] to includes all corners [_expandedPosition]
   Rect _expandedRect() {
-    Rect expandedPosition = _expandedPosition(_rect.value.center);
+    final expandedPosition = _expandedPosition(_rect.value.center);
     return Rect.fromCenter(
         center: _rect.value.center,
         width: _rect.value.width + expandedPosition.width,
@@ -375,24 +387,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
             transform: transform,
             child: VideoViewer(
               controller: _controller,
-              child: LayoutBuilder(builder: (_, constraints) {
-                Size size = constraints.biggest;
-                if (_layout != size) {
-                  _layout = size;
-                  if (widget.showGrid) {
-                    // need to recompute crop if layout size changed, (i.e after rotation)
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _calculatePreferedCrop();
-                    });
-                  } else {
-                    _rect.value = calculateCroppedRect(_controller, _layout);
-                  }
-                }
-                return ValueListenableBuilder(
-                  valueListenable: _rect,
-                  builder: (_, Rect value, __) => _paint(value),
-                );
-              }),
+              child: ValueListenableBuilder(
+                valueListenable: _rect,
+                builder: (_, Rect value, __) => _paint(value),
+              ),
             ),
           ),
         ),

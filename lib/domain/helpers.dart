@@ -120,3 +120,14 @@ bool isRectContained(Size size, Rect rect) =>
     rect.top >= 0 &&
     rect.right <= size.width &&
     rect.bottom <= size.height;
+
+/// Returns opposite aspect ratio
+///
+/// ```
+/// i.e
+/// ratio=4/5 => 5/4
+/// ratio=5/4 => 4/5
+/// ratio=9/16 => 16/9
+/// ratio=1 => 1
+/// ```
+double getOppositeRatio(double ratio) => 1 / ratio;
