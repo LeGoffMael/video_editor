@@ -28,12 +28,14 @@ class CropGridViewer extends StatefulWidget {
     super.key,
     required this.controller,
   })  : showGrid = false,
+        rotateCropArea = true,
         margin = EdgeInsets.zero;
 
   const CropGridViewer.edit({
     super.key,
     required this.controller,
     this.margin = const EdgeInsets.symmetric(horizontal: 20),
+    this.rotateCropArea = true,
   }) : showGrid = true;
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
@@ -46,6 +48,13 @@ class CropGridViewer extends StatefulWidget {
   /// The amount of space by which to inset the crop view, not used in preview mode
   /// so in case of a change the new layout can be computed properly (i.e after a rotation)
   final EdgeInsets margin;
+
+  /// The [rotateCropArea] parameters specifies if the crop should be rotated along
+  /// with the video
+  /// Set it to `false` to preserve `_controller.preferredAspectRatio` on rotation
+  ///
+  /// Defaults to `true` (like iOS Photos app crop)
+  final bool rotateCropArea;
 
   @override
   State<CropGridViewer> createState() => _CropGridViewerState();
@@ -60,7 +69,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Size _layout = Size.zero;
   CropBoundaries _boundary = CropBoundaries.none;
 
-  double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
 
   /// Minimum size of the cropped area
@@ -92,6 +100,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
     super.dispose();
   }
 
+  /// Returns the proper aspect ratio to apply depending on view rotation
+  double? get aspectRatio => widget.rotateCropArea == false &&
+          _controller.isRotated &&
+          _controller.preferredCropAspectRatio != null
+      ? getOppositeRatio(_controller.preferredCropAspectRatio!)
+      : _controller.preferredCropAspectRatio;
+
   /// Returns the size of the max crop dimension based on available space and
   /// original video aspect ratio
   Size computeLayout() {
@@ -114,8 +129,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Compute new [Rect] crop area depending of [_controller] data and layout size
   void _calculatePreferedCrop() {
-    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-
     // set cached crop values to adjust it later
     Rect newRect = calculateCroppedRect(
       _controller,
@@ -123,11 +136,13 @@ class _CropGridViewerState extends State<CropGridViewer> {
       min: _controller.cacheMinCrop,
       max: _controller.cacheMaxCrop,
     );
-    if (_preferredCropAspectRatio != null) {
+    if (_controller.preferredCropAspectRatio != null) {
       newRect = resizeCropToRatio(
         _layout,
         newRect,
-        _preferredCropAspectRatio!,
+        widget.rotateCropArea == false && _controller.isRotated
+            ? getOppositeRatio(_controller.preferredCropAspectRatio!)
+            : _controller.preferredCropAspectRatio!,
       );
     }
 
@@ -277,19 +292,19 @@ class _CropGridViewerState extends State<CropGridViewer> {
     bottom = min(_layout.height, bottom ?? _rect.value.bottom);
 
     // update crop height or width to adjust to the selected aspect ratio
-    if (_preferredCropAspectRatio != null) {
+    if (aspectRatio != null) {
       final width = right - left;
       final height = bottom - top;
 
-      if (width / height > _preferredCropAspectRatio!) {
+      if (width / height > aspectRatio!) {
         switch (_boundary) {
           case CropBoundaries.topLeft:
           case CropBoundaries.bottomLeft:
-            left = right - height * _preferredCropAspectRatio!;
+            left = right - height * aspectRatio!;
             break;
           case CropBoundaries.topRight:
           case CropBoundaries.bottomRight:
-            right = left + height * _preferredCropAspectRatio!;
+            right = left + height * aspectRatio!;
             break;
           default:
             assert(false);
@@ -298,11 +313,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
         switch (_boundary) {
           case CropBoundaries.topLeft:
           case CropBoundaries.topRight:
-            top = bottom - width / _preferredCropAspectRatio!;
+            top = bottom - width / aspectRatio!;
             break;
           case CropBoundaries.bottomLeft:
           case CropBoundaries.bottomRight:
-            bottom = top + width / _preferredCropAspectRatio!;
+            bottom = top + width / aspectRatio!;
             break;
           default:
             assert(false);
