@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:example/crop.dart';
-import 'package:example/widgets/export_result.dart';
+import 'package:video_editor_example/crop.dart';
+import 'package:video_editor_example/widgets/export_result.dart';
 import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart' show OpacityTransition;
 import 'package:image_picker/image_picker.dart';

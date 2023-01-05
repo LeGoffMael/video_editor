@@ -1,8 +1,8 @@
-name: example
-description: Video editor example app
+name: video_editor_example
+description: The example project for the video_editor package.
 
 publish_to: "none" 
-version: 1.0.0+1
+version: 2.2.0+1
 
 environment:
   flutter: ">=3.0.0"
@@ -17,8 +17,7 @@ dependencies:
 
   helpers: ^1.1.4
   image_picker: ^0.8.6
-  cupertino_icons: ^1.0.5
-  video_player: ^2.4.8
+  video_player: ^2.4.10
   fraction: ^4.1.4
 
 flutter:

@@ -18,7 +18,7 @@ Following steps will help you add this library as a dependency in your flutter p
 
 ```yaml
 dependencies:
-  video_editor: ^2.1.0
+  video_editor: ^2.2.0
 ```
 
 - Import the package in your code:
@@ -49,9 +49,9 @@ Those Android API level and iOS deployment target are required to uses this pack
 ## 📸 Screenshots
 (The UI Design is fully customizable on the [example](https://pub.dev/packages/video_editor/example))
 
-| Example app running on an Iphone 11 pro | Customization example, light mode     |
-| --------------------------------------- | ------------------------------------- |
-| ![](./assets/readme/demo.gif)           | ![](./assets/readme/light_editor.png) |
+| Example app running on an Iphone 11 pro | Customization example, light mode |
+| --------------------------------------- | --------------------------------- |
+| ![](./assets/demo.gif)                  | ![](./assets/light_editor.png)    |
 
 ## 👀 Usage
 

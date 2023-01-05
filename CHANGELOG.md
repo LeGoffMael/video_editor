@@ -1,3 +1,9 @@
+## [2.2.0]
+
+- improved widgets performances [#130](https://github.com/LeGoffMael/video_editor/pull/130) & [#132](https://github.com/LeGoffMael/video_editor/pull/132)
+- improve crop preview internal logic by using mixin [#131](https://github.com/LeGoffMael/video_editor/pull/131)
+- new `rotateCropArea` parameter in `CropGridViewer.edit` [#130](https://github.com/LeGoffMael/video_editor/pull/130)
+
 ## [2.1.0]
 
 - Trim values are now more accurate for exportation [#127](https://github.com/LeGoffMael/video_editor/pull/127)
