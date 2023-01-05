@@ -585,14 +585,16 @@ class _TrimSliderState extends State<TrimSlider>
                   widget.controller.video,
                 ]),
                 builder: (_, __) {
-                  return CustomPaint(
-                    size: Size.fromHeight(widget.height),
-                    painter: TrimSliderPainter(
-                      _rect,
-                      _getVideoPosition(),
-                      widget.controller.trimStyle,
-                      isTrimming: widget.controller.isTrimming,
-                      isTrimmed: widget.controller.isTrimmed,
+                  return RepaintBoundary(
+                    child: CustomPaint(
+                      size: Size.fromHeight(widget.height),
+                      painter: TrimSliderPainter(
+                        _rect,
+                        _getVideoPosition(),
+                        widget.controller.trimStyle,
+                        isTrimming: widget.controller.isTrimming,
+                        isTrimmed: widget.controller.isTrimmed,
+                      ),
                     ),
                   );
                 },

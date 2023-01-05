@@ -311,7 +311,12 @@ class TrimSliderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(TrimSliderPainter oldDelegate) => true;
+  bool shouldRepaint(TrimSliderPainter oldDelegate) =>
+      oldDelegate.rect != rect ||
+      oldDelegate.position != position ||
+      oldDelegate.style != style ||
+      oldDelegate.isTrimming != isTrimming ||
+      oldDelegate.isTrimmed != isTrimmed;
 
   @override
   bool shouldRebuildSemantics(TrimSliderPainter oldDelegate) => false;

@@ -106,14 +106,16 @@ mixin CropPreviewMixin<T extends StatefulWidget> on State<T> {
       valueListenable: rect,
 
       /// Build a [Widget] that hides the cropped area and show the crop grid if widget.showGris is true
-      builder: (_, Rect value, __) => CustomPaint(
-        size: Size.infinite,
-        painter: CropGridPainter(
-          value,
-          style: controller.cropStyle,
-          boundary: boundary,
-          showGrid: showGrid,
-          showCenterRects: showCenterRects,
+      builder: (_, Rect value, __) => RepaintBoundary(
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: CropGridPainter(
+            value,
+            style: controller.cropStyle,
+            boundary: boundary,
+            showGrid: showGrid,
+            showCenterRects: showCenterRects,
+          ),
         ),
       ),
     );
