@@ -173,4 +173,14 @@ void main() {
       expect(getBestIndex(120, 213, 119), 212);
     });
   });
+
+  group('getOppositeRatio', () {
+    test('ratio=1', () => expect(getOppositeRatio(1), 1));
+    test('ratio=9/16', () => expect(getOppositeRatio(9 / 16), 16 / 9));
+    test('ratio=16/9', () => expect(getOppositeRatio(16 / 9), 9 / 16));
+    test('ratio=3/4', () => expect(getOppositeRatio(3 / 4), 4 / 3));
+    test('ratio=4/3', () => expect(getOppositeRatio(4 / 3), 3 / 4));
+    test('ratio=4/5', () => expect(getOppositeRatio(4 / 5), 5 / 4));
+    test('ratio=4/5', () => expect(getOppositeRatio(5 / 4), 4 / 5));
+  });
 }

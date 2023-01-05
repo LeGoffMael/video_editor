@@ -102,6 +102,7 @@ This widget is used to enable the crop actions on top of the video (CropGridView
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the crop view |
 | EdgeInsets margin | The amount of space by which to inset the crop view, not used in preview mode |
+| bool rotateCropArea | To preserve `preferredCropAspectRatio` when crop view is rotated |
 
 #### Trimmer
 

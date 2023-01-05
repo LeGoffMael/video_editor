@@ -35,6 +35,7 @@ class CropScreen extends StatelessWidget {
             Expanded(
               child: CropGridViewer.edit(
                 controller: controller,
+                rotateCropArea: false,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
             ),

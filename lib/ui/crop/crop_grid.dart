@@ -28,12 +28,14 @@ class CropGridViewer extends StatefulWidget {
     super.key,
     required this.controller,
   })  : showGrid = false,
+        rotateCropArea = true,
         margin = EdgeInsets.zero;
 
   const CropGridViewer.edit({
     super.key,
     required this.controller,
     this.margin = const EdgeInsets.symmetric(horizontal: 20),
+    this.rotateCropArea = true,
   }) : showGrid = true;
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
@@ -46,6 +48,13 @@ class CropGridViewer extends StatefulWidget {
   /// The amount of space by which to inset the crop view, not used in preview mode
   /// so in case of a change the new layout can be computed properly (i.e after a rotation)
   final EdgeInsets margin;
+
+  /// The [rotateCropArea] parameters specifies if the crop should be rotated along
+  /// with the video
+  /// Set it to `false` to preserve `_controller.preferredAspectRatio` on rotation
+  ///
+  /// Defaults to `true` (like iOS Photos app crop)
+  final bool rotateCropArea;
 
   @override
   State<CropGridViewer> createState() => _CropGridViewerState();
@@ -60,7 +69,6 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Size _layout = Size.zero;
   CropBoundaries _boundary = CropBoundaries.none;
 
-  double? _preferredCropAspectRatio;
   late VideoEditorController _controller;
 
   /// Minimum size of the cropped area
@@ -69,20 +77,10 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   void initState() {
     _controller = widget.controller;
-    _controller.addListener(!widget.showGrid ? _scaleRect : _updateRect);
+    _controller.addListener(widget.showGrid ? _updateRect : _scaleRect);
     if (widget.showGrid) {
       _controller.cacheMaxCrop = _controller.maxCrop;
       _controller.cacheMinCrop = _controller.minCrop;
-
-      // init the crop area with preferredCropAspectRatio
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateRect();
-      });
-    } else {
-      // init the widget with controller values if it is not the croping screen
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scaleRect();
-      });
     }
 
     super.initState();
@@ -90,43 +88,66 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   @override
   void dispose() {
-    _controller.removeListener(!widget.showGrid ? _scaleRect : _updateRect);
+    _controller.removeListener(widget.showGrid ? _updateRect : _scaleRect);
     _transform.dispose();
     _rect.dispose();
     super.dispose();
   }
 
+  /// Returns the proper aspect ratio to apply depending on view rotation
+  double? get aspectRatio => widget.rotateCropArea == false &&
+          _controller.isRotated &&
+          _controller.preferredCropAspectRatio != null
+      ? getOppositeRatio(_controller.preferredCropAspectRatio!)
+      : _controller.preferredCropAspectRatio;
+
+  /// Returns the size of the max crop dimension based on available space and
+  /// original video aspect ratio
+  Size computeLayout() {
+    if (_viewerSize == Size.zero) return Size.zero;
+    final videoRatio = _controller.video.value.aspectRatio;
+    final size = Size(_viewerSize.width - widget.margin.horizontal,
+        _viewerSize.height - widget.margin.vertical);
+    if (_controller.isRotated && widget.showGrid) {
+      return computeSizeWithRatio(size, getOppositeRatio(videoRatio)).flipped;
+    }
+    return computeSizeWithRatio(size, videoRatio);
+  }
+
   /// Update crop [Rect] after change in [_controller] such as change of aspect ratio
   void _updateRect() {
+    _layout = computeLayout();
     _transform.value = TransformData.fromController(_controller);
     _calculatePreferedCrop();
   }
 
   /// Compute new [Rect] crop area depending of [_controller] data and layout size
   void _calculatePreferedCrop() {
-    _preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-
     // set cached crop values to adjust it later
-    _rect.value = calculateCroppedRect(
+    Rect newRect = calculateCroppedRect(
       _controller,
       _layout,
       min: _controller.cacheMinCrop,
       max: _controller.cacheMaxCrop,
     );
+    if (_controller.preferredCropAspectRatio != null) {
+      newRect = resizeCropToRatio(
+        _layout,
+        newRect,
+        widget.rotateCropArea == false && _controller.isRotated
+            ? getOppositeRatio(_controller.preferredCropAspectRatio!)
+            : _controller.preferredCropAspectRatio!,
+      );
+    }
 
     setState(() {
-      if (_preferredCropAspectRatio != null) {
-        _rect.value = resizeCropToRatio(
-          _layout,
-          _rect.value,
-          _preferredCropAspectRatio!,
-        );
-      }
+      _rect.value = newRect;
       _onPanEnd(force: true);
     });
   }
 
   void _scaleRect() {
+    _layout = computeLayout();
     _rect.value = calculateCroppedRect(_controller, _layout);
     _transform.value = TransformData.fromRect(
       _rect.value,
@@ -142,7 +163,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
 
   /// Return expanded [Rect] to includes all corners [_expandedPosition]
   Rect _expandedRect() {
-    Rect expandedPosition = _expandedPosition(_rect.value.center);
+    final expandedPosition = _expandedPosition(_rect.value.center);
     return Rect.fromCenter(
         center: _rect.value.center,
         width: _rect.value.width + expandedPosition.width,
@@ -265,19 +286,19 @@ class _CropGridViewerState extends State<CropGridViewer> {
     bottom = min(_layout.height, bottom ?? _rect.value.bottom);
 
     // update crop height or width to adjust to the selected aspect ratio
-    if (_preferredCropAspectRatio != null) {
+    if (aspectRatio != null) {
       final width = right - left;
       final height = bottom - top;
 
-      if (width / height > _preferredCropAspectRatio!) {
+      if (width / height > aspectRatio!) {
         switch (_boundary) {
           case CropBoundaries.topLeft:
           case CropBoundaries.bottomLeft:
-            left = right - height * _preferredCropAspectRatio!;
+            left = right - height * aspectRatio!;
             break;
           case CropBoundaries.topRight:
           case CropBoundaries.bottomRight:
-            right = left + height * _preferredCropAspectRatio!;
+            right = left + height * aspectRatio!;
             break;
           default:
             assert(false);
@@ -286,11 +307,11 @@ class _CropGridViewerState extends State<CropGridViewer> {
         switch (_boundary) {
           case CropBoundaries.topLeft:
           case CropBoundaries.topRight:
-            top = bottom - width / _preferredCropAspectRatio!;
+            top = bottom - width / aspectRatio!;
             break;
           case CropBoundaries.bottomLeft:
           case CropBoundaries.bottomRight:
-            bottom = top + width / _preferredCropAspectRatio!;
+            bottom = top + width / aspectRatio!;
             break;
           default:
             assert(false);
@@ -311,7 +332,17 @@ class _CropGridViewerState extends State<CropGridViewer> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, constraints) {
-      _viewerSize = constraints.biggest;
+      final size = constraints.biggest;
+      if (size != _viewerSize) {
+        _viewerSize = constraints.biggest;
+        if (widget.showGrid) {
+          // init the crop area with preferredCropAspectRatio
+          WidgetsBinding.instance.addPostFrameCallback((_) => _updateRect());
+        } else {
+          // init the widget with controller values if it is not the croping screen
+          _scaleRect();
+        }
+      }
 
       return ValueListenableBuilder(
           valueListenable: _transform,
@@ -362,37 +393,21 @@ class _CropGridViewerState extends State<CropGridViewer> {
   Widget _buildCropView(BoxConstraints constraints, TransformData transform) {
     return Padding(
       padding: widget.margin,
-      child: Center(
-        child: Container(
-          // when widget.showGrid is true, the layout size should never be bigger than the screen size
-          constraints: BoxConstraints(
-            maxHeight: _controller.isRotated && widget.showGrid
-                ? constraints.maxWidth - widget.margin.horizontal
-                : Size.infinite.height,
-          ),
-          child: CropTransformWithAnimation(
-            shouldAnimate: _layout != Size.zero,
-            transform: transform,
-            child: VideoViewer(
-              controller: _controller,
-              child: LayoutBuilder(builder: (_, constraints) {
-                Size size = constraints.biggest;
-                if (_layout != size) {
-                  _layout = size;
-                  if (widget.showGrid) {
-                    // need to recompute crop if layout size changed, (i.e after rotation)
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _calculatePreferedCrop();
-                    });
-                  } else {
-                    _rect.value = calculateCroppedRect(_controller, _layout);
-                  }
-                }
-                return ValueListenableBuilder(
-                  valueListenable: _rect,
-                  builder: (_, Rect value, __) => _paint(value),
-                );
-              }),
+      child: ConstrainedBox(
+        // when widget.showGrid is true, the layout size should never be bigger than the screen size
+        constraints: BoxConstraints(
+          maxHeight: _controller.isRotated && widget.showGrid
+              ? constraints.maxWidth - widget.margin.horizontal
+              : Size.infinite.height,
+        ),
+        child: CropTransformWithAnimation(
+          shouldAnimate: _layout != Size.zero,
+          transform: transform,
+          child: VideoViewer(
+            controller: _controller,
+            child: ValueListenableBuilder(
+              valueListenable: _rect,
+              builder: (_, Rect value, __) => _paint(value),
             ),
           ),
         ),

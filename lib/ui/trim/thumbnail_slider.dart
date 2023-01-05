@@ -155,7 +155,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     TransformData transform, {
     required bool isPlaceholder,
   }) {
-    return Container(
+    return ConstrainedBox(
       constraints: BoxConstraints.tight(_maxLayout),
       child: CropTransform(
         transform: transform,
