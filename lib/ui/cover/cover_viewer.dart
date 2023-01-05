@@ -3,9 +3,7 @@ import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/helpers.dart';
-import 'package:video_editor/ui/crop/crop_grid_painter.dart';
-import 'package:video_editor/ui/image_viewer.dart';
-import 'package:video_editor/ui/transform.dart';
+import 'package:video_editor/ui/crop/crop_mixin.dart';
 
 class CoverViewer extends StatefulWidget {
   /// It is the viewer that show the selected cover
@@ -25,14 +23,7 @@ class CoverViewer extends StatefulWidget {
   State<CoverViewer> createState() => _CoverViewerState();
 }
 
-class _CoverViewerState extends State<CoverViewer> {
-  final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  final ValueNotifier<TransformData> _transform =
-      ValueNotifier<TransformData>(const TransformData());
-
-  Size _viewerSize = Size.zero;
-  Size _layout = Size.zero;
-
+class _CoverViewerState extends State<CoverViewer> with CropPreviewMixin {
   @override
   void initState() {
     super.initState();
@@ -43,17 +34,16 @@ class _CoverViewerState extends State<CoverViewer> {
   @override
   void dispose() {
     widget.controller.removeListener(_scaleRect);
-    _transform.dispose();
-    _rect.dispose();
     super.dispose();
   }
 
   void _scaleRect() {
-    _rect.value = calculateCroppedRect(widget.controller, _layout);
-    _transform.value = TransformData.fromRect(
-      _rect.value,
-      _layout,
-      _viewerSize,
+    layout = computeLayout(widget.controller);
+    rect.value = calculateCroppedRect(widget.controller, layout);
+    transform.value = TransformData.fromRect(
+      rect.value,
+      layout,
+      viewerSize,
       widget.controller,
     );
 
@@ -67,53 +57,23 @@ class _CoverViewerState extends State<CoverViewer> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, constraints) {
-      _viewerSize = constraints.biggest;
+  void updateRectFromBuild() => _scaleRect();
 
-      return ValueListenableBuilder(
-        valueListenable: _transform,
-        builder: (_, TransformData transform, __) => ValueListenableBuilder(
-          valueListenable: widget.controller.selectedCoverNotifier,
-          builder: (context, CoverData? selectedCover, __) =>
-              selectedCover?.thumbData == null
-                  ? Center(child: Text(widget.noCoverText))
-                  : CropTransformWithAnimation(
-                      shouldAnimate: _layout != Size.zero,
-                      transform: transform,
-                      child: ImageViewer(
-                        controller: widget.controller,
-                        bytes: selectedCover!.thumbData!,
-                        child: LayoutBuilder(
-                          builder: (_, constraints) {
-                            Size size = constraints.biggest;
-                            if (_layout != size) {
-                              _layout = size;
-                              // init the widget with controller values
-                              WidgetsBinding.instance
-                                  .addPostFrameCallback((_) => _scaleRect());
-                            }
+  @override
+  Widget buildView(BuildContext context, TransformData transform) {
+    return ValueListenableBuilder(
+      valueListenable: widget.controller.selectedCoverNotifier,
+      builder: (_, CoverData? selectedCover, __) {
+        if (selectedCover?.thumbData == null) {
+          return Center(child: Text(widget.noCoverText));
+        }
 
-                            return ValueListenableBuilder(
-                              valueListenable: _rect,
-                              builder: (_, Rect value, __) {
-                                return CustomPaint(
-                                  size: Size.infinite,
-                                  painter: CropGridPainter(
-                                    value,
-                                    style: widget.controller.cropStyle,
-                                    showGrid: false,
-                                    showCenterRects: false,
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-        ),
-      );
-    });
+        return buildImageView(
+          widget.controller,
+          selectedCover!.thumbData!,
+          transform,
+        );
+      },
+    );
   }
 }

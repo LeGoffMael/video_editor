@@ -48,18 +48,16 @@ class CropTransformWithAnimation extends StatelessWidget {
       return CropTransform(transform: transform, child: child);
     }
 
-    return ClipRRect(
-      child: AnimatedRotation(
-        // convert rad to turns
-        turns: transform.rotation * (57.29578 / 360),
-        curve: Curves.easeInOut,
-        duration: const Duration(milliseconds: 300),
-        child: Transform.scale(
-          scale: transform.scale,
-          child: Transform.translate(
-            offset: transform.translate,
-            child: child,
-          ),
+    return AnimatedRotation(
+      // convert rad to turns
+      turns: transform.rotation * (57.29578 / 360),
+      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 300),
+      child: Transform.scale(
+        scale: transform.scale,
+        child: Transform.translate(
+          offset: transform.translate,
+          child: child,
         ),
       ),
     );
