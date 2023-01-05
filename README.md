@@ -47,13 +47,14 @@ Those Android API level and iOS deployment target are required to uses this pack
 </table>
 
 ## 📸 Screenshots
-(The UI Design is fully customizable on the [example](https://pub.dev/packages/video_editor/example))
 
 | Example app running on an Iphone 11 pro | Customization example, light mode |
 | --------------------------------------- | --------------------------------- |
 | ![](./assets/demo.gif)                  | ![](./assets/light_editor.png)    |
 
 ## 👀 Usage
+
+For more details check out the [example](https://pub.dev/packages/video_editor/example).
 
 ### VideoEditorController
 
