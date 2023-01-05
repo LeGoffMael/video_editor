@@ -193,7 +193,13 @@ class CropGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CropGridPainter oldDelegate) => true;
+  bool shouldRepaint(CropGridPainter oldDelegate) =>
+      oldDelegate.rect != rect ||
+      oldDelegate.style != style ||
+      oldDelegate.boundary != boundary ||
+      oldDelegate.radius != radius ||
+      oldDelegate.showCenterRects != showCenterRects ||
+      oldDelegate.showGrid != showGrid;
 
   @override
   bool shouldRebuildSemantics(CropGridPainter oldDelegate) => false;

@@ -31,7 +31,11 @@ class ImageViewer extends StatelessWidget {
                     image: MemoryImage(bytes),
                     placeholder: MemoryImage(kTransparentImage),
                   )
-                : Image.memory(bytes),
+                : Image.memory(
+                    bytes,
+                    color: const Color.fromRGBO(255, 255, 255, 0.2),
+                    colorBlendMode: BlendMode.modulate,
+                  ),
           ),
           if (child != null)
             AspectRatio(

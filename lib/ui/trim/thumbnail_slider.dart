@@ -125,13 +125,10 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
                       return Stack(
                         children: [
-                          Opacity(
-                            opacity: 0.2,
-                            child: _buildSingleThumbnail(
-                              data[0],
-                              transform,
-                              isPlaceholder: true,
-                            ),
+                          _buildSingleThumbnail(
+                            data[0],
+                            transform,
+                            isPlaceholder: true,
                           ),
                           if (index < data.length)
                             _buildSingleThumbnail(
@@ -164,19 +161,21 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
           bytes: bytes,
           fadeIn: !isPlaceholder,
           child: LayoutBuilder(builder: (_, constraints) {
-            Size size = constraints.biggest;
+            final size = constraints.biggest;
             if (!isPlaceholder && _layout != size) {
               _layout = size;
               // init the widget with controller values
               WidgetsBinding.instance.addPostFrameCallback((_) => _scaleRect());
             }
 
-            return CustomPaint(
-              size: Size.infinite,
-              painter: CropGridPainter(
-                _rect.value,
-                showGrid: false,
-                style: widget.controller.cropStyle,
+            return RepaintBoundary(
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: CropGridPainter(
+                  _rect.value,
+                  showGrid: false,
+                  style: widget.controller.cropStyle,
+                ),
               ),
             );
           }),

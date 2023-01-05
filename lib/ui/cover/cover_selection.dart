@@ -207,13 +207,15 @@ class _CoverSelectionState extends State<CoverSelection>
                           .addPostFrameCallback((_) => _scaleRect());
                     }
 
-                    return CustomPaint(
-                      size: Size.infinite,
-                      painter: CropGridPainter(
-                        _rect.value,
-                        radius: coverStyle.borderRadius / 2,
-                        showGrid: false,
-                        style: widget.controller.cropStyle,
+                    return RepaintBoundary(
+                      child: CustomPaint(
+                        size: Size.infinite,
+                        painter: CropGridPainter(
+                          _rect.value,
+                          radius: coverStyle.borderRadius / 2,
+                          showGrid: false,
+                          style: widget.controller.cropStyle,
+                        ),
                       ),
                     );
                   }),
