@@ -508,7 +508,7 @@ class VideoEditorController extends ChangeNotifier {
     if (!isFiltersEnabled) return "";
 
     // CALCULATE FILTERS
-    final String gif = videoFormat != "gif" ? "" : "fps=10 -loop 0";
+    final bool isGif = videoFormat?.toLowerCase() == "gif";
     final String scaleInstruction =
         scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
@@ -517,10 +517,12 @@ class VideoEditorController extends ChangeNotifier {
       _getCrop(),
       scaleInstruction,
       _getRotation(),
-      gif
+      isGif ? "fps=10" : "",
     ];
     filters.removeWhere((item) => item.isEmpty);
-    return filters.isNotEmpty ? "-vf '${filters.join(",")}'" : "";
+    return filters.isNotEmpty
+        ? "-vf '${filters.join(",")}'${isGif ? " -loop 0" : ""}"
+        : "";
   }
 
   /// Export the video using this edition parameters and return a `File`.

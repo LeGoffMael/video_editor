@@ -15,11 +15,11 @@ dependencies:
     sdk: flutter
 
   ffmpeg_kit_flutter_min_gpl: ^5.1.0
-  path_provider: ^2.0.11
-  video_player: ^2.4.10
-  video_thumbnail: ^0.5.3
   path: ^1.8.0 # update to `1.8.1` causes #79
+  path_provider: ^2.0.12
   transparent_image: ^2.0.0 # show fade-in placeholder in thumbnails generation
+  video_player: ^2.5.1
+  video_thumbnail: ^0.5.3
 
 dev_dependencies:
   flutter_test:
