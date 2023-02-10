@@ -6,6 +6,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
 import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_player/video_player.dart';
@@ -490,25 +491,26 @@ class VideoEditorController extends ChangeNotifier {
     required String filePath,
     String? name,
     String? outputDirectory,
-    required String format,
+    required FileFormat format,
   }) async {
     final String tempPath =
         outputDirectory ?? (await getTemporaryDirectory()).path;
     name ??= path.basenameWithoutExtension(filePath);
     final int epoch = DateTime.now().millisecondsSinceEpoch;
-    return "$tempPath/${name}_$epoch.$format";
+    return "$tempPath/${name}_$epoch.${format.extension}";
   }
 
   /// Returns the `-filter:v` command to use in ffmpeg execution
   String _getExportFilters({
-    String? videoFormat,
+    VideoExportFormat? videoFormat,
     double scale = 1.0,
     bool isFiltersEnabled = true,
   }) {
     if (!isFiltersEnabled) return "";
 
     // CALCULATE FILTERS
-    final bool isGif = videoFormat?.toLowerCase() == "gif";
+    final bool isGif =
+        videoFormat?.extension == VideoExportFormat.gif.extension;
     final String scaleInstruction =
         scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
@@ -517,7 +519,9 @@ class VideoEditorController extends ChangeNotifier {
       _getCrop(),
       scaleInstruction,
       _getRotation(),
-      isGif ? "fps=10" : "",
+      isGif
+          ? "fps=${videoFormat is GifExportFormat ? videoFormat.fps : VideoExportFormat.gif.fps}"
+          : "",
     ];
     filters.removeWhere((item) => item.isEmpty);
     return filters.isNotEmpty
@@ -535,7 +539,9 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// If the [outDir] is `null`, then it uses `TemporaryDirectory`.
   ///
-  /// The [format] of the video to be exported, by default `mp4`.
+  /// The [format] of the video to be exported, by default [VideoExportFormat.mp4].
+  /// You can export as a GIF file by using [VideoExportFormat.gif] or with
+  /// [GifExportFormat()] which allows you to control the frame rate of the exported GIF file.
   ///
   /// The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
   ///
@@ -556,7 +562,7 @@ class VideoEditorController extends ChangeNotifier {
     void Function(Object, StackTrace)? onError,
     String? name,
     String? outDir,
-    String format = "mp4",
+    VideoExportFormat format = VideoExportFormat.mp4,
     double scale = 1.0,
     String? customInstruction,
     void Function(Statistics, double)? onProgress,
@@ -679,9 +685,9 @@ class VideoEditorController extends ChangeNotifier {
   ///
   /// If the [name] is `null`, then it uses this video filename.
   ///
-  /// If the [outDir] is `null`, then it uses [TemporaryDirectory].
+  /// If the [outDir] is `null`, then it uses `TemporaryDirectory`.
   ///
-  /// The [format] of the image to be exported, by default `jpg`.
+  /// The [format] of the image to be exported, by default [CoverExportFormat.jpg].
   ///
   /// The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
   ///
@@ -697,7 +703,7 @@ class VideoEditorController extends ChangeNotifier {
     void Function(Object, StackTrace)? onError,
     String? name,
     String? outDir,
-    String format = "jpg",
+    CoverExportFormat format = CoverExportFormat.jpg,
     double scale = 1.0,
     int quality = 100,
     void Function(Statistics)? onProgress,
