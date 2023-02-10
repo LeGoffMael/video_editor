@@ -18,7 +18,7 @@ Following steps will help you add this library as a dependency in your flutter p
 
 ```yaml
 dependencies:
-  video_editor: ^2.2.0
+  video_editor: ^2.3.0
 ```
 
 - Import the package in your code:
@@ -54,7 +54,40 @@ Those Android API level and iOS deployment target are required to uses this pack
 
 ## 👀 Usage
 
-For more details check out the [example](https://pub.dev/packages/video_editor/example).
+```dart
+final VideoEditorController _controller = VideoEditorController.file(
+  File('/path/to/video.mp4'),
+  minDuration: const Duration(seconds: 1),
+  maxDuration: const Duration(seconds: 10),
+);
+
+@override
+void initState() {
+  super.initState();
+  _controller.initialize().then((_) => setState(() {}));
+}
+
+@override
+void dispose() {
+  _controller.dispose();
+  super.dispose();
+}
+
+// Basic export video function
+Future<void> exportVideo() => _controller.exportVideo(
+  onCompleted: (file) {}, // show the exported video
+);
+
+// Export a GIF image, with some handlers
+Future<void> exporGif() => _controller.exportVideo(
+  format: VideoExportFormat.gif, // or GifExportFormat(fps: 20), to customize the fps
+  onProgress: (stats, value) {}, // show exportation progress
+  onError: (e, s) {}, // handle the error
+  onCompleted: (file) {}, // show the exported GIF
+);
+```
+
+For more details check out the [example](https://github.com/LeGoffMael/video_editor/tree/master/example).
 
 ### VideoEditorController
 

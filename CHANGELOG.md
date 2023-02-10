@@ -1,10 +1,38 @@
-## [2.2.0]
+## 2.3.0
+
+- fixes GIF file exportation [#134](https://github.com/LeGoffMael/video_editor/pull/134)
+
+### Breaking changes
+
+- `format` argument in `exportVideo` and `exportCover`, is now an object.
+
+Before:
+
+```dart
+await controller.exportVideo(format: 'mp4', onCompleted: (_) {});
+await controller.extractCover(format: 'jpg', onCompleted: (_) {});
+```
+
+After:
+```dart
+await controller.exportVideo(
+  format: VideoExportFormat.mp4, // or const VideoExportFormat('mp4')
+  onCompleted: (_) {}.
+);
+
+await controller.extractCover(
+  format: CoverExportFormat.jpg, // or const CoverExportFormat('jpg')
+  onCompleted: (_) {}.
+);
+```
+
+## 2.2.0
 
 - improved widgets performances [#130](https://github.com/LeGoffMael/video_editor/pull/130) & [#132](https://github.com/LeGoffMael/video_editor/pull/132)
 - improve crop preview internal logic by using mixin [#131](https://github.com/LeGoffMael/video_editor/pull/131)
 - new `rotateCropArea` parameter in `CropGridViewer.edit` [#130](https://github.com/LeGoffMael/video_editor/pull/130)
 
-## [2.1.0]
+## 2.1.0
 
 - Trim values are now more accurate for exportation [#127](https://github.com/LeGoffMael/video_editor/pull/127)
 - New `minDuration` argument in controller [#126](https://github.com/LeGoffMael/video_editor/pull/126)
@@ -13,7 +41,7 @@
   - Fix issue were crop were not applied on export
   - New `trimmedDuration` getter
 
-## [2.0.0]
+## 2.0.0
 
 - New trimmer gesture [#124](https://github.com/LeGoffMael/video_editor/pull/124)
 - New animation during rotation [#123](https://github.com/LeGoffMael/video_editor/pull/123)
@@ -26,40 +54,40 @@
 
 Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migration-to-2.0.0).
 
-## [1.5.2]
+## 1.5.2
 
 - Fix scale issue when video is rotated
 
-## [1.5.1]
+## 1.5.1
 
 - New `aspectRatio` param in initialize function, to set up the crop param without opening the crop view
 - Fix some crop resize issue with ratio
 - Fix scale issue
 
-## [1.5.0]
+## 1.5.0
 
 - Upgrade `flutter_ffmpeg_kit` to latest 5.1.0
 
-## [1.4.4]
+## 1.4.4
 
 - Fix export error when space in output path [#108](https://github.com/LeGoffMael/video_editor/pull/108) by [@martingeorgiu](https://github.com/martingeorgiu)
 - Bump `video_thumbnail` dependencies to 0.5.3 so upgrade android compileSdkVersion to 33
 
-## [1.4.3]
+## 1.4.3
 
 - New `onError` param in export functions [#98](https://github.com/LeGoffMael/video_editor/pull/98)
 - New selectedIndicator param in `CoverSelectionStyle` [#97](https://github.com/LeGoffMael/video_editor/pull/97)
 - Update dependencies
 
-## [1.4.2]
+## 1.4.2
 
 - Update to flutter 3 [#91](https://github.com/LeGoffMael/video_editor/pull/91)
 
-## [1.4.1]
+## 1.4.1
 
 - Generated thumbnails list is not cleared after an exception [#88](https://github.com/LeGoffMael/video_editor/pull/88)
 
-## [1.4.0]
+## 1.4.0
 
 - Fix crop grid : gesture, aspect ratio, and painting area [#87](https://github.com/LeGoffMael/video_editor/pull/87)
 - [MAJOR INTERNAL CROP CHANGES]
@@ -68,12 +96,12 @@ Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migratio
   - The crop area gesture is detected differently
   - The crop paint area is diplayed using `Path.combine`
 
-## [1.3.1]
+## 1.3.1
 
 - Implements flutter_lints configuration [#86](https://github.com/LeGoffMael/video_editor/issues/86)
 - [NEW] Exportation progress value is returned in `onProgress` function of exportVideo [#85](https://github.com/LeGoffMael/video_editor/issues/85)
 
-## [1.3.0]
+## 1.3.0
 
 - [BREAKING CHANGE]
     - In TrimTimeline, `secondGap` param is no more nullable
@@ -82,32 +110,32 @@ Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migratio
 - Improve package documentation [#84](https://github.com/LeGoffMael/video_editor/issues/84)
 - Switch from LTS FFmpeg package to Main release [#81](https://github.com/LeGoffMael/video_editor/issues/81) by [@adigladi](https://github.com/adigladi)
 
-## [1.2.5]
+## 1.2.5
 
 - Upgraded `video_thumbnail` dependency
 - Fix dependency conflict with `path 1.8.1` [#79](https://github.com/LeGoffMael/video_editor/issues/79)
 
-## [1.2.4]
+## 1.2.4
 
 - Updated dependencies
 - Add `isFiltersEnabled` param to disable all changes at extraction [#76](https://github.com/LeGoffMael/video_editor/pull/76) by [@AlexSmirnov9107](https://github.com/AlexSmirnov9107)
 - Fix an error at extraction if the destination path contains a space [#74](https://github.com/LeGoffMael/video_editor/pull/74) by [@rgplvr](https://github.com/rgplvr)
 
-## [1.2.3]
+## 1.2.3
 
 - Update `ffmpeg_kit_flutter` to latest 4.5.1 [#65](https://github.com/LeGoffMael/video_editor/pull/65)
 - Print ffmpeg session state, return code and fail stack trace if exists [#63](https://github.com/LeGoffMael/video_editor/pull/63)
 - New function to get metadata of video file [#57](https://github.com/LeGoffMael/video_editor/pull/57)
 - Update `README.md` about `ffmpeg_kit_flutter` configuration [#53](https://github.com/LeGoffMael/video_editor/pull/53) by [@qiongshusheng](https://github.com/qiongshusheng)
 
-## [1.2.2]
+## 1.2.2
 
 [@legoffmael](https://github.com/LeGoffMael) changes
 
 - Error MissingPluginException with video_thumbnail fixed [#49](https://github.com/LeGoffMael/video_editor/pull/49)
 - Add epoch to exportation names by default [#50](https://github.com/LeGoffMael/video_editor/pull/50)
 
-## [1.2.1]
+## 1.2.1
 
 [@legoffmael](https://github.com/LeGoffMael) changes
 
@@ -120,7 +148,7 @@ Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migratio
 
 - Migrated to FFMPEG KIT xd
 
-## [1.2.0]
+## 1.2.0
 
 [@legoffmael](https://github.com/LeGoffMael) changes
 
@@ -132,27 +160,27 @@ Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migratio
 - New smooth trimmer when video durarion > maxDuration [#27](https://github.com/LeGoffMael/video_editor/pull/27)
 
 
-## [1.1.0]
+## 1.1.0
 
 - Sound Null Safety Migration [#21](https://github.com/LeGoffMael/video_editor/pull/21) by [@paricleu](https://github.com/paricleu)
 - Preffered Aspect Ratio on crop
 - Improved gesture on crop screen
 
-## [1.0.3+1]
+## 1.0.3+1
 
 - [UNIDENTIFIED] ERROR FIXED.
 
-## [1.0.3]
+## 1.0.3
 
 - Progress bar on export
 - Improved export function
 
-## [1.0.2]
+## 1.0.2
 
 - Improved cropping gestures
 - TrimSlider bugs fixed
 
-## [1.0.1]
+## 1.0.1
 
 - Export Video:
 
@@ -164,10 +192,10 @@ Check [migration guide](https://github.com/LeGoffMael/video_editor/wiki/Migratio
   - MaxTrimDuration
   - Bugs Fixed
 
-## [1.0.0+1]
+## 1.0.0+1
 
 - Export error fixed.
 
-## [1.0.0]
+## 1.0.0
 
 - Initial Release.
