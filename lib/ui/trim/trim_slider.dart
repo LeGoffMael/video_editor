@@ -22,6 +22,7 @@ class TrimSlider extends StatefulWidget {
     this.child,
     this.hasHaptic = true,
     this.maxViewportRatio = 2.5,
+    this.scrollController,
   });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
@@ -59,6 +60,9 @@ class TrimSlider extends StatefulWidget {
   ///
   /// Defaults to `2.5`
   final double maxViewportRatio;
+
+  //// The [scrollController] param specifies the scroll controller to use for the trim slider view
+  final ScrollController? scrollController;
 
   @override
   State<TrimSlider> createState() => _TrimSliderState();
@@ -102,7 +106,7 @@ class _TrimSliderState extends State<TrimSlider>
 
   // Scroll view
 
-  final _scrollController = ScrollController();
+  late final ScrollController _scrollController;
 
   /// The distance of rect left side to the left of the scroll view before bouncing
   double? _preSynchLeft;
@@ -119,6 +123,7 @@ class _TrimSliderState extends State<TrimSlider>
   @override
   void initState() {
     super.initState();
+    _scrollController = widget.scrollController ?? ScrollController();
     if (_isExtendTrim) _scrollController.addListener(attachTrimToScroll);
   }
 
