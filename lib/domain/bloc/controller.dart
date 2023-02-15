@@ -140,24 +140,12 @@ class VideoEditorController extends ChangeNotifier {
   /// The minimum value of this param is `0.0`
   /// The maximum value of this param is [maxTrim]
   double get minTrim => _minTrim;
-  set minTrim(double value) {
-    if (value >= _min.dx && value <= _max.dx) {
-      _minTrim = value;
-      _updateTrimRange();
-    }
-  }
 
   /// The [maxTrim] param is the maximum position of the trimmed area on the slider
   ///
   /// The minimum value of this param is [minTrim]
   /// The maximum value of this param is `1.0`
   double get maxTrim => _maxTrim;
-  set maxTrim(double value) {
-    if (value >= _min.dx && value <= _max.dx) {
-      _maxTrim = value;
-      _updateTrimRange();
-    }
-  }
 
   /// The [startTrim] param is the maximum position of the trimmed area in video position in [Duration] value
   Duration get startTrim => _trimStart;
@@ -173,24 +161,12 @@ class VideoEditorController extends ChangeNotifier {
   /// The minimum value of this param is `0.0`
   /// The maximum value of this param is `1.0`
   Offset get minCrop => _minCrop;
-  set minCrop(Offset value) {
-    if (value >= _min && value <= _max) {
-      _minCrop = value;
-      notifyListeners();
-    }
-  }
 
   /// The [maxCrop] param is the [Rect.bottomRight] position of the crop area
   ///
   /// The minimum value of this param is `0.0`
   /// The maximum value of this param is `1.0`
   Offset get maxCrop => _maxCrop;
-  set maxCrop(Offset value) {
-    if (value >= _min && value <= _max) {
-      _maxCrop = value;
-      notifyListeners();
-    }
-  }
 
   /// Get the [Size] of the [videoDimension] cropped by the points [minCrop] & [maxCrop]
   Size get croppedArea => Rect.fromLTWH(
@@ -228,9 +204,9 @@ class VideoEditorController extends ChangeNotifier {
         height: newSize.height,
       );
 
-      minCrop =
+      _minCrop =
           Offset(centerCrop.left / videoWidth, centerCrop.top / videoHeight);
-      maxCrop = Offset(
+      _maxCrop = Offset(
           centerCrop.right / videoWidth, centerCrop.bottom / videoHeight);
       notifyListeners();
     }
@@ -320,9 +296,21 @@ class VideoEditorController extends ChangeNotifier {
   }
 
   /// Update the [minCrop] and [maxCrop] with [cacheMinCrop] and [cacheMaxCrop]
-  void updateCrop() {
-    minCrop = cacheMinCrop;
-    maxCrop = cacheMaxCrop;
+  void applyCacheCrop() => updateCrop(cacheMinCrop, cacheMaxCrop);
+
+  // Update [minCrop] and [maxCrop].
+  ///
+  /// The [min] param is the [Rect.topLeft] position of the crop area
+  /// The [max] param is the [Rect.bottomRight] position of the crop area
+  ///
+  /// Arguments range are [Offset.zero] to `Offset(1.0, 1.0)`.
+  void updateCrop(Offset min, Offset max) {
+    assert(min < max,
+        'Minimum crop value ($min) cannot be bigger and maximum crop value ($max)');
+
+    _minCrop = min;
+    _maxCrop = max;
+    notifyListeners();
   }
 
   //----------//
@@ -331,18 +319,28 @@ class VideoEditorController extends ChangeNotifier {
 
   /// Update [minTrim] and [maxTrim].
   ///
+  /// The [min] param is the minimum position of the trimmed area on the slider
+  /// The [max] param is the maximum position of the trimmed area on the slider
+  ///
   /// Arguments range are `0.0` to `1.0`.
   void updateTrim(double min, double max) {
+    assert(min < max,
+        'Minimum trim value ($min) cannot be bigger and maximum trim value ($max)');
+
+    // check that the new params does not cause a wrong duration
+    final newDuration = Duration(
+        milliseconds: (videoDuration.inMilliseconds * (max - min)).toInt());
+    assert(newDuration <= maxDuration && newDuration >= minDuration,
+        'Trim duration ($newDuration) cannot be bigger than $maxDuration or smaller than $minDuration');
+
     _minTrim = min;
     _maxTrim = max;
     _updateTrimRange();
-    notifyListeners();
   }
 
   void _updateTrimRange() {
-    final duration = videoDuration;
-    _trimStart = duration * minTrim;
-    _trimEnd = duration * maxTrim;
+    _trimStart = videoDuration * minTrim;
+    _trimEnd = videoDuration * maxTrim;
 
     if (_trimStart != Duration.zero || _trimEnd != videoDuration) {
       _isTrimmed = true;
