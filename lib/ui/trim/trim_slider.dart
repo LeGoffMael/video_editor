@@ -22,6 +22,7 @@ class TrimSlider extends StatefulWidget {
     this.child,
     this.hasHaptic = true,
     this.maxViewportRatio = 2.5,
+    this.scrollController,
   });
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
@@ -59,6 +60,9 @@ class TrimSlider extends StatefulWidget {
   ///
   /// Defaults to `2.5`
   final double maxViewportRatio;
+
+  //// The [scrollController] param specifies the scroll controller to use for the trim slider view
+  final ScrollController? scrollController;
 
   @override
   State<TrimSlider> createState() => _TrimSliderState();
@@ -102,7 +106,7 @@ class _TrimSliderState extends State<TrimSlider>
 
   // Scroll view
 
-  final _scrollController = ScrollController();
+  late final ScrollController _scrollController;
 
   /// The distance of rect left side to the left of the scroll view before bouncing
   double? _preSynchLeft;
@@ -119,15 +123,27 @@ class _TrimSliderState extends State<TrimSlider>
   @override
   void initState() {
     super.initState();
+    _scrollController = widget.scrollController ?? ScrollController();
+    widget.controller.addListener(_updateTrim);
     if (_isExtendTrim) _scrollController.addListener(attachTrimToScroll);
   }
 
   @override
   void dispose() {
+    widget.controller.removeListener(_updateTrim);
     if (_isExtendTrim) _scrollController.removeListener(attachTrimToScroll);
     _scrollController.dispose();
     super.dispose();
   }
+
+  /// Returns the [Rect] side position (left or rect) in a range between 0 and 1
+  double _getRectToTrim(double rectVal) =>
+      (rectVal + _scrollController.offset - _horizontalMargin) /
+      _fullLayout.width;
+
+  /// Convert the controller trim value into the trim slider view size
+  double _geTrimToRect(double trimVal) =>
+      (_fullLayout.width * trimVal) + _horizontalMargin;
 
   // Distance of sroll bounce on the right
   double get _bounceRightOffset =>
@@ -144,6 +160,37 @@ class _TrimSliderState extends State<TrimSlider>
         _scrollController.offset > _scrollController.position.maxScrollExtent &&
             _scrollController.offset < _lastScrollPixels;
     return !(isBouncingFromLeft || isBouncingFromRight);
+  }
+
+  /// Update [_rect] and the view when controller is updated
+  void _updateTrim() {
+    if (widget.controller.minTrim != _getRectToTrim(_rect.left) ||
+        widget.controller.maxTrim != _getRectToTrim(_rect.right)) {
+      // if trim slider is extended, set rect based on viewport with left at minimum position
+      if (_isExtendTrim) {
+        setState(() {
+          _rect = Rect.fromLTWH(
+              _horizontalMargin,
+              _rect.top,
+              _geTrimToRect(widget.controller.maxTrim) -
+                  _geTrimToRect(widget.controller.minTrim),
+              _rect.height);
+        });
+        // then update scroll controller to align the thumbnails with the new trim
+        _scrollController.jumpTo(
+            _geTrimToRect(widget.controller.minTrim) - _horizontalMargin);
+      } else {
+        // if the trim slider is not extended, set rect based on layout width
+        setState(() {
+          _rect = Rect.fromLTRB(
+              _geTrimToRect(widget.controller.minTrim),
+              _rect.top,
+              _geTrimToRect(widget.controller.maxTrim),
+              _rect.height);
+        });
+      }
+      _resetControllerPosition();
+    }
   }
 
   /// Scroll to update [_rect] and trim values on scroll
@@ -437,13 +484,10 @@ class _TrimSliderState extends State<TrimSlider>
   }
 
   void _updateControllerTrim() {
-    final double width = _fullLayout.width;
-    final startTrim =
-        (_rect.left + _scrollController.offset - _horizontalMargin) / width;
-    final endTrim =
-        (_rect.right + _scrollController.offset - _horizontalMargin) / width;
-
-    widget.controller.updateTrim(startTrim, endTrim);
+    widget.controller.updateTrim(
+      _getRectToTrim(_rect.left),
+      _getRectToTrim(_rect.right),
+    );
     _resetControllerPosition();
   }
 

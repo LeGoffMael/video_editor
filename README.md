@@ -153,6 +153,7 @@ Display the trimmer containing video thumbnails with rotation and crop parameter
 | Widget? child | The `child` param can be specify to display a widget below this one (e.g: TrimTimeline) |
 | bool hasHaptic = true | The `hasHaptic` param specifies if haptic feed back can be triggered when the trim touch an edge (left or right) |
 | double maxViewportRatioo = 2.5 | The `maxViewportRatio` param specifies the upper limit of the view ratio |
+| ScrollController? scrollController | The `scrollController` param specifies the scroll controller to use for the trim slider view |
 
 ##### 2. TrimTimeline
 

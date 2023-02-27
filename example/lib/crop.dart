@@ -107,12 +107,10 @@ class CropScreen extends StatelessWidget {
                 flex: 2,
                 child: IconButton(
                   onPressed: () {
-                    // 2 WAYS TO UPDATE CROP
-                    // WAY 1:
-                    controller.updateCrop();
-                    // WAY 2:
-                    // controller.minCrop = controller.cacheMinCrop;
-                    // controller.maxCrop = controller.cacheMaxCrop;
+                    // WAY 1: validate crop parameters set in the crop view
+                    controller.applyCacheCrop();
+                    // WAY 2: update manually with Offset values
+                    // controller.updateCrop(const Offset(0.2, 0.2), const Offset(0.8, 0.8));
                     Navigator.pop(context);
                   },
                   icon: Center(
