@@ -1,3 +1,15 @@
+## 2.4.0
+
+- Fix update TrimSlider trim values from controller [#141](https://github.com/LeGoffMael/video_editor/pull/141)
+- Add `scrollController` param in TrimSlider [#139](https://github.com/LeGoffMael/video_editor/pull/139)
+
+- Some controller's methods name has been changed :
+
+### Breaking changes
+
+- `updateCrop()` method is now renamed `applyCacheCrop()`.
+- Setters `minTrim`, `maxTrim`, `minCrop` & `maxCrop` has been removed.<br>Prefer using `updateTrim(min, max)` and the new `updateCrop(min, max)` methods instead.
+
 ## 2.3.0
 
 - fixes GIF file exportation [#134](https://github.com/LeGoffMael/video_editor/pull/134)

@@ -18,7 +18,7 @@ Following steps will help you add this library as a dependency in your flutter p
 
 ```yaml
 dependencies:
-  video_editor: ^2.3.0
+  video_editor: ^2.4.0
 ```
 
 - Import the package in your code:
