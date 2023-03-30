@@ -14,7 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  ffmpeg_kit_flutter_min_gpl: ^5.1.0
+  ffmpeg_kit_flutter_min: ^5.1.0
   path: ^1.8.0 # update to `1.8.1` causes #79
   path_provider: ^2.0.12
   transparent_image: ^2.0.1 # show fade-in placeholder in thumbnails generation
