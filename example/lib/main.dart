@@ -1,11 +1,21 @@
 import 'dart:io';
 
-import 'package:video_editor_example/crop.dart';
-import 'package:video_editor_example/widgets/export_result.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_session.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart' show OpacityTransition;
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_editor_example/crop.dart';
+import 'package:video_editor_example/widgets/export_result.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 void main() => runApp(
       MaterialApp(
@@ -119,11 +129,11 @@ class _VideoEditorState extends State<VideoEditor> {
         ),
       );
 
-  void _exportVideo() async {
+  Future<void> _exportVideo() async {
     _exportingProgress.value = 0;
     _isExporting.value = true;
     // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
-    await _controller.exportVideo(
+    await exportVideo(
       // format: VideoExportFormat.gif,
       // preset: VideoExportPreset.medium,
       // customInstruction: "-crf 17",
@@ -141,8 +151,8 @@ class _VideoEditorState extends State<VideoEditor> {
     );
   }
 
-  void _exportCover() async {
-    await _controller.extractCover(
+  Future<void> _exportCover() async {
+    await extractCover(
       onError: (e, s) => _showErrorSnackBar("Error on cover exportation :("),
       onCompleted: (cover) {
         if (!mounted) return;
@@ -427,6 +437,169 @@ class _VideoEditorState extends State<VideoEditor> {
           ),
         ),
       ),
+    );
+  }
+
+  //--------------//
+  //VIDEO METADATA//
+  //--------------//
+
+  Future<void> getMetaData(
+      {required void Function(Map<dynamic, dynamic>? metadata)
+          onCompleted}) async {
+    await FFprobeKit.getMediaInformationAsync(
+      _controller.file.path,
+      (session) async {
+        final information = session.getMediaInformation();
+        onCompleted(information?.getAllProperties());
+      },
+    );
+  }
+
+  //--------//
+  // EXPORT //
+  //--------//
+
+  Future<String> _getOutputPath({
+    required String filePath,
+    required FileFormat format,
+  }) async {
+    final tempPath = (await getTemporaryDirectory()).path;
+    final name = path.basenameWithoutExtension(filePath);
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return "$tempPath/${name}_$epoch.${format.extension}";
+  }
+
+  Future<void> exportVideo({
+    required void Function(File file) onCompleted,
+    void Function(Object, StackTrace)? onError,
+    void Function(Statistics, double)? onProgress,
+    VideoExportFormat format = VideoExportFormat.mp4,
+    double scale = 1.0,
+    String customInstruction = '',
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+  }) async {
+    final config = _controller.createVideoFFmpegConfig();
+    final inputPath = _controller.file.path;
+    final outputPath = await _getOutputPath(
+      filePath: inputPath,
+      format: format,
+    );
+
+    final execute = config.createExportCommand(
+      inputPath: inputPath,
+      outputPath: outputPath,
+      format: format,
+      scale: scale,
+      customInstruction: customInstruction,
+      preset: preset,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('VideoEditor - run export video command : [$execute]');
+
+    // PROGRESS CALLBACKS
+    FFmpegKit.executeAsync(
+      execute,
+      (session) async {
+        final state =
+            FFmpegKitConfig.sessionStateToString(await session.getState());
+        final code = await session.getReturnCode();
+
+        if (ReturnCode.isSuccess(code)) {
+          onCompleted(File(outputPath));
+        } else {
+          if (onError != null) {
+            onError(
+              Exception(
+                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
+              StackTrace.current,
+            );
+          }
+          return;
+        }
+      },
+      null,
+      onProgress != null
+          ? (stats) {
+              // Progress value of encoded video
+              final progressValue =
+                  stats.getTime() / _controller.trimmedDuration.inMilliseconds;
+              onProgress(stats, progressValue.clamp(0.0, 1.0));
+            }
+          : null,
+    );
+  }
+
+  Future<void> extractCover({
+    required void Function(File file) onCompleted,
+    void Function(Object, StackTrace)? onError,
+    void Function(Statistics)? onProgress,
+    CoverExportFormat format = CoverExportFormat.jpg,
+    double scale = 1.0,
+    int quality = 100,
+    bool isFiltersEnabled = true,
+  }) async {
+    var config = _controller.createCoverFFmpegConfig();
+
+    // file generated from the thumbnail library or video source
+    final coverPath = await _generateCoverFile(quality: quality);
+    if (coverPath == null) {
+      onError?.call(
+        Exception('VideoThumbnail library error while exporting the cover'),
+        StackTrace.current,
+      );
+      return;
+    }
+    final outputPath = await _getOutputPath(
+      filePath: coverPath,
+      format: format,
+    );
+
+    final execute = config.createCoverExportCommand(
+      inputPath: coverPath,
+      outputPath: outputPath,
+      scale: scale,
+      quality: quality,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('VideoEditor - run export cover command : [$execute]');
+
+    // PROGRESS CALLBACKS
+    FFmpegKit.executeAsync(
+      execute,
+      (FFmpegSession session) async {
+        final state =
+            FFmpegKitConfig.sessionStateToString(await session.getState());
+        final code = await session.getReturnCode();
+
+        if (ReturnCode.isSuccess(code)) {
+          onCompleted(File(outputPath));
+        } else {
+          onError?.call(
+            Exception(
+              'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}',
+            ),
+            StackTrace.current,
+          );
+          return;
+        }
+      },
+      null,
+      onProgress,
+    );
+  }
+
+  Future<String?> _generateCoverFile({int quality = 100}) async {
+    return await VideoThumbnail.thumbnailFile(
+      imageFormat: ImageFormat.JPEG,
+      thumbnailPath: (await getTemporaryDirectory()).path,
+      video: _controller.file.path,
+      timeMs: _controller.selectedCoverVal?.timeMs ??
+          _controller.startTrim.inMilliseconds,
+      quality: quality,
     );
   }
 }
