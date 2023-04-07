@@ -1,24 +1,25 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fraction/fraction.dart';
 import 'package:path/path.dart' as path;
 import 'package:video_player/video_player.dart';
 
-Future<void> _getImageDimension(File file,
-    {required Function(Size) onResult}) async {
-  var decodedImage = await decodeImageFromList(file.readAsBytesSync());
-  onResult(Size(decodedImage.width.toDouble(), decodedImage.height.toDouble()));
+Future<Size> _getImageDimension(Uint8List bytes) async {
+  var decodedImage = await decodeImageFromList(bytes);
+  return Size(decodedImage.width.toDouble(), decodedImage.height.toDouble());
 }
 
-String _fileMBSize(File file) =>
-    ' ${(file.lengthSync() / (1024 * 1024)).toStringAsFixed(1)} MB';
+String _fileMBSize(Uint8List bytes) {
+  return '${(bytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
 
 class VideoResultPopup extends StatefulWidget {
   const VideoResultPopup({super.key, required this.video});
 
-  final File video;
+  final XFile video;
 
   @override
   State<VideoResultPopup> createState() => _VideoResultPopupState();
@@ -28,28 +29,37 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
   VideoPlayerController? _controller;
   FileImage? _fileImage;
   Size _fileDimension = Size.zero;
-  late final bool _isGif =
-      path.extension(widget.video.path).toLowerCase() == ".gif";
-  late String _fileMbSize;
+  late final _isGif = kIsWeb
+      ? widget.video.mimeType == 'image/gif'
+      : path.extension(widget.video.path).toLowerCase() == ".gif";
+  String? _fileMbSize;
 
   @override
   void initState() {
     super.initState();
-    if (_isGif) {
-      _getImageDimension(
-        widget.video,
-        onResult: (d) => setState(() => _fileDimension = d),
-      );
-    } else {
-      _controller = VideoPlayerController.file(widget.video);
-      _controller?.initialize().then((_) {
-        _fileDimension = _controller?.value.size ?? Size.zero;
-        setState(() {});
-        _controller?.play();
-        _controller?.setLooping(true);
-      });
+
+    if (!_isGif) {
+      _controller = kIsWeb
+          ? VideoPlayerController.network(widget.video.path)
+          : VideoPlayerController.file(File(widget.video.path))
+        ..initialize().then((_) {
+          _fileDimension = _controller!.value.size;
+          setState(() {});
+          _controller?.play();
+          _controller?.setLooping(true);
+        });
     }
-    _fileMbSize = _fileMBSize(widget.video);
+
+    widget.video.readAsBytes().then((bytes) {
+      if (_isGif) {
+        _getImageDimension(bytes).then(
+          (dimension) => setState(() => _fileDimension = dimension),
+        );
+      }
+
+      _fileMbSize = _fileMBSize(bytes);
+      setState(() {});
+    });
   }
 
   @override
@@ -75,8 +85,11 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
               aspectRatio: _fileDimension.aspectRatio == 0
                   ? 1
                   : _fileDimension.aspectRatio,
-              child:
-                  _isGif ? Image.file(widget.video) : VideoPlayer(_controller!),
+              child: _isGif
+                  ? (kIsWeb
+                      ? Image.network(widget.video.path)
+                      : Image.file(File(widget.video.path)))
+                  : VideoPlayer(_controller!),
             ),
             Positioned(
               bottom: 0,
@@ -104,25 +117,31 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
 class CoverResultPopup extends StatefulWidget {
   const CoverResultPopup({super.key, required this.cover});
 
-  final File cover;
+  final XFile cover;
 
   @override
   State<CoverResultPopup> createState() => _CoverResultPopupState();
 }
 
 class _CoverResultPopupState extends State<CoverResultPopup> {
-  late final Uint8List _imagebytes = widget.cover.readAsBytesSync();
+  Uint8List? _imagebytes;
   Size? _fileDimension;
-  late String _fileMbSize;
+  String? _fileMbSize;
 
   @override
   void initState() {
     super.initState();
-    _getImageDimension(
-      widget.cover,
-      onResult: (d) => setState(() => _fileDimension = d),
-    );
-    _fileMbSize = _fileMBSize(widget.cover);
+
+    widget.cover.readAsBytes().then((bytes) {
+      _imagebytes = bytes;
+
+      _getImageDimension(bytes).then(
+        (dimension) => setState(() => _fileDimension = dimension),
+      );
+      _fileMbSize = _fileMBSize(bytes);
+
+      setState(() {});
+    });
   }
 
   @override
@@ -132,7 +151,10 @@ class _CoverResultPopupState extends State<CoverResultPopup> {
       child: Center(
         child: Stack(
           children: [
-            Image.memory(_imagebytes),
+            if (_imagebytes == null)
+              const CircularProgressIndicator()
+            else
+              Image.memory(_imagebytes!),
             Positioned(
               bottom: 0,
               child: FileDescription(
@@ -157,7 +179,7 @@ class _CoverResultPopupState extends State<CoverResultPopup> {
 class FileDescription extends StatelessWidget {
   const FileDescription({super.key, required this.description});
 
-  final Map<String, String> description;
+  final Map<String, String?> description;
 
   @override
   Widget build(BuildContext context) {

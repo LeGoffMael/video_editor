@@ -40,7 +40,7 @@ abstract class FFmpegConfig {
     ]..removeWhere((item) => item.isEmpty);
 
     return filters.isNotEmpty
-        ? "-vf '${filters.join(",")}'${isGif ? " -loop 0" : ""}"
+        ? "-vf ${filters.join(",")}${isGif ? " -loop 0" : ""}"
         : "";
   }
 }
@@ -62,7 +62,7 @@ class VideoFFmpegConfig extends FFmpegConfig {
   ///
   /// The [outputPath] specifies the path where the exported video file should be saved.
   ///
-  /// The [format] of the video to be exported, by default [VideoExportFormat.mp4].
+  /// The [outputFormat] of the video to be exported, by default [VideoExportFormat.mp4].
   /// You can export as a GIF file by using [VideoExportFormat.gif] or with
   /// [GifExportFormat()] which allows you to control the frame rate of the exported GIF file.
   ///
@@ -79,19 +79,19 @@ class VideoFFmpegConfig extends FFmpegConfig {
   String createExportCommand({
     required String inputPath,
     required String outputPath,
-    VideoExportFormat format = VideoExportFormat.mp4,
+    VideoExportFormat outputFormat = VideoExportFormat.mp4,
     double scale = 1.0,
     String customInstruction = '',
     VideoExportPreset preset = VideoExportPreset.none,
     bool isFiltersEnabled = true,
   }) {
     final filter = getExportFilters(
-      videoFormat: format,
+      videoFormat: outputFormat,
       scale: scale,
       isFiltersEnabled: isFiltersEnabled,
     );
 
-    return "-i '$inputPath' $customInstruction $filter ${preset.ffmpegPreset} $trimCommand -y '$outputPath'";
+    return '-i $inputPath $customInstruction $filter ${preset.ffmpegPreset} $trimCommand -y $outputPath';
   }
 }
 
@@ -124,6 +124,6 @@ class CoverFFmpegConfig extends FFmpegConfig {
       isFiltersEnabled: isFiltersEnabled,
     );
 
-    return "-i '$inputPath' $filter -y $outputPath";
+    return "-i $inputPath $filter -y $outputPath";
   }
 }

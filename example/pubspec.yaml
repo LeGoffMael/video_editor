@@ -21,8 +21,16 @@ dependencies:
   image_picker: ^0.8.6+1
   path: ^1.8.2
   video_player: ^2.5.1
-  video_thumbnail: ^0.5.3
   path_provider: ^2.0.12
+  cross_file: ^0.3.3+4
+  # TODO(maRci002): remove local path when new package is published
+  video_thumbnail:
+    path: ../../video_thumbnail/video_thumbnail
+  # TODO(maRci002): remove git path when new package is published
+  ffmpeg_wasm:
+    git:
+      url: https://github.com/maRci002/flutter_ffmpeg_wasm.git
+      ref: feature/ffmpeg-api-refactor
 
 flutter:
   uses-material-design: true

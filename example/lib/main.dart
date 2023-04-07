@@ -1,11 +1,13 @@
-import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_session.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart' show OpacityTransition;
 import 'package:image_picker/image_picker.dart';
@@ -52,7 +54,7 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
       Navigator.push(
         context,
         MaterialPageRoute<void>(
-          builder: (BuildContext context) => VideoEditor(file: File(file.path)),
+          builder: (BuildContext context) => VideoEditor(file: file),
         ),
       );
     }
@@ -84,7 +86,7 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
 class VideoEditor extends StatefulWidget {
   const VideoEditor({super.key, required this.file});
 
-  final File file;
+  final XFile file;
 
   @override
   State<VideoEditor> createState() => _VideoEditorState();
@@ -99,6 +101,8 @@ class _VideoEditorState extends State<VideoEditor> {
     widget.file,
     minDuration: const Duration(seconds: 1),
     maxDuration: const Duration(seconds: 10),
+    // TODO(maRci002): transparent needed on the web?
+    cropStyle: const CropGridStyle(background: Colors.transparent),
   );
 
   @override
@@ -133,36 +137,40 @@ class _VideoEditorState extends State<VideoEditor> {
     _exportingProgress.value = 0;
     _isExporting.value = true;
     // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
-    await exportVideo(
-      // format: VideoExportFormat.gif,
-      // preset: VideoExportPreset.medium,
-      // customInstruction: "-crf 17",
-      onProgress: (stats, value) => _exportingProgress.value = value,
-      onError: (e, s) => _showErrorSnackBar("Error on export video :("),
-      onCompleted: (file) {
-        _isExporting.value = false;
-        if (!mounted) return;
+    try {
+      final video = await exportVideo(
+        // outputFormat: VideoExportFormat.gif,
+        // preset: VideoExportPreset.medium,
+        // customInstruction: "-crf 17",
+        onProgress: (stats, value) => _exportingProgress.value = value,
+      );
 
+      _isExporting.value = false;
+
+      if (mounted) {
         showDialog(
           context: context,
-          builder: (_) => VideoResultPopup(video: file),
+          builder: (_) => VideoResultPopup(video: video),
         );
-      },
-    );
+      }
+    } catch (e) {
+      _showErrorSnackBar("Error on export video :(");
+    }
   }
 
   Future<void> _exportCover() async {
-    await extractCover(
-      onError: (e, s) => _showErrorSnackBar("Error on cover exportation :("),
-      onCompleted: (cover) {
-        if (!mounted) return;
+    try {
+      final cover = await extractCover();
 
+      if (mounted) {
         showDialog(
           context: context,
           builder: (_) => CoverResultPopup(cover: cover),
         );
-      },
-    );
+      }
+    } catch (e) {
+      _showErrorSnackBar("Error on cover exportation :(");
+    }
   }
 
   @override
@@ -447,59 +455,44 @@ class _VideoEditorState extends State<VideoEditor> {
   Future<void> getMetaData(
       {required void Function(Map<dynamic, dynamic>? metadata)
           onCompleted}) async {
-    await FFprobeKit.getMediaInformationAsync(
-      _controller.file.path,
-      (session) async {
-        final information = session.getMediaInformation();
-        onCompleted(information?.getAllProperties());
-      },
-    );
+    if (kIsWeb) {
+      // Default FFMPEG lib throws: Requested output format 'json' is not a suitable output format
+      final format = FileFormat.fromMimeType(_controller.file.mimeType);
+      final inputPath = webInputPath(format);
+      const outputPath = 'output.json';
+
+      final outputFile = await executeFFmpegWeb(
+        execute: '-i $inputPath -f ffmetadata -f json $outputPath',
+        inputData: await _controller.file.readAsBytes(),
+        outputMimeType: 'application/json',
+        inputPath: inputPath,
+        outputPath: outputPath,
+      );
+
+      onCompleted(json.decode(await outputFile.readAsString()));
+    } else {
+      await FFprobeKit.getMediaInformationAsync(
+        _controller.file.path,
+        (session) async {
+          final information = session.getMediaInformation();
+          onCompleted(information?.getAllProperties());
+        },
+      );
+    }
   }
 
   //--------//
   // EXPORT //
   //--------//
 
-  Future<String> _getOutputPath({
-    required String filePath,
-    required FileFormat format,
-  }) async {
-    final tempPath = (await getTemporaryDirectory()).path;
-    final name = path.basenameWithoutExtension(filePath);
-    final epoch = DateTime.now().millisecondsSinceEpoch;
-    return "$tempPath/${name}_$epoch.${format.extension}";
-  }
+  Future<XFile> executeFFmpegIO({
+    required String execute,
+    required String outputPath,
+    int totalVideoDurationMs = 0,
+    void Function(FFmpegStatistics, double)? onProgress,
+  }) {
+    final completer = Completer<XFile>();
 
-  Future<void> exportVideo({
-    required void Function(File file) onCompleted,
-    void Function(Object, StackTrace)? onError,
-    void Function(Statistics, double)? onProgress,
-    VideoExportFormat format = VideoExportFormat.mp4,
-    double scale = 1.0,
-    String customInstruction = '',
-    VideoExportPreset preset = VideoExportPreset.none,
-    bool isFiltersEnabled = true,
-  }) async {
-    final config = _controller.createVideoFFmpegConfig();
-    final inputPath = _controller.file.path;
-    final outputPath = await _getOutputPath(
-      filePath: inputPath,
-      format: format,
-    );
-
-    final execute = config.createExportCommand(
-      inputPath: inputPath,
-      outputPath: outputPath,
-      format: format,
-      scale: scale,
-      customInstruction: customInstruction,
-      preset: preset,
-      isFiltersEnabled: isFiltersEnabled,
-    );
-
-    debugPrint('VideoEditor - run export video command : [$execute]');
-
-    // PROGRESS CALLBACKS
     FFmpegKit.executeAsync(
       execute,
       (session) async {
@@ -508,57 +501,167 @@ class _VideoEditorState extends State<VideoEditor> {
         final code = await session.getReturnCode();
 
         if (ReturnCode.isSuccess(code)) {
-          onCompleted(File(outputPath));
+          completer.complete(XFile(outputPath));
         } else {
-          if (onError != null) {
-            onError(
-              Exception(
-                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
-              StackTrace.current,
-            );
-          }
-          return;
+          completer.completeError(
+            Exception(
+              'FFmpeg process exited with state $state and return code $code.'
+              '${await session.getOutput()}',
+            ),
+          );
         }
       },
       null,
       onProgress != null
-          ? (stats) {
-              // Progress value of encoded video
-              final progressValue =
-                  stats.getTime() / _controller.trimmedDuration.inMilliseconds;
-              onProgress(stats, progressValue.clamp(0.0, 1.0));
+          ? (s) {
+              final progress = totalVideoDurationMs <= 0
+                  ? 0.0
+                  : s.getTime() / totalVideoDurationMs;
+
+              final statistics = FFmpegStatistics.fromStatistics(s);
+              onProgress(statistics, progress.clamp(0.0, 1.0));
             }
           : null,
     );
+
+    return completer.future;
   }
 
-  Future<void> extractCover({
-    required void Function(File file) onCompleted,
-    void Function(Object, StackTrace)? onError,
+  Future<XFile> executeFFmpegWeb({
+    required String execute,
+    required Uint8List inputData,
+    required String inputPath,
+    required String outputPath,
+    String? outputMimeType,
+    int totalVideoDurationMs = 0,
+    void Function(FFmpegStatistics, double)? onProgress,
+  }) async {
+    FFmpeg? ffmpeg;
+    final logs = <String>[];
+    try {
+      ffmpeg = createFFmpeg(CreateFFmpegParam(log: false));
+      ffmpeg.setLogger((LoggerParam logger) {
+        logs.add('[${logger.type}] ${logger.message}');
+
+        if (onProgress != null && logger.type == 'fferr') {
+          final statistics = FFmpegStatistics.fromMessage(logger.message);
+          if (statistics != null) {
+            final progress = totalVideoDurationMs <= 0
+                ? 0.0
+                : statistics.time / totalVideoDurationMs;
+            onProgress(statistics, progress);
+          }
+        }
+      });
+
+      await ffmpeg.load();
+
+      ffmpeg.writeFile(inputPath, inputData);
+      await ffmpeg.runCommand(execute);
+
+      final data = ffmpeg.readFile(outputPath);
+      return XFile.fromData(data, mimeType: outputMimeType);
+    } catch (e, s) {
+      Error.throwWithStackTrace(
+        Exception('Exception:\n$e\n\nLogs:${logs.join('\n')}}'),
+        s,
+      );
+    } finally {
+      ffmpeg?.exit();
+    }
+  }
+
+  Future<String> ioOutputPath(String filePath, FileFormat format) async {
+    final tempPath = (await getTemporaryDirectory()).path;
+    final name = path.basenameWithoutExtension(filePath);
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return "$tempPath/${name}_$epoch.${format.extension}";
+  }
+
+  String _webPath(String prePath, FileFormat format) {
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return '${prePath}_$epoch.${format.extension}';
+  }
+
+  String webInputPath(FileFormat format) => _webPath('input', format);
+
+  String webOutputPath(FileFormat format) => _webPath('output', format);
+
+  Future<XFile> exportVideo({
+    void Function(FFmpegStatistics, double)? onProgress,
+    VideoExportFormat outputFormat = VideoExportFormat.mp4,
+    double scale = 1.0,
+    String customInstruction = '',
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+  }) async {
+    final inputPath = kIsWeb
+        ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+        : _controller.file.path;
+    final outputPath = kIsWeb
+        ? webOutputPath(outputFormat)
+        : await ioOutputPath(inputPath, outputFormat);
+
+    final config = _controller.createVideoFFmpegConfig();
+    final execute = config.createExportCommand(
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputFormat: outputFormat,
+      scale: scale,
+      customInstruction: customInstruction,
+      preset: preset,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('run export video command : [$execute]');
+
+    if (kIsWeb) {
+      return executeFFmpegWeb(
+        execute: execute,
+        inputData: await _controller.file.readAsBytes(),
+        inputPath: inputPath,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+        totalVideoDurationMs: _controller.trimmedDuration.inMilliseconds,
+        onProgress: onProgress,
+      );
+    } else {
+      return executeFFmpegIO(
+        execute: execute,
+        outputPath: outputPath,
+        totalVideoDurationMs: _controller.trimmedDuration.inMilliseconds,
+        onProgress: onProgress,
+      );
+    }
+  }
+
+  Future<XFile> extractCover({
     void Function(Statistics)? onProgress,
-    CoverExportFormat format = CoverExportFormat.jpg,
+    CoverExportFormat outputFormat = CoverExportFormat.jpg,
     double scale = 1.0,
     int quality = 100,
     bool isFiltersEnabled = true,
   }) async {
-    var config = _controller.createCoverFFmpegConfig();
-
     // file generated from the thumbnail library or video source
-    final coverPath = await _generateCoverFile(quality: quality);
-    if (coverPath == null) {
-      onError?.call(
-        Exception('VideoThumbnail library error while exporting the cover'),
-        StackTrace.current,
-      );
-      return;
-    }
-    final outputPath = await _getOutputPath(
-      filePath: coverPath,
-      format: format,
+    final coverFile = await VideoThumbnail.thumbnailFile(
+      imageFormat: ImageFormat.JPEG,
+      thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
+      video: _controller.file.path,
+      timeMs: _controller.selectedCoverVal?.timeMs ??
+          _controller.startTrim.inMilliseconds,
+      quality: quality,
     );
 
+    final inputPath = kIsWeb
+        ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+        : coverFile.path;
+    final outputPath = kIsWeb
+        ? webOutputPath(outputFormat)
+        : await ioOutputPath(coverFile.path, outputFormat);
+
+    var config = _controller.createCoverFFmpegConfig();
     final execute = config.createCoverExportCommand(
-      inputPath: coverPath,
+      inputPath: inputPath,
       outputPath: outputPath,
       scale: scale,
       quality: quality,
@@ -567,39 +670,90 @@ class _VideoEditorState extends State<VideoEditor> {
 
     debugPrint('VideoEditor - run export cover command : [$execute]');
 
-    // PROGRESS CALLBACKS
-    FFmpegKit.executeAsync(
-      execute,
-      (FFmpegSession session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
-        final code = await session.getReturnCode();
+    if (kIsWeb) {
+      return executeFFmpegWeb(
+        execute: execute,
+        inputData: await _controller.file.readAsBytes(),
+        inputPath: inputPath,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+        totalVideoDurationMs: 0,
+        onProgress: null,
+      );
+    } else {
+      return executeFFmpegIO(
+        execute: execute,
+        outputPath: outputPath,
+        totalVideoDurationMs: 0,
+        onProgress: null,
+      );
+    }
+  }
+}
 
-        if (ReturnCode.isSuccess(code)) {
-          onCompleted(File(outputPath));
-        } else {
-          onError?.call(
-            Exception(
-              'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}',
-            ),
-            StackTrace.current,
-          );
-          return;
-        }
-      },
-      null,
-      onProgress,
-    );
+class FFmpegStatistics {
+  final int videoFrameNumber;
+  final double videoFps;
+  final double videoQuality;
+  final int size;
+  final int time;
+  final double bitrate;
+  final double speed;
+
+  static final statisticsRegex = RegExp(
+    r'frame\s*=\s*(\d+)\s+fps\s*=\s*(\d+(?:\.\d+)?)\s+q\s*=\s*([\d.-]+)\s+L?size\s*=\s*(\d+)\w*\s+time\s*=\s*([\d:.]+)\s+bitrate\s*=\s*([\d.]+)\s*(\w+)/s\s+speed\s*=\s*([\d.]+)x',
+  );
+
+  const FFmpegStatistics({
+    required this.videoFrameNumber,
+    required this.videoFps,
+    required this.videoQuality,
+    required this.size,
+    required this.time,
+    required this.bitrate,
+    required this.speed,
+  });
+
+  FFmpegStatistics.fromStatistics(Statistics s)
+      : this(
+          videoFrameNumber: s.getVideoFrameNumber(),
+          videoFps: s.getVideoFps(),
+          videoQuality: s.getVideoQuality(),
+          size: s.getSize(),
+          time: s.getTime(),
+          bitrate: s.getBitrate(),
+          speed: s.getSpeed(),
+        );
+
+  static FFmpegStatistics? fromMessage(String message) {
+    final match = statisticsRegex.firstMatch(message);
+    if (match != null) {
+      try {
+        return FFmpegStatistics(
+          videoFrameNumber: int.parse(match.group(1)!),
+          videoFps: double.parse(match.group(2)!),
+          videoQuality: double.parse(match.group(3)!),
+          size: int.parse(match.group(4)!),
+          time: timeToMs(match.group(5)!),
+          bitrate: double.parse(match.group(6)!),
+          // final bitrateUnit = match.group(7);
+          speed: double.parse(match.group(8)!),
+        );
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+
+    return null;
   }
 
-  Future<String?> _generateCoverFile({int quality = 100}) async {
-    return await VideoThumbnail.thumbnailFile(
-      imageFormat: ImageFormat.JPEG,
-      thumbnailPath: (await getTemporaryDirectory()).path,
-      video: _controller.file.path,
-      timeMs: _controller.selectedCoverVal?.timeMs ??
-          _controller.startTrim.inMilliseconds,
-      quality: quality,
-    );
+  static int timeToMs(String timeString) {
+    final parts = timeString.split(':');
+    final hours = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+    final secondsParts = parts[2].split('.');
+    final seconds = int.parse(secondsParts[0]);
+    final milliseconds = int.parse(secondsParts[1]);
+    return ((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + milliseconds);
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:cross_file/cross_file.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
@@ -67,8 +69,8 @@ class VideoEditorController extends ChangeNotifier {
   /// Style for [CropGridViewer]
   final CropGridStyle cropStyle;
 
-  /// Video from [File].
-  final File file;
+  /// Video from [XFile].
+  final XFile file;
 
   /// Constructs a [VideoEditorController] that edits a video from a file.
   ///
@@ -80,10 +82,14 @@ class VideoEditorController extends ChangeNotifier {
     this.coverStyle = const CoverSelectionStyle(),
     this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
-  })  : _video = VideoPlayerController.file(File(
-          // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
-          Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
-        )),
+  })  : _video = kIsWeb
+            ? VideoPlayerController.network(file.path)
+            : VideoPlayerController.file(
+                File(
+                  // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
+                  Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
+                ),
+              ),
         trimStyle = trimStyle ?? TrimSliderStyle(),
         assert(maxDuration > minDuration,
             'The maximum duration must be bigger than the minimum duration');
