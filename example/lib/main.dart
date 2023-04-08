@@ -142,7 +142,7 @@ class _VideoEditorState extends State<VideoEditor> {
         // outputFormat: VideoExportFormat.gif,
         // preset: VideoExportPreset.medium,
         // customInstruction: "-crf 17",
-        onProgress: (stats) => _exportingProgress.value =
+        onStatistics: (stats) => _exportingProgress.value =
             stats.getProgress(_controller.trimmedDuration.inMilliseconds),
       );
 
@@ -490,7 +490,7 @@ class _VideoEditorState extends State<VideoEditor> {
     required String execute,
     required String outputPath,
     String? outputMimeType,
-    void Function(FFmpegStatistics)? onProgress,
+    void Function(FFmpegStatistics)? onStatistics,
   }) {
     final completer = Completer<XFile>();
 
@@ -514,8 +514,8 @@ class _VideoEditorState extends State<VideoEditor> {
         }
       },
       null,
-      onProgress != null
-          ? (s) => onProgress(FFmpegStatistics.fromIOStatistics(s))
+      onStatistics != null
+          ? (s) => onStatistics(FFmpegStatistics.fromIOStatistics(s))
           : null,
     );
 
@@ -528,7 +528,7 @@ class _VideoEditorState extends State<VideoEditor> {
     required String inputPath,
     required String outputPath,
     String? outputMimeType,
-    void Function(FFmpegStatistics)? onProgress,
+    void Function(FFmpegStatistics)? onStatistics,
   }) async {
     FFmpeg? ffmpeg;
     final logs = <String>[];
@@ -537,10 +537,10 @@ class _VideoEditorState extends State<VideoEditor> {
       ffmpeg.setLogger((LoggerParam logger) {
         logs.add('[${logger.type}] ${logger.message}');
 
-        if (onProgress != null && logger.type == 'fferr') {
+        if (onStatistics != null && logger.type == 'fferr') {
           final statistics = FFmpegStatistics.fromMessage(logger.message);
           if (statistics != null) {
-            onProgress(statistics);
+            onStatistics(statistics);
           }
         }
       });
@@ -579,7 +579,7 @@ class _VideoEditorState extends State<VideoEditor> {
   String webOutputPath(FileFormat format) => _webPath('output', format);
 
   Future<XFile> exportVideo({
-    void Function(FFmpegStatistics)? onProgress,
+    void Function(FFmpegStatistics)? onStatistics,
     VideoExportFormat outputFormat = VideoExportFormat.mp4,
     double scale = 1.0,
     String customInstruction = '',
@@ -613,20 +613,20 @@ class _VideoEditorState extends State<VideoEditor> {
         inputPath: inputPath,
         outputPath: outputPath,
         outputMimeType: outputFormat.mimeType,
-        onProgress: onProgress,
+        onStatistics: onStatistics,
       );
     } else {
       return executeFFmpegIO(
         execute: execute,
         outputPath: outputPath,
         outputMimeType: outputFormat.mimeType,
-        onProgress: onProgress,
+        onStatistics: onStatistics,
       );
     }
   }
 
   Future<XFile> extractCover({
-    void Function(Statistics)? onProgress,
+    void Function(FFmpegStatistics)? onStatistics,
     CoverExportFormat outputFormat = CoverExportFormat.jpg,
     double scale = 1.0,
     int quality = 100,
@@ -650,7 +650,7 @@ class _VideoEditorState extends State<VideoEditor> {
         : await ioOutputPath(coverFile.path, outputFormat);
 
     var config = _controller.createCoverFFmpegConfig();
-    final execute = config.createCoverExportCommand(
+    final execute = config.createExportCommand(
       inputPath: inputPath,
       outputPath: outputPath,
       scale: scale,
@@ -678,6 +678,7 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 }
 
+/// Common class for ffmpeg_kit and ffmpeg_wasm statistics.
 class FFmpegStatistics {
   final int videoFrameNumber;
   final double videoFps;
@@ -730,8 +731,10 @@ class FFmpegStatistics {
     return null;
   }
 
-  double getProgress(int totalVideoDurationMs) {
-    return totalVideoDurationMs <= 0.0 ? 0.0 : time / totalVideoDurationMs;
+  double getProgress(int videoDurationMs) {
+    return videoDurationMs <= 0.0
+        ? 0.0
+        : (time / videoDurationMs).clamp(0.0, 1.0);
   }
 
   static int _timeToMs(String timeString) {

@@ -112,7 +112,7 @@ class CoverFFmpegConfig extends FFmpegConfig {
   /// The [quality] of the exported image (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
-  String createCoverExportCommand({
+  String createExportCommand({
     required String inputPath,
     required String outputPath,
     double scale = 1.0,
