@@ -142,7 +142,8 @@ class _VideoEditorState extends State<VideoEditor> {
         // outputFormat: VideoExportFormat.gif,
         // preset: VideoExportPreset.medium,
         // customInstruction: "-crf 17",
-        onProgress: (stats, value) => _exportingProgress.value = value,
+        onProgress: (stats) => _exportingProgress.value =
+            stats.getProgress(_controller.trimmedDuration.inMilliseconds),
       );
 
       _isExporting.value = false;
@@ -488,21 +489,22 @@ class _VideoEditorState extends State<VideoEditor> {
   Future<XFile> executeFFmpegIO({
     required String execute,
     required String outputPath,
-    int totalVideoDurationMs = 0,
-    void Function(FFmpegStatistics, double)? onProgress,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onProgress,
   }) {
     final completer = Completer<XFile>();
 
     FFmpegKit.executeAsync(
       execute,
       (session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
         final code = await session.getReturnCode();
 
         if (ReturnCode.isSuccess(code)) {
-          completer.complete(XFile(outputPath));
+          completer.complete(XFile(outputPath, mimeType: outputMimeType));
         } else {
+          final state = FFmpegKitConfig.sessionStateToString(
+            await session.getState(),
+          );
           completer.completeError(
             Exception(
               'FFmpeg process exited with state $state and return code $code.'
@@ -513,14 +515,7 @@ class _VideoEditorState extends State<VideoEditor> {
       },
       null,
       onProgress != null
-          ? (s) {
-              final progress = totalVideoDurationMs <= 0
-                  ? 0.0
-                  : s.getTime() / totalVideoDurationMs;
-
-              final statistics = FFmpegStatistics.fromStatistics(s);
-              onProgress(statistics, progress.clamp(0.0, 1.0));
-            }
+          ? (s) => onProgress(FFmpegStatistics.fromIOStatistics(s))
           : null,
     );
 
@@ -533,8 +528,7 @@ class _VideoEditorState extends State<VideoEditor> {
     required String inputPath,
     required String outputPath,
     String? outputMimeType,
-    int totalVideoDurationMs = 0,
-    void Function(FFmpegStatistics, double)? onProgress,
+    void Function(FFmpegStatistics)? onProgress,
   }) async {
     FFmpeg? ffmpeg;
     final logs = <String>[];
@@ -546,10 +540,7 @@ class _VideoEditorState extends State<VideoEditor> {
         if (onProgress != null && logger.type == 'fferr') {
           final statistics = FFmpegStatistics.fromMessage(logger.message);
           if (statistics != null) {
-            final progress = totalVideoDurationMs <= 0
-                ? 0.0
-                : statistics.time / totalVideoDurationMs;
-            onProgress(statistics, progress);
+            onProgress(statistics);
           }
         }
       });
@@ -588,7 +579,7 @@ class _VideoEditorState extends State<VideoEditor> {
   String webOutputPath(FileFormat format) => _webPath('output', format);
 
   Future<XFile> exportVideo({
-    void Function(FFmpegStatistics, double)? onProgress,
+    void Function(FFmpegStatistics)? onProgress,
     VideoExportFormat outputFormat = VideoExportFormat.mp4,
     double scale = 1.0,
     String customInstruction = '',
@@ -622,14 +613,13 @@ class _VideoEditorState extends State<VideoEditor> {
         inputPath: inputPath,
         outputPath: outputPath,
         outputMimeType: outputFormat.mimeType,
-        totalVideoDurationMs: _controller.trimmedDuration.inMilliseconds,
         onProgress: onProgress,
       );
     } else {
       return executeFFmpegIO(
         execute: execute,
         outputPath: outputPath,
-        totalVideoDurationMs: _controller.trimmedDuration.inMilliseconds,
+        outputMimeType: outputFormat.mimeType,
         onProgress: onProgress,
       );
     }
@@ -677,15 +667,12 @@ class _VideoEditorState extends State<VideoEditor> {
         inputPath: inputPath,
         outputPath: outputPath,
         outputMimeType: outputFormat.mimeType,
-        totalVideoDurationMs: 0,
-        onProgress: null,
       );
     } else {
       return executeFFmpegIO(
         execute: execute,
         outputPath: outputPath,
-        totalVideoDurationMs: 0,
-        onProgress: null,
+        outputMimeType: outputFormat.mimeType,
       );
     }
   }
@@ -714,7 +701,7 @@ class FFmpegStatistics {
     required this.speed,
   });
 
-  FFmpegStatistics.fromStatistics(Statistics s)
+  FFmpegStatistics.fromIOStatistics(Statistics s)
       : this(
           videoFrameNumber: s.getVideoFrameNumber(),
           videoFps: s.getVideoFps(),
@@ -728,26 +715,26 @@ class FFmpegStatistics {
   static FFmpegStatistics? fromMessage(String message) {
     final match = statisticsRegex.firstMatch(message);
     if (match != null) {
-      try {
-        return FFmpegStatistics(
-          videoFrameNumber: int.parse(match.group(1)!),
-          videoFps: double.parse(match.group(2)!),
-          videoQuality: double.parse(match.group(3)!),
-          size: int.parse(match.group(4)!),
-          time: timeToMs(match.group(5)!),
-          bitrate: double.parse(match.group(6)!),
-          // final bitrateUnit = match.group(7);
-          speed: double.parse(match.group(8)!),
-        );
-      } catch (e) {
-        debugPrint(e.toString());
-      }
+      return FFmpegStatistics(
+        videoFrameNumber: int.parse(match.group(1)!),
+        videoFps: double.parse(match.group(2)!),
+        videoQuality: double.parse(match.group(3)!),
+        size: int.parse(match.group(4)!),
+        time: _timeToMs(match.group(5)!),
+        bitrate: double.parse(match.group(6)!),
+        // final bitrateUnit = match.group(7);
+        speed: double.parse(match.group(8)!),
+      );
     }
 
     return null;
   }
 
-  static int timeToMs(String timeString) {
+  double getProgress(int totalVideoDurationMs) {
+    return totalVideoDurationMs <= 0.0 ? 0.0 : time / totalVideoDurationMs;
+  }
+
+  static int _timeToMs(String timeString) {
     final parts = timeString.split(':');
     final hours = int.parse(parts[0]);
     final minutes = int.parse(parts[1]);
