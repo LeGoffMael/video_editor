@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/domain/helpers.dart';
-import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/ui/crop/crop_mixin.dart';
 import 'package:video_editor/ui/video_viewer.dart';
 
@@ -323,7 +323,7 @@ class _CropGridViewerState extends State<CropGridViewer> with CropPreviewMixin {
   @override
   Widget buildView(BuildContext context, TransformData transform) {
     // return crop view without the grid
-    if (widget.showGrid == false) {
+    if (!widget.showGrid) {
       return _buildCropView(transform);
     }
 

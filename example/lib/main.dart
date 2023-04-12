@@ -97,7 +97,15 @@ class _VideoEditorState extends State<VideoEditor> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  late final VideoEditorController _controller = VideoEditorController.file(
+  /// On the web, when multiple VideoPlayers reuse the same VideoController,
+  /// only the last one can show the frames.
+  /// Therefore, when CropScreen is popped, the CropGridViewer should be given a
+  /// new key to refresh itself.
+  ///
+  /// https://github.com/flutter/flutter/issues/124210
+  int cropGridViewerKey = 0;
+
+  late final _controller = VideoEditorController.file(
     widget.file,
     minDuration: const Duration(seconds: 1),
     maxDuration: const Duration(seconds: 10),
@@ -199,7 +207,9 @@ class _VideoEditorState extends State<VideoEditor> {
                                         alignment: Alignment.center,
                                         children: [
                                           CropGridViewer.preview(
-                                              controller: _controller),
+                                            key: ValueKey(cropGridViewerKey),
+                                            controller: _controller,
+                                          ),
                                           AnimatedBuilder(
                                             animation: _controller.video,
                                             builder: (_, __) =>
@@ -338,12 +348,18 @@ class _VideoEditorState extends State<VideoEditor> {
             ),
             Expanded(
               child: IconButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (context) => CropScreen(controller: _controller),
-                  ),
-                ),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (context) => CropScreen(controller: _controller),
+                    ),
+                  );
+
+                  if (kIsWeb) {
+                    setState(() => ++cropGridViewerKey);
+                  }
+                },
                 icon: const Icon(Icons.crop),
                 tooltip: 'Open crop screen',
               ),
