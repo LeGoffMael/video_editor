@@ -101,8 +101,6 @@ class _VideoEditorState extends State<VideoEditor> {
     widget.file,
     minDuration: const Duration(seconds: 1),
     maxDuration: const Duration(seconds: 10),
-    // TODO(maRci002): transparent needed on the web?
-    cropStyle: const CropGridStyle(background: Colors.transparent),
   );
 
   @override

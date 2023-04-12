@@ -1,9 +1,10 @@
 ## 3.0.0
 
+- [#147](https://github.com/LeGoffMael/video_editor/pull/147) by [@maRci002](https://github.com/maRci002)
 - Removed the dependency on the `ffmpeg_kit` package.
 - Created `FFmpegConfig` to improve video and cover export functionality.
 - Added an example demonstrating how to export video and cover images using either `ffmpeg_kit` or `ffmpeg_wasm`, depending on the platform.
-- Updated the `VideoThumbnail` version to 0.6.0.
+- Updated the `video_thumbnail` version to 0.6.0.
 - Updated the project to work on the web.
 - Updated the documentation to reflect these changes.
 
