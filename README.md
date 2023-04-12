@@ -214,14 +214,15 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 Since version `3.0.0`, you have complete control over the video / cover image export process. The `VideoEditorController`'s new methods, `createVideoFFmpegConfig` and `createCoverFFmpegConfig`, allow you to create your own ffmpeg configurations and export commands. This means that you can now choose your preferred ffmpeg library for iOS / Android, such as `ffmpeg_kit_flutter_min`, `ffmpeg_kit_flutter_min_gpl`, `ffmpeg_kit_flutter_full_gpl`, or `ffmpeg_kit_flutter_full`. For web platforms, you can choose `ffmpeg_wasm`. Alternatively, you can choose not to include any ffmpeg package to minimize your app's size, and instead delegate the exportation task to a webservice by passing the ffmpeg command to it.
 
 <details>
-  <summary>Example of how to export with the `ffmpeg_kit` package</summary>
+  <summary>Example of how to run ffmpeg command with the `ffmpeg_kit` package</summary>
 
 ```dart
+import 'dart:async';
+
+import 'package:cross_file/cross_file.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 
 Future<XFile> executeFFmpegIO({
   required String execute,
@@ -263,9 +264,12 @@ Future<XFile> executeFFmpegIO({
 </details>
 
 <details>
-  <summary>Example of how to export with the `ffmpeg_wasm` package</summary>
+  <summary>Example of how to run ffmpeg command with the `ffmpeg_wasm` package</summary>
 
 ```dart
+import 'dart:typed_data';
+
+import 'package:cross_file/cross_file.dart';
 import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
 
 Future<XFile> executeFFmpegWeb({
@@ -315,6 +319,16 @@ Future<XFile> executeFFmpegWeb({
   <summary>Example of how to export video / cover images</summary>
 
 ```dart
+import 'dart:async';
+
+import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
+import 'package:video_editor/video_editor.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+
 Future<String> ioOutputPath(String filePath, FileFormat format) async {
   final tempPath = (await getTemporaryDirectory()).path;
   final name = path.basenameWithoutExtension(filePath);
@@ -396,7 +410,7 @@ Future<XFile> extractCover({
   );
 
   final inputPath = kIsWeb
-      ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+      ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
       : coverFile.path;
   final outputPath = kIsWeb
       ? webOutputPath(outputFormat)
@@ -416,7 +430,7 @@ Future<XFile> extractCover({
   if (kIsWeb) {
     return executeFFmpegWeb(
       execute: execute,
-      inputData: await _controller.file.readAsBytes(),
+      inputData: await coverFile.readAsBytes(),
       inputPath: inputPath,
       outputPath: outputPath,
       outputMimeType: outputFormat.mimeType,
@@ -497,6 +511,50 @@ class FFmpegStatistics {
     final seconds = int.parse(secondsParts[0]);
     final milliseconds = int.parse(secondsParts[1]);
     return ((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + milliseconds);
+  }
+}
+```
+
+</details>
+
+
+<details>
+  <summary>Example of how to get metadata</summary>
+
+```dart
+import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:flutter/foundation.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
+
+Future<void> getMetaData(
+    {required void Function(Map<dynamic, dynamic>? metadata)
+    onCompleted}) async {
+  if (kIsWeb) {
+    // ffprobe is not available on the web
+    // https://github.com/ffmpegwasm/ffmpeg.wasm/issues/121
+    final format = FileFormat.fromMimeType(_controller.file.mimeType);
+    final inputPath = webInputPath(format);
+    const outputPath = 'output.txt';
+
+    final outputFile = await executeFFmpegWeb(
+      execute: '-i $inputPath -f ffmetadata $outputPath',
+      inputData: await _controller.file.readAsBytes(),
+      outputMimeType: 'text/plain',
+      inputPath: inputPath,
+      outputPath: outputPath,
+    );
+
+    final metadata = await outputFile.readAsString();
+    print(metadata);
+    onCompleted({});
+  } else {
+    await FFprobeKit.getMediaInformationAsync(
+      _controller.file.path,
+          (session) async {
+        final information = session.getMediaInformation();
+        onCompleted(information?.getAllProperties());
+      },
+    );
   }
 }
 ```

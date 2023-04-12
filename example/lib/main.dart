@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
@@ -471,20 +470,23 @@ class _VideoEditorState extends State<VideoEditor> {
       {required void Function(Map<dynamic, dynamic>? metadata)
           onCompleted}) async {
     if (kIsWeb) {
-      // Default FFMPEG lib throws: Requested output format 'json' is not a suitable output format
+      // ffprobe is not available on the web
+      // https://github.com/ffmpegwasm/ffmpeg.wasm/issues/121
       final format = FileFormat.fromMimeType(_controller.file.mimeType);
       final inputPath = webInputPath(format);
-      const outputPath = 'output.json';
+      const outputPath = 'output.txt';
 
       final outputFile = await executeFFmpegWeb(
-        execute: '-i $inputPath -f ffmetadata -f json $outputPath',
+        execute: '-i $inputPath -f ffmetadata $outputPath',
         inputData: await _controller.file.readAsBytes(),
-        outputMimeType: 'application/json',
+        outputMimeType: 'text/plain',
         inputPath: inputPath,
         outputPath: outputPath,
       );
 
-      onCompleted(json.decode(await outputFile.readAsString()));
+      final metadata = await outputFile.readAsString();
+      print(metadata);
+      onCompleted({});
     } else {
       await FFprobeKit.getMediaInformationAsync(
         _controller.file.path,
@@ -657,7 +659,7 @@ class _VideoEditorState extends State<VideoEditor> {
     );
 
     final inputPath = kIsWeb
-        ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+        ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
         : coverFile.path;
     final outputPath = kIsWeb
         ? webOutputPath(outputFormat)
@@ -677,7 +679,7 @@ class _VideoEditorState extends State<VideoEditor> {
     if (kIsWeb) {
       return executeFFmpegWeb(
         execute: execute,
-        inputData: await _controller.file.readAsBytes(),
+        inputData: await coverFile.readAsBytes(),
         inputPath: inputPath,
         outputPath: outputPath,
         outputMimeType: outputFormat.mimeType,
