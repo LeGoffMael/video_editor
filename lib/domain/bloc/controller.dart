@@ -499,10 +499,11 @@ class VideoEditorController extends ChangeNotifier {
   }
 
   /// Returns the `-filter:v` command to use in ffmpeg execution
-  String _getExportFilters({
+  String _getVideoExportFilters({
     VideoExportFormat? videoFormat,
     double scale = 1.0,
     bool isFiltersEnabled = true,
+    List<String> additionalFilters = const <String>[],
   }) {
     if (!isFiltersEnabled) return "";
 
@@ -510,10 +511,10 @@ class VideoEditorController extends ChangeNotifier {
     final bool isGif =
         videoFormat?.extension == VideoExportFormat.gif.extension;
     final String scaleInstruction =
-        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+    scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
     // VALIDATE FILTERS
-    final List<String> filters = [
+    List<String> filters = [
       _getCrop(),
       scaleInstruction,
       _getRotation(),
@@ -521,6 +522,7 @@ class VideoEditorController extends ChangeNotifier {
           ? "fps=${videoFormat is GifExportFormat ? videoFormat.fps : VideoExportFormat.gif.fps}"
           : "",
     ];
+    filters += additionalFilters;
     filters.removeWhere((item) => item.isEmpty);
     return filters.isNotEmpty
         ? "-vf '${filters.join(",")}'${isGif ? " -loop 0" : ""}"
@@ -561,6 +563,7 @@ class VideoEditorController extends ChangeNotifier {
     String? name,
     String? outDir,
     VideoExportFormat format = VideoExportFormat.mp4,
+    List<String> additionalVideoFilters = const <String>[],
     double scale = 1.0,
     String? customInstruction,
     void Function(Statistics, double)? onProgress,
@@ -574,10 +577,11 @@ class VideoEditorController extends ChangeNotifier {
       outputDirectory: outDir,
       format: format,
     );
-    final String filter = _getExportFilters(
+    final String filter = _getVideoExportFilters(
       videoFormat: format,
       scale: scale,
       isFiltersEnabled: isFiltersEnabled,
+      additionalFilters: additionalVideoFilters,
     );
     final String execute =
         // ignore: unnecessary_string_escapes
@@ -725,7 +729,7 @@ class VideoEditorController extends ChangeNotifier {
       format: format,
     );
     final String filter =
-        _getExportFilters(scale: scale, isFiltersEnabled: isFiltersEnabled);
+    _getVideoExportFilters(scale: scale, isFiltersEnabled: isFiltersEnabled);
     // ignore: unnecessary_string_escapes
     final String execute = "-i \'$coverPath\' $filter -y $outputPath";
 
