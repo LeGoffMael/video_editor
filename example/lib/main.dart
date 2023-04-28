@@ -476,7 +476,7 @@ class _VideoEditorState extends State<VideoEditor> {
       final inputPath = webInputPath(format);
       const outputPath = 'output.txt';
 
-      final outputFile = await executeFFmpegWeb(
+      final outputFile = await const FFmpegExport().executeFFmpegWeb(
         execute: '-i $inputPath -f ffmetadata $outputPath',
         inputData: await _controller.file.readAsBytes(),
         outputMimeType: 'text/plain',
@@ -501,6 +501,125 @@ class _VideoEditorState extends State<VideoEditor> {
   //--------//
   // EXPORT //
   //--------//
+
+  Future<String> ioOutputPath(String filePath, FileFormat format) async {
+    final tempPath = (await getTemporaryDirectory()).path;
+    final name = path.basenameWithoutExtension(filePath);
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return "$tempPath/${name}_$epoch.${format.extension}";
+  }
+
+  String _webPath(String prePath, FileFormat format) {
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return '${prePath}_$epoch.${format.extension}';
+  }
+
+  String webInputPath(FileFormat format) => _webPath('input', format);
+
+  String webOutputPath(FileFormat format) => _webPath('output', format);
+
+  Future<XFile> exportVideo({
+    void Function(FFmpegStatistics)? onStatistics,
+    VideoExportFormat outputFormat = VideoExportFormat.mp4,
+    double scale = 1.0,
+    String customInstruction = '',
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+  }) async {
+    final inputPath = kIsWeb
+        ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+        : _controller.file.path;
+    final outputPath = kIsWeb
+        ? webOutputPath(outputFormat)
+        : await ioOutputPath(inputPath, outputFormat);
+
+    final config = _controller.createVideoFFmpegConfig();
+    final execute = config.createExportCommand(
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputFormat: outputFormat,
+      scale: scale,
+      customInstruction: customInstruction,
+      preset: preset,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('run export video command : [$execute]');
+
+    if (kIsWeb) {
+      return const FFmpegExport().executeFFmpegWeb(
+        execute: execute,
+        inputData: await _controller.file.readAsBytes(),
+        inputPath: inputPath,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+        onStatistics: onStatistics,
+      );
+    } else {
+      return const FFmpegExport().executeFFmpegIO(
+        execute: execute,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+        onStatistics: onStatistics,
+      );
+    }
+  }
+
+  Future<XFile> extractCover({
+    void Function(FFmpegStatistics)? onStatistics,
+    CoverExportFormat outputFormat = CoverExportFormat.jpg,
+    double scale = 1.0,
+    int quality = 100,
+    bool isFiltersEnabled = true,
+  }) async {
+    // file generated from the thumbnail library or video source
+    final coverFile = await VideoThumbnail.thumbnailFile(
+      imageFormat: ImageFormat.JPEG,
+      thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
+      video: _controller.file.path,
+      timeMs: _controller.selectedCoverVal?.timeMs ??
+          _controller.startTrim.inMilliseconds,
+      quality: quality,
+    );
+
+    final inputPath = kIsWeb
+        ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
+        : coverFile.path;
+    final outputPath = kIsWeb
+        ? webOutputPath(outputFormat)
+        : await ioOutputPath(coverFile.path, outputFormat);
+
+    var config = _controller.createCoverFFmpegConfig();
+    final execute = config.createExportCommand(
+      inputPath: inputPath,
+      outputPath: outputPath,
+      scale: scale,
+      quality: quality,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('VideoEditor - run export cover command : [$execute]');
+
+    if (kIsWeb) {
+      return const FFmpegExport().executeFFmpegWeb(
+        execute: execute,
+        inputData: await coverFile.readAsBytes(),
+        inputPath: inputPath,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+      );
+    } else {
+      return const FFmpegExport().executeFFmpegIO(
+        execute: execute,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+      );
+    }
+  }
+}
+
+class FFmpegExport {
+  const FFmpegExport();
 
   Future<XFile> executeFFmpegIO({
     required String execute,
@@ -575,121 +694,6 @@ class _VideoEditorState extends State<VideoEditor> {
       );
     } finally {
       ffmpeg?.exit();
-    }
-  }
-
-  Future<String> ioOutputPath(String filePath, FileFormat format) async {
-    final tempPath = (await getTemporaryDirectory()).path;
-    final name = path.basenameWithoutExtension(filePath);
-    final epoch = DateTime.now().millisecondsSinceEpoch;
-    return "$tempPath/${name}_$epoch.${format.extension}";
-  }
-
-  String _webPath(String prePath, FileFormat format) {
-    final epoch = DateTime.now().millisecondsSinceEpoch;
-    return '${prePath}_$epoch.${format.extension}';
-  }
-
-  String webInputPath(FileFormat format) => _webPath('input', format);
-
-  String webOutputPath(FileFormat format) => _webPath('output', format);
-
-  Future<XFile> exportVideo({
-    void Function(FFmpegStatistics)? onStatistics,
-    VideoExportFormat outputFormat = VideoExportFormat.mp4,
-    double scale = 1.0,
-    String customInstruction = '',
-    VideoExportPreset preset = VideoExportPreset.none,
-    bool isFiltersEnabled = true,
-  }) async {
-    final inputPath = kIsWeb
-        ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
-        : _controller.file.path;
-    final outputPath = kIsWeb
-        ? webOutputPath(outputFormat)
-        : await ioOutputPath(inputPath, outputFormat);
-
-    final config = _controller.createVideoFFmpegConfig();
-    final execute = config.createExportCommand(
-      inputPath: inputPath,
-      outputPath: outputPath,
-      outputFormat: outputFormat,
-      scale: scale,
-      customInstruction: customInstruction,
-      preset: preset,
-      isFiltersEnabled: isFiltersEnabled,
-    );
-
-    debugPrint('run export video command : [$execute]');
-
-    if (kIsWeb) {
-      return executeFFmpegWeb(
-        execute: execute,
-        inputData: await _controller.file.readAsBytes(),
-        inputPath: inputPath,
-        outputPath: outputPath,
-        outputMimeType: outputFormat.mimeType,
-        onStatistics: onStatistics,
-      );
-    } else {
-      return executeFFmpegIO(
-        execute: execute,
-        outputPath: outputPath,
-        outputMimeType: outputFormat.mimeType,
-        onStatistics: onStatistics,
-      );
-    }
-  }
-
-  Future<XFile> extractCover({
-    void Function(FFmpegStatistics)? onStatistics,
-    CoverExportFormat outputFormat = CoverExportFormat.jpg,
-    double scale = 1.0,
-    int quality = 100,
-    bool isFiltersEnabled = true,
-  }) async {
-    // file generated from the thumbnail library or video source
-    final coverFile = await VideoThumbnail.thumbnailFile(
-      imageFormat: ImageFormat.JPEG,
-      thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
-      video: _controller.file.path,
-      timeMs: _controller.selectedCoverVal?.timeMs ??
-          _controller.startTrim.inMilliseconds,
-      quality: quality,
-    );
-
-    final inputPath = kIsWeb
-        ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
-        : coverFile.path;
-    final outputPath = kIsWeb
-        ? webOutputPath(outputFormat)
-        : await ioOutputPath(coverFile.path, outputFormat);
-
-    var config = _controller.createCoverFFmpegConfig();
-    final execute = config.createExportCommand(
-      inputPath: inputPath,
-      outputPath: outputPath,
-      scale: scale,
-      quality: quality,
-      isFiltersEnabled: isFiltersEnabled,
-    );
-
-    debugPrint('VideoEditor - run export cover command : [$execute]');
-
-    if (kIsWeb) {
-      return executeFFmpegWeb(
-        execute: execute,
-        inputData: await coverFile.readAsBytes(),
-        inputPath: inputPath,
-        outputPath: outputPath,
-        outputMimeType: outputFormat.mimeType,
-      );
-    } else {
-      return executeFFmpegIO(
-        execute: execute,
-        outputPath: outputPath,
-        outputMimeType: outputFormat.mimeType,
-      );
     }
   }
 }

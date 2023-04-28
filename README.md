@@ -214,233 +214,97 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 Since version `3.0.0`, you have complete control over the video / cover image export process. The `VideoEditorController`'s new methods, `createVideoFFmpegConfig` and `createCoverFFmpegConfig`, allow you to create your own ffmpeg configurations and export commands. This means that you can now choose your preferred ffmpeg library for iOS / Android, such as `ffmpeg_kit_flutter_min`, `ffmpeg_kit_flutter_min_gpl`, `ffmpeg_kit_flutter_full_gpl`, or `ffmpeg_kit_flutter_full`. For web platforms, you can choose `ffmpeg_wasm`. Alternatively, you can choose not to include any ffmpeg package to minimize your app's size, and instead delegate the exportation task to a webservice by passing the ffmpeg command to it.
 
 <details>
-  <summary>Example of how to run ffmpeg command with the `ffmpeg_kit` package</summary>
+  <summary>Example of how to run ffmpeg command with the `ffmpeg_kit` / `ffmpeg_wasm` package</summary>
 
 ```dart
 import 'dart:async';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
-
-Future<XFile> executeFFmpegIO({
-  required String execute,
-  required String outputPath,
-  String? outputMimeType,
-  void Function(FFmpegStatistics)? onStatistics,
-}) {
-  final completer = Completer<XFile>();
-
-  FFmpegKit.executeAsync(
-    execute,
-        (session) async {
-      final code = await session.getReturnCode();
-
-      if (ReturnCode.isSuccess(code)) {
-        completer.complete(XFile(outputPath, mimeType: outputMimeType));
-      } else {
-        final state = FFmpegKitConfig.sessionStateToString(
-          await session.getState(),
-        );
-        completer.completeError(
-          Exception(
-            'FFmpeg process exited with state $state and return code $code.'
-                '${await session.getOutput()}',
-          ),
-        );
-      }
-    },
-    null,
-    onStatistics != null
-        ? (s) => onStatistics(FFmpegStatistics.fromIOStatistics(s))
-        : null,
-  );
-
-  return completer.future;
-}
-```
-
-</details>
-
-<details>
-  <summary>Example of how to run ffmpeg command with the `ffmpeg_wasm` package</summary>
-
-```dart
-import 'dart:typed_data';
-
-import 'package:cross_file/cross_file.dart';
-import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
-
-Future<XFile> executeFFmpegWeb({
-  required String execute,
-  required Uint8List inputData,
-  required String inputPath,
-  required String outputPath,
-  String? outputMimeType,
-  void Function(FFmpegStatistics)? onStatistics,
-}) async {
-  FFmpeg? ffmpeg;
-  final logs = <String>[];
-  try {
-    ffmpeg = createFFmpeg(CreateFFmpegParam(log: false));
-    ffmpeg.setLogger((LoggerParam logger) {
-      logs.add('[${logger.type}] ${logger.message}');
-
-      if (onStatistics != null && logger.type == 'fferr') {
-        final statistics = FFmpegStatistics.fromMessage(logger.message);
-        if (statistics != null) {
-          onStatistics(statistics);
-        }
-      }
-    });
-
-    await ffmpeg.load();
-
-    ffmpeg.writeFile(inputPath, inputData);
-    await ffmpeg.runCommand(execute);
-
-    final data = ffmpeg.readFile(outputPath);
-    return XFile.fromData(data, mimeType: outputMimeType);
-  } catch (e, s) {
-    Error.throwWithStackTrace(
-      Exception('Exception:\n$e\n\nLogs:${logs.join('\n')}}'),
-      s,
-    );
-  } finally {
-    ffmpeg?.exit();
-  }
-}
-```
-
-</details>
-
-<details>
-  <summary>Example of how to export video / cover images</summary>
-
-```dart
-import 'dart:async';
-
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
-import 'package:video_editor/domain/entities/file_format.dart';
-import 'package:video_editor/video_editor.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-Future<String> ioOutputPath(String filePath, FileFormat format) async {
-  final tempPath = (await getTemporaryDirectory()).path;
-  final name = path.basenameWithoutExtension(filePath);
-  final epoch = DateTime.now().millisecondsSinceEpoch;
-  return "$tempPath/${name}_$epoch.${format.extension}";
-}
+class FFmpegExport {
+  const FFmpegExport();
 
-String _webPath(String prePath, FileFormat format) {
-  final epoch = DateTime.now().millisecondsSinceEpoch;
-  return '${prePath}_$epoch.${format.extension}';
-}
+  Future<XFile> executeFFmpegIO({
+    required String execute,
+    required String outputPath,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onStatistics,
+  }) {
+    final completer = Completer<XFile>();
 
-String webInputPath(FileFormat format) => _webPath('input', format);
+    FFmpegKit.executeAsync(
+      execute,
+          (session) async {
+        final code = await session.getReturnCode();
 
-String webOutputPath(FileFormat format) => _webPath('output', format);
-
-Future<XFile> exportVideo({
-  void Function(FFmpegStatistics)? onStatistics,
-  VideoExportFormat outputFormat = VideoExportFormat.mp4,
-  double scale = 1.0,
-  String customInstruction = '',
-  VideoExportPreset preset = VideoExportPreset.none,
-  bool isFiltersEnabled = true,
-}) async {
-  final inputPath = kIsWeb
-      ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
-      : _controller.file.path;
-  final outputPath = kIsWeb
-      ? webOutputPath(outputFormat)
-      : await ioOutputPath(inputPath, outputFormat);
-
-  final config = _controller.createVideoFFmpegConfig();
-  final execute = config.createExportCommand(
-    inputPath: inputPath,
-    outputPath: outputPath,
-    outputFormat: outputFormat,
-    scale: scale,
-    customInstruction: customInstruction,
-    preset: preset,
-    isFiltersEnabled: isFiltersEnabled,
-  );
-
-  debugPrint('run export video command : [$execute]');
-
-  if (kIsWeb) {
-    return executeFFmpegWeb(
-      execute: execute,
-      inputData: await _controller.file.readAsBytes(),
-      inputPath: inputPath,
-      outputPath: outputPath,
-      outputMimeType: outputFormat.mimeType,
-      onStatistics: onStatistics,
+        if (ReturnCode.isSuccess(code)) {
+          completer.complete(XFile(outputPath, mimeType: outputMimeType));
+        } else {
+          final state = FFmpegKitConfig.sessionStateToString(
+            await session.getState(),
+          );
+          completer.completeError(
+            Exception(
+              'FFmpeg process exited with state $state and return code $code.'
+                  '${await session.getOutput()}',
+            ),
+          );
+        }
+      },
+      null,
+      onStatistics != null
+          ? (s) => onStatistics(FFmpegStatistics.fromIOStatistics(s))
+          : null,
     );
-  } else {
-    return executeFFmpegIO(
-      execute: execute,
-      outputPath: outputPath,
-      outputMimeType: outputFormat.mimeType,
-      onStatistics: onStatistics,
-    );
+
+    return completer.future;
   }
-}
 
-Future<XFile> extractCover({
-  void Function(FFmpegStatistics)? onStatistics,
-  CoverExportFormat outputFormat = CoverExportFormat.jpg,
-  double scale = 1.0,
-  int quality = 100,
-  bool isFiltersEnabled = true,
-}) async {
-  // file generated from the thumbnail library or video source
-  final coverFile = await VideoThumbnail.thumbnailFile(
-    imageFormat: ImageFormat.JPEG,
-    thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
-    video: _controller.file.path,
-    timeMs: _controller.selectedCoverVal?.timeMs ??
-        _controller.startTrim.inMilliseconds,
-    quality: quality,
-  );
+  Future<XFile> executeFFmpegWeb({
+    required String execute,
+    required Uint8List inputData,
+    required String inputPath,
+    required String outputPath,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onStatistics,
+  }) async {
+    FFmpeg? ffmpeg;
+    final logs = <String>[];
+    try {
+      ffmpeg = createFFmpeg(CreateFFmpegParam(log: false));
+      ffmpeg.setLogger((LoggerParam logger) {
+        logs.add('[${logger.type}] ${logger.message}');
 
-  final inputPath = kIsWeb
-      ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
-      : coverFile.path;
-  final outputPath = kIsWeb
-      ? webOutputPath(outputFormat)
-      : await ioOutputPath(coverFile.path, outputFormat);
+        if (onStatistics != null && logger.type == 'fferr') {
+          final statistics = FFmpegStatistics.fromMessage(logger.message);
+          if (statistics != null) {
+            onStatistics(statistics);
+          }
+        }
+      });
 
-  var config = _controller.createCoverFFmpegConfig();
-  final execute = config.createExportCommand(
-    inputPath: inputPath,
-    outputPath: outputPath,
-    scale: scale,
-    quality: quality,
-    isFiltersEnabled: isFiltersEnabled,
-  );
+      await ffmpeg.load();
 
-  debugPrint('VideoEditor - run export cover command : [$execute]');
+      ffmpeg.writeFile(inputPath, inputData);
+      await ffmpeg.runCommand(execute);
 
-  if (kIsWeb) {
-    return executeFFmpegWeb(
-      execute: execute,
-      inputData: await coverFile.readAsBytes(),
-      inputPath: inputPath,
-      outputPath: outputPath,
-      outputMimeType: outputFormat.mimeType,
-    );
-  } else {
-    return executeFFmpegIO(
-      execute: execute,
-      outputPath: outputPath,
-      outputMimeType: outputFormat.mimeType,
-    );
+      final data = ffmpeg.readFile(outputPath);
+      return XFile.fromData(data, mimeType: outputMimeType);
+    } catch (e, s) {
+      Error.throwWithStackTrace(
+        Exception('Exception:\n$e\n\nLogs:${logs.join('\n')}}'),
+        s,
+      );
+    } finally {
+      ffmpeg?.exit();
+    }
   }
 }
 
@@ -517,11 +381,144 @@ class FFmpegStatistics {
 
 </details>
 
+<details>
+  <summary>Example of how to export video / cover images</summary>
+
+```dart
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
+import 'package:video_editor/video_editor.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+Future<String> ioOutputPath(String filePath, FileFormat format) async {
+  final tempPath = (await getTemporaryDirectory()).path;
+  final name = path.basenameWithoutExtension(filePath);
+  final epoch = DateTime.now().millisecondsSinceEpoch;
+  return "$tempPath/${name}_$epoch.${format.extension}";
+}
+
+String _webPath(String prePath, FileFormat format) {
+  final epoch = DateTime.now().millisecondsSinceEpoch;
+  return '${prePath}_$epoch.${format.extension}';
+}
+
+String webInputPath(FileFormat format) => _webPath('input', format);
+
+String webOutputPath(FileFormat format) => _webPath('output', format);
+
+Future<XFile> exportVideo({
+  void Function(FFmpegStatistics)? onStatistics,
+  VideoExportFormat outputFormat = VideoExportFormat.mp4,
+  double scale = 1.0,
+  String customInstruction = '',
+  VideoExportPreset preset = VideoExportPreset.none,
+  bool isFiltersEnabled = true,
+}) async {
+  final inputPath = kIsWeb
+      ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+      : _controller.file.path;
+  final outputPath = kIsWeb
+      ? webOutputPath(outputFormat)
+      : await ioOutputPath(inputPath, outputFormat);
+
+  final config = _controller.createVideoFFmpegConfig();
+  final execute = config.createExportCommand(
+    inputPath: inputPath,
+    outputPath: outputPath,
+    outputFormat: outputFormat,
+    scale: scale,
+    customInstruction: customInstruction,
+    preset: preset,
+    isFiltersEnabled: isFiltersEnabled,
+  );
+
+  debugPrint('run export video command : [$execute]');
+
+  if (kIsWeb) {
+    return const FFmpegExport().executeFFmpegWeb(
+      execute: execute,
+      inputData: await _controller.file.readAsBytes(),
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+      onStatistics: onStatistics,
+    );
+  } else {
+    return const FFmpegExport().executeFFmpegIO(
+      execute: execute,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+      onStatistics: onStatistics,
+    );
+  }
+}
+
+Future<XFile> extractCover({
+  void Function(FFmpegStatistics)? onStatistics,
+  CoverExportFormat outputFormat = CoverExportFormat.jpg,
+  double scale = 1.0,
+  int quality = 100,
+  bool isFiltersEnabled = true,
+}) async {
+  // file generated from the thumbnail library or video source
+  final coverFile = await VideoThumbnail.thumbnailFile(
+    imageFormat: ImageFormat.JPEG,
+    thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
+    video: _controller.file.path,
+    timeMs: _controller.selectedCoverVal?.timeMs ??
+        _controller.startTrim.inMilliseconds,
+    quality: quality,
+  );
+
+  final inputPath = kIsWeb
+      ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
+      : coverFile.path;
+  final outputPath = kIsWeb
+      ? webOutputPath(outputFormat)
+      : await ioOutputPath(coverFile.path, outputFormat);
+
+  var config = _controller.createCoverFFmpegConfig();
+  final execute = config.createExportCommand(
+    inputPath: inputPath,
+    outputPath: outputPath,
+    scale: scale,
+    quality: quality,
+    isFiltersEnabled: isFiltersEnabled,
+  );
+
+  debugPrint('VideoEditor - run export cover command : [$execute]');
+
+  if (kIsWeb) {
+    return const FFmpegExport().executeFFmpegWeb(
+      execute: execute,
+      inputData: await coverFile.readAsBytes(),
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+    );
+  } else {
+    return const FFmpegExport().executeFFmpegIO(
+      execute: execute,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+    );
+  }
+}
+```
+
+</details>
+
 
 <details>
   <summary>Example of how to get metadata</summary>
 
 ```dart
+import 'dart:async';
+
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:video_editor/domain/entities/file_format.dart';
@@ -536,7 +533,7 @@ Future<void> getMetaData(
     final inputPath = webInputPath(format);
     const outputPath = 'output.txt';
 
-    final outputFile = await executeFFmpegWeb(
+    final outputFile = await const FFmpegExport().executeFFmpegWeb(
       execute: '-i $inputPath -f ffmetadata $outputPath',
       inputData: await _controller.file.readAsBytes(),
       outputMimeType: 'text/plain',
