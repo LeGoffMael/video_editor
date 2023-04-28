@@ -43,12 +43,6 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        // By default Flutter uses --multidex
-        // https://docs.flutter.dev/deployment/android#enabling-multidex-support
-        // However this should be enabled (just defaultConfig.multiDexEnabled true is enough)
-        // https://stackoverflow.com/questions/49886597/multidex-issue-with-flutter#comment130032024_54680454
-        // In case compileSdkVersion is greater or equals than 21 multiDexEnabled can be removed
-        // It comes from: flutter/packages/flutter_tools/gradle/flutter.gradle
         multiDexEnabled true
     }
 
