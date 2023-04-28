@@ -12,7 +12,7 @@ import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_player/video_player.dart';
 
-class VideoMinDurationError extends Error {
+class VideoMinDurationError implements Exception {
   final Duration minDuration;
   final Duration videoDuration;
 
@@ -72,6 +72,9 @@ class VideoEditorController extends ChangeNotifier {
   /// Video from [XFile].
   final XFile file;
 
+  /// Quality of default thumbnail
+  final int defaultCoverThumbnailQuality;
+
   /// Constructs a [VideoEditorController] that edits a video from a file.
   ///
   /// The [file] argument must not be null.
@@ -82,6 +85,7 @@ class VideoEditorController extends ChangeNotifier {
     this.coverStyle = const CoverSelectionStyle(),
     this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
+    this.defaultCoverThumbnailQuality = 10,
   })  : _video = kIsWeb
             ? VideoPlayerController.network(file.path)
             : VideoPlayerController.file(
@@ -92,7 +96,12 @@ class VideoEditorController extends ChangeNotifier {
               ),
         trimStyle = trimStyle ?? TrimSliderStyle(),
         assert(maxDuration > minDuration,
-            'The maximum duration must be bigger than the minimum duration');
+            'The maximum duration must be bigger than the minimum duration'),
+        assert(
+          defaultCoverThumbnailQuality > 0 &&
+              defaultCoverThumbnailQuality <= 100,
+          'defaultCoverThumbnailQuality should be between 0 and 100',
+        );
 
   int _rotation = 0;
   bool _isTrimming = false;
@@ -416,6 +425,7 @@ class VideoEditorController extends ChangeNotifier {
     final defaultCover = await generateSingleCoverThumbnail(
       file.path,
       timeMs: startTrim.inMilliseconds,
+      quality: defaultCoverThumbnailQuality,
     );
     updateSelectedCover(defaultCover);
   }
