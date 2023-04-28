@@ -218,14 +218,14 @@ Since version `3.0.0`, you have complete control over the video / cover image ex
 
 ```dart
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
-import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class FFmpegExport {
