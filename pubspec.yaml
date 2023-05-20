@@ -17,9 +17,13 @@ dependencies:
   transparent_image: ^2.0.1 # show fade-in placeholder in thumbnails generation
   video_player: ^2.5.2
   cross_file: ^0.3.3+4
-  # TODO(maRci002): remove local path when new package is published
+  # TODO(maRci002): remove git path when new package is published
   video_thumbnail:
-    path: ../video_thumbnail/video_thumbnail
+    # path: ../video_thumbnail/video_thumbnail
+    git:
+      url: git@github.com:maRci002/video_thumbnail.git
+      ref: feat-web_implementation
+      path: video_thumbnail
 
 dev_dependencies:
   flutter_test:

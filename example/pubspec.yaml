@@ -23,9 +23,13 @@ dependencies:
   video_player: ^2.5.1
   path_provider: ^2.0.12
   cross_file: ^0.3.3+4
-  # TODO(maRci002): remove local path when new package is published
+  # TODO(maRci002): remove git path when new package is published
   video_thumbnail:
-    path: ../../video_thumbnail/video_thumbnail
+    # path: ../../video_thumbnail/video_thumbnail
+    git:
+      url: git@github.com:maRci002/video_thumbnail.git
+      ref: feat-web_implementation
+      path: video_thumbnail
   # TODO(maRci002): remove git path when new package is published
   ffmpeg_wasm:
     git:
