@@ -1,14 +1,9 @@
 # Flutter video editor
 
 [![Pub](https://img.shields.io/pub/v/video_editor.svg)](https://pub.dev/packages/video_editor)
-[![ffmpeg_kit_flutter](https://img.shields.io/badge/ffmpeg_kit_flutter-v5.1.0-green)](https://pub.dev/packages/ffmpeg_kit_flutter)
 [![GitHub stars](https://img.shields.io/github/stars/LeGoffMael/video_editor?style=social)](https://github.com/LeGoffMael/video_editor/stargazers)
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
-
-The exportation is made using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library.
-
-This library is written in Dart only but uses external packages such as [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) and [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now.
 
 ## 📖 Installation
 
@@ -27,25 +22,6 @@ dependencies:
 import 'package:video_editor/video_editor.dart';
 ```
 
-Since [v1.3.0](https://github.com/LeGoffMael/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. (More info on [flutter FFmepeg kit](https://github.com/arthenica/ffmpeg-kit/tree/main/flutter/flutter))
-
-Those Android API level and iOS deployment target are required to uses this package. If you're planing to target older devices, check about the [LTS release](#1-how-to-use-ffmpeg-lts-release).
-
-<table>
-<thead>
-<tr>
-<th align="center">Android<br>API Level</th>
-<th align="center">iOS Minimum<br>Deployment Target</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">24</td>
-<td align="center">12.1</td>
-</tr>
-</tbody>
-</table>
-
 ## 📸 Screenshots
 
 | Example app running on an Iphone 11 pro | Customization example, light mode |
@@ -56,7 +32,7 @@ Those Android API level and iOS deployment target are required to uses this pack
 
 ```dart
 final VideoEditorController _controller = VideoEditorController.file(
-  File('/path/to/video.mp4'),
+  XFile('/path/to/video.mp4'),
   minDuration: const Duration(seconds: 1),
   maxDuration: const Duration(seconds: 10),
 );
@@ -72,37 +48,23 @@ void dispose() {
   _controller.dispose();
   super.dispose();
 }
-
-// Basic export video function
-Future<void> exportVideo() => _controller.exportVideo(
-  onCompleted: (file) {}, // show the exported video
-);
-
-// Export a GIF image, with some handlers
-Future<void> exporGif() => _controller.exportVideo(
-  format: VideoExportFormat.gif, // or GifExportFormat(fps: 20), to customize the fps
-  onProgress: (stats, value) {}, // show exportation progress
-  onError: (e, s) {}, // handle the error
-  onCompleted: (file) {}, // show the exported GIF
-);
 ```
 
 For more details check out the [example](https://github.com/LeGoffMael/video_editor/tree/master/example).
 
 ### VideoEditorController
 
-| Function                         | Description                       |
-| -------------------------------- | --------------------------------- |
-| initialize(aspectRatio)          | Init the `controller` parameters, the video, the trim and the cover, call `cropAspectRatio` |
-| rotate90Degrees(RotateDirection) | Rotate the video by 90 degrees in the direction provided            |
-| preferredCropAspectRatio         | Update the aspect ratio of the crop area                            |
-| setPreferredRatioFromCrop        | Update the aspect ratio to the current crop area ratio              |
-| cropAspectRatio                  | Update the aspect ratio + update the crop area to the center of the video size |
-| updateCrop                       | Update the controller crop min and max values                       |
-| updateTrim                       | Update the controller trim min and max values                       |
-| getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
-| exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
-| extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  |
+| Function                         | Description                                                                                           |
+| -------------------------------- |-------------------------------------------------------------------------------------------------------|
+| initialize(aspectRatio)          | Init the `controller` parameters, the video, the trim and the cover, call `cropAspectRatio`           |
+| rotate90Degrees(RotateDirection) | Rotate the video by 90 degrees in the direction provided                                              |
+| preferredCropAspectRatio         | Update the aspect ratio of the crop area                                                              |
+| setPreferredRatioFromCrop        | Update the aspect ratio to the current crop area ratio                                                |
+| cropAspectRatio                  | Update the aspect ratio + update the crop area to the center of the video size                        |
+| updateCrop                       | Update the controller crop min and max values                                                         |
+| updateTrim                       | Update the controller trim min and max values                                                         |
+| createVideoFFmpegConfig          | Creates a `VideoFFmpegConfig` object that can be used to generate an ffmpeg command via the `createExportCommand` method |
+| createCoverFFmpegConfig          | Creates a `CoverFFmpegConfig` object that can be used to generate an ffmpeg command via the `createExportCommand` method  |
 
 | Getter                           | Description                       |
 | -------------------------------- | --------------------------------- |
@@ -247,26 +209,356 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 
 </details>
 
-## 💭 FAQ
+## ✂ How to export video / cover images?
 
-### 1. How to use FFmpeg LTS release
+Since version `3.0.0`, you have complete control over the video / cover image export process. The `VideoEditorController`'s new methods, `createVideoFFmpegConfig` and `createCoverFFmpegConfig`, allow you to create your own ffmpeg configurations and export commands. This means that you can now choose your preferred ffmpeg library for iOS / Android, such as `ffmpeg_kit_flutter_min`, `ffmpeg_kit_flutter_min_gpl`, `ffmpeg_kit_flutter_full_gpl`, or `ffmpeg_kit_flutter_full`. For web platforms, you can choose `ffmpeg_wasm`. Alternatively, you can choose not to include any ffmpeg package to minimize your app's size, and instead delegate the exportation task to a webservice by passing the ffmpeg command to it.
 
-Since [v1.3.0](https://github.com/LeGoffMael/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. If you want to support a wider range of devices you should use the LTS release. [more info](https://github.com/arthenica/ffmpeg-kit/tree/main/flutter/flutter#24-lts-releases)
+<details>
+  <summary>Example of how to run ffmpeg command with the `ffmpeg_kit` / `ffmpeg_wasm` package</summary>
 
+```dart
+import 'dart:async';
+import 'dart:typed_data';
 
-To do this, add this to your `pubspec.yaml`:
-```yaml
-dependency_overrides:
-  ffmpeg_kit_flutter_min_gpl: ^5.1.0-LTS
+import 'package:cross_file/cross_file.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+class FFmpegExport {
+  const FFmpegExport();
+
+  Future<XFile> executeFFmpegIO({
+    required String execute,
+    required String outputPath,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onStatistics,
+  }) {
+    final completer = Completer<XFile>();
+
+    FFmpegKit.executeAsync(
+      execute,
+          (session) async {
+        final code = await session.getReturnCode();
+
+        if (ReturnCode.isSuccess(code)) {
+          completer.complete(XFile(outputPath, mimeType: outputMimeType));
+        } else {
+          final state = FFmpegKitConfig.sessionStateToString(
+            await session.getState(),
+          );
+          completer.completeError(
+            Exception(
+              'FFmpeg process exited with state $state and return code $code.'
+                  '${await session.getOutput()}',
+            ),
+          );
+        }
+      },
+      null,
+      onStatistics != null
+          ? (s) => onStatistics(FFmpegStatistics.fromIOStatistics(s))
+          : null,
+    );
+
+    return completer.future;
+  }
+
+  Future<XFile> executeFFmpegWeb({
+    required String execute,
+    required Uint8List inputData,
+    required String inputPath,
+    required String outputPath,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onStatistics,
+  }) async {
+    FFmpeg? ffmpeg;
+    final logs = <String>[];
+    try {
+      ffmpeg = createFFmpeg(CreateFFmpegParam(log: false));
+      ffmpeg.setLogger((LoggerParam logger) {
+        logs.add('[${logger.type}] ${logger.message}');
+
+        if (onStatistics != null && logger.type == 'fferr') {
+          final statistics = FFmpegStatistics.fromMessage(logger.message);
+          if (statistics != null) {
+            onStatistics(statistics);
+          }
+        }
+      });
+
+      await ffmpeg.load();
+
+      ffmpeg.writeFile(inputPath, inputData);
+      await ffmpeg.runCommand(execute);
+
+      final data = ffmpeg.readFile(outputPath);
+      return XFile.fromData(data, mimeType: outputMimeType);
+    } catch (e, s) {
+      Error.throwWithStackTrace(
+        Exception('Exception:\n$e\n\nLogs:${logs.join('\n')}}'),
+        s,
+      );
+    } finally {
+      ffmpeg?.exit();
+    }
+  }
+}
+
+/// Common class for ffmpeg_kit and ffmpeg_wasm statistics.
+class FFmpegStatistics {
+  final int videoFrameNumber;
+  final double videoFps;
+  final double videoQuality;
+  final int size;
+  final int time;
+  final double bitrate;
+  final double speed;
+
+  static final statisticsRegex = RegExp(
+    r'frame\s*=\s*(\d+)\s+fps\s*=\s*(\d+(?:\.\d+)?)\s+q\s*=\s*([\d.-]+)\s+L?size\s*=\s*(\d+)\w*\s+time\s*=\s*([\d:.]+)\s+bitrate\s*=\s*([\d.]+)\s*(\w+)/s\s+speed\s*=\s*([\d.]+)x',
+  );
+
+  const FFmpegStatistics({
+    required this.videoFrameNumber,
+    required this.videoFps,
+    required this.videoQuality,
+    required this.size,
+    required this.time,
+    required this.bitrate,
+    required this.speed,
+  });
+
+  FFmpegStatistics.fromIOStatistics(Statistics s)
+      : this(
+    videoFrameNumber: s.getVideoFrameNumber(),
+    videoFps: s.getVideoFps(),
+    videoQuality: s.getVideoQuality(),
+    size: s.getSize(),
+    time: s.getTime(),
+    bitrate: s.getBitrate(),
+    speed: s.getSpeed(),
+  );
+
+  static FFmpegStatistics? fromMessage(String message) {
+    final match = statisticsRegex.firstMatch(message);
+    if (match != null) {
+      return FFmpegStatistics(
+        videoFrameNumber: int.parse(match.group(1)!),
+        videoFps: double.parse(match.group(2)!),
+        videoQuality: double.parse(match.group(3)!),
+        size: int.parse(match.group(4)!),
+        time: _timeToMs(match.group(5)!),
+        bitrate: double.parse(match.group(6)!),
+        // final bitrateUnit = match.group(7);
+        speed: double.parse(match.group(8)!),
+      );
+    }
+
+    return null;
+  }
+
+  double getProgress(int videoDurationMs) {
+    return videoDurationMs <= 0.0
+        ? 0.0
+        : (time / videoDurationMs).clamp(0.0, 1.0);
+  }
+
+  static int _timeToMs(String timeString) {
+    final parts = timeString.split(':');
+    final hours = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+    final secondsParts = parts[2].split('.');
+    final seconds = int.parse(secondsParts[0]);
+    final milliseconds = int.parse(secondsParts[1]);
+    return ((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + milliseconds);
+  }
+}
 ```
 
-On Android, if it gives a `minSdkVersion` error, try adding the following in `/android/app/src/main/AndroidManifest.xml`.
+</details>
 
-```xml
-<manifest xmlns:android=... package=... xmlns:tools="http://schemas.android.com/tools" >
-  <uses-sdk tools:overrideLibrary="com.arthenica.ffmpegkit.flutter"/>
-</manifest>
+<details>
+  <summary>Example of how to export video / cover images</summary>
+
+```dart
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
+import 'package:video_editor/video_editor.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+Future<String> ioOutputPath(String filePath, FileFormat format) async {
+  final tempPath = (await getTemporaryDirectory()).path;
+  final name = path.basenameWithoutExtension(filePath);
+  final epoch = DateTime.now().millisecondsSinceEpoch;
+  return "$tempPath/${name}_$epoch.${format.extension}";
+}
+
+String _webPath(String prePath, FileFormat format) {
+  final epoch = DateTime.now().millisecondsSinceEpoch;
+  return '${prePath}_$epoch.${format.extension}';
+}
+
+String webInputPath(FileFormat format) => _webPath('input', format);
+
+String webOutputPath(FileFormat format) => _webPath('output', format);
+
+Future<XFile> exportVideo({
+  void Function(FFmpegStatistics)? onStatistics,
+  VideoExportFormat outputFormat = VideoExportFormat.mp4,
+  double scale = 1.0,
+  String customInstruction = '',
+  VideoExportPreset preset = VideoExportPreset.none,
+  bool isFiltersEnabled = true,
+}) async {
+  final inputPath = kIsWeb
+      ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+      : _controller.file.path;
+  final outputPath = kIsWeb
+      ? webOutputPath(outputFormat)
+      : await ioOutputPath(inputPath, outputFormat);
+
+  final config = _controller.createVideoFFmpegConfig();
+  final execute = config.createExportCommand(
+    inputPath: inputPath,
+    outputPath: outputPath,
+    outputFormat: outputFormat,
+    scale: scale,
+    customInstruction: customInstruction,
+    preset: preset,
+    isFiltersEnabled: isFiltersEnabled,
+  );
+
+  debugPrint('run export video command : [$execute]');
+
+  if (kIsWeb) {
+    return const FFmpegExport().executeFFmpegWeb(
+      execute: execute,
+      inputData: await _controller.file.readAsBytes(),
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+      onStatistics: onStatistics,
+    );
+  } else {
+    return const FFmpegExport().executeFFmpegIO(
+      execute: execute,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+      onStatistics: onStatistics,
+    );
+  }
+}
+
+Future<XFile> extractCover({
+  void Function(FFmpegStatistics)? onStatistics,
+  CoverExportFormat outputFormat = CoverExportFormat.jpg,
+  double scale = 1.0,
+  int quality = 100,
+  bool isFiltersEnabled = true,
+}) async {
+  // file generated from the thumbnail library or video source
+  final coverFile = await VideoThumbnail.thumbnailFile(
+    imageFormat: ImageFormat.JPEG,
+    thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
+    video: _controller.file.path,
+    timeMs: _controller.selectedCoverVal?.timeMs ??
+        _controller.startTrim.inMilliseconds,
+    quality: quality,
+  );
+
+  final inputPath = kIsWeb
+      ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
+      : coverFile.path;
+  final outputPath = kIsWeb
+      ? webOutputPath(outputFormat)
+      : await ioOutputPath(coverFile.path, outputFormat);
+
+  var config = _controller.createCoverFFmpegConfig();
+  final execute = config.createExportCommand(
+    inputPath: inputPath,
+    outputPath: outputPath,
+    scale: scale,
+    quality: quality,
+    isFiltersEnabled: isFiltersEnabled,
+  );
+
+  debugPrint('VideoEditor - run export cover command : [$execute]');
+
+  if (kIsWeb) {
+    return const FFmpegExport().executeFFmpegWeb(
+      execute: execute,
+      inputData: await coverFile.readAsBytes(),
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+    );
+  } else {
+    return const FFmpegExport().executeFFmpegIO(
+      execute: execute,
+      outputPath: outputPath,
+      outputMimeType: outputFormat.mimeType,
+    );
+  }
+}
 ```
+
+</details>
+
+
+<details>
+  <summary>Example of how to get metadata</summary>
+
+```dart
+import 'dart:async';
+
+import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:flutter/foundation.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
+
+Future<void> getMetaData(
+    {required void Function(Map<dynamic, dynamic>? metadata)
+    onCompleted}) async {
+  if (kIsWeb) {
+    // ffprobe is not available on the web
+    // https://github.com/ffmpegwasm/ffmpeg.wasm/issues/121
+    final format = FileFormat.fromMimeType(_controller.file.mimeType);
+    final inputPath = webInputPath(format);
+    const outputPath = 'output.txt';
+
+    final outputFile = await const FFmpegExport().executeFFmpegWeb(
+      execute: '-i $inputPath -f ffmetadata $outputPath',
+      inputData: await _controller.file.readAsBytes(),
+      outputMimeType: 'text/plain',
+      inputPath: inputPath,
+      outputPath: outputPath,
+    );
+
+    final metadata = await outputFile.readAsString();
+    print(metadata);
+    onCompleted({});
+  } else {
+    await FFprobeKit.getMediaInformationAsync(
+      _controller.file.path,
+          (session) async {
+        final information = session.getMediaInformation();
+        onCompleted(information?.getAllProperties());
+      },
+    );
+  }
+}
+```
+
+</details>
+
+For more details check out the [example](https://github.com/LeGoffMael/video_editor/tree/master/example).
 
 ## ✨ Credit
 

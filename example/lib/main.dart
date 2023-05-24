@@ -1,11 +1,22 @@
-import 'dart:io';
+import 'dart:async';
 
-import 'package:video_editor_example/crop.dart';
-import 'package:video_editor_example/widgets/export_result.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
+import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_wasm/ffmpeg_wasm.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart' show OpacityTransition;
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:video_editor/domain/entities/file_format.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_editor_example/crop.dart';
+import 'package:video_editor_example/widgets/export_result.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 void main() => runApp(
       MaterialApp(
@@ -42,7 +53,7 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
       Navigator.push(
         context,
         MaterialPageRoute<void>(
-          builder: (BuildContext context) => VideoEditor(file: File(file.path)),
+          builder: (BuildContext context) => VideoEditor(file: file),
         ),
       );
     }
@@ -74,7 +85,7 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
 class VideoEditor extends StatefulWidget {
   const VideoEditor({super.key, required this.file});
 
-  final File file;
+  final XFile file;
 
   @override
   State<VideoEditor> createState() => _VideoEditorState();
@@ -85,7 +96,15 @@ class _VideoEditorState extends State<VideoEditor> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  late final VideoEditorController _controller = VideoEditorController.file(
+  /// On the web, when multiple VideoPlayers reuse the same VideoController,
+  /// only the last one can show the frames.
+  /// Therefore, when CropScreen is popped, the CropGridViewer should be given a
+  /// new key to refresh itself.
+  ///
+  /// https://github.com/flutter/flutter/issues/124210
+  int cropGridViewerKey = 0;
+
+  late final _controller = VideoEditorController.file(
     widget.file,
     minDuration: const Duration(seconds: 1),
     maxDuration: const Duration(seconds: 10),
@@ -119,40 +138,45 @@ class _VideoEditorState extends State<VideoEditor> {
         ),
       );
 
-  void _exportVideo() async {
+  Future<void> _exportVideo() async {
     _exportingProgress.value = 0;
     _isExporting.value = true;
     // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
-    await _controller.exportVideo(
-      // format: VideoExportFormat.gif,
-      // preset: VideoExportPreset.medium,
-      // customInstruction: "-crf 17",
-      onProgress: (stats, value) => _exportingProgress.value = value,
-      onError: (e, s) => _showErrorSnackBar("Error on export video :("),
-      onCompleted: (file) {
-        _isExporting.value = false;
-        if (!mounted) return;
+    try {
+      final video = await exportVideo(
+        // outputFormat: VideoExportFormat.gif,
+        // preset: VideoExportPreset.medium,
+        // customInstruction: "-crf 17",
+        onStatistics: (stats) => _exportingProgress.value =
+            stats.getProgress(_controller.trimmedDuration.inMilliseconds),
+      );
 
+      _isExporting.value = false;
+
+      if (mounted) {
         showDialog(
           context: context,
-          builder: (_) => VideoResultPopup(video: file),
+          builder: (_) => VideoResultPopup(video: video),
         );
-      },
-    );
+      }
+    } catch (e) {
+      _showErrorSnackBar("Error on export video :(");
+    }
   }
 
-  void _exportCover() async {
-    await _controller.extractCover(
-      onError: (e, s) => _showErrorSnackBar("Error on cover exportation :("),
-      onCompleted: (cover) {
-        if (!mounted) return;
+  Future<void> _exportCover() async {
+    try {
+      final cover = await extractCover();
 
+      if (mounted) {
         showDialog(
           context: context,
           builder: (_) => CoverResultPopup(cover: cover),
         );
-      },
-    );
+      }
+    } catch (e) {
+      _showErrorSnackBar("Error on cover exportation :(");
+    }
   }
 
   @override
@@ -182,7 +206,9 @@ class _VideoEditorState extends State<VideoEditor> {
                                         alignment: Alignment.center,
                                         children: [
                                           CropGridViewer.preview(
-                                              controller: _controller),
+                                            key: ValueKey(cropGridViewerKey),
+                                            controller: _controller,
+                                          ),
                                           AnimatedBuilder(
                                             animation: _controller.video,
                                             builder: (_, __) =>
@@ -321,12 +347,18 @@ class _VideoEditorState extends State<VideoEditor> {
             ),
             Expanded(
               child: IconButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (context) => CropScreen(controller: _controller),
-                  ),
-                ),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (context) => CropScreen(controller: _controller),
+                    ),
+                  );
+
+                  if (kIsWeb) {
+                    setState(() => ++cropGridViewerKey);
+                  }
+                },
                 icon: const Icon(Icons.crop),
                 tooltip: 'Open crop screen',
               ),
@@ -428,5 +460,310 @@ class _VideoEditorState extends State<VideoEditor> {
         ),
       ),
     );
+  }
+
+  //--------------//
+  //VIDEO METADATA//
+  //--------------//
+
+  Future<void> getMetaData(
+      {required void Function(Map<dynamic, dynamic>? metadata)
+          onCompleted}) async {
+    if (kIsWeb) {
+      // ffprobe is not available on the web
+      // https://github.com/ffmpegwasm/ffmpeg.wasm/issues/121
+      final format = FileFormat.fromMimeType(_controller.file.mimeType);
+      final inputPath = webInputPath(format);
+      const outputPath = 'output.txt';
+
+      final outputFile = await const FFmpegExport().executeFFmpegWeb(
+        execute: '-i $inputPath -f ffmetadata $outputPath',
+        inputData: await _controller.file.readAsBytes(),
+        outputMimeType: 'text/plain',
+        inputPath: inputPath,
+        outputPath: outputPath,
+      );
+
+      final metadata = await outputFile.readAsString();
+      print(metadata);
+      onCompleted({});
+    } else {
+      await FFprobeKit.getMediaInformationAsync(
+        _controller.file.path,
+        (session) async {
+          final information = session.getMediaInformation();
+          onCompleted(information?.getAllProperties());
+        },
+      );
+    }
+  }
+
+  //--------//
+  // EXPORT //
+  //--------//
+
+  Future<String> ioOutputPath(String filePath, FileFormat format) async {
+    final tempPath = (await getTemporaryDirectory()).path;
+    final name = path.basenameWithoutExtension(filePath);
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return "$tempPath/${name}_$epoch.${format.extension}";
+  }
+
+  String _webPath(String prePath, FileFormat format) {
+    final epoch = DateTime.now().millisecondsSinceEpoch;
+    return '${prePath}_$epoch.${format.extension}';
+  }
+
+  String webInputPath(FileFormat format) => _webPath('input', format);
+
+  String webOutputPath(FileFormat format) => _webPath('output', format);
+
+  Future<XFile> exportVideo({
+    void Function(FFmpegStatistics)? onStatistics,
+    VideoExportFormat outputFormat = VideoExportFormat.mp4,
+    double scale = 1.0,
+    String customInstruction = '',
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+  }) async {
+    final inputPath = kIsWeb
+        ? webInputPath(FileFormat.fromMimeType(_controller.file.mimeType))
+        : _controller.file.path;
+    final outputPath = kIsWeb
+        ? webOutputPath(outputFormat)
+        : await ioOutputPath(inputPath, outputFormat);
+
+    final config = _controller.createVideoFFmpegConfig();
+    final execute = config.createExportCommand(
+      inputPath: inputPath,
+      outputPath: outputPath,
+      outputFormat: outputFormat,
+      scale: scale,
+      customInstruction: customInstruction,
+      preset: preset,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('run export video command : [$execute]');
+
+    if (kIsWeb) {
+      return const FFmpegExport().executeFFmpegWeb(
+        execute: execute,
+        inputData: await _controller.file.readAsBytes(),
+        inputPath: inputPath,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+        onStatistics: onStatistics,
+      );
+    } else {
+      return const FFmpegExport().executeFFmpegIO(
+        execute: execute,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+        onStatistics: onStatistics,
+      );
+    }
+  }
+
+  Future<XFile> extractCover({
+    void Function(FFmpegStatistics)? onStatistics,
+    CoverExportFormat outputFormat = CoverExportFormat.jpg,
+    double scale = 1.0,
+    int quality = 100,
+    bool isFiltersEnabled = true,
+  }) async {
+    // file generated from the thumbnail library or video source
+    final coverFile = await VideoThumbnail.thumbnailFile(
+      imageFormat: ImageFormat.JPEG,
+      thumbnailPath: kIsWeb ? null : (await getTemporaryDirectory()).path,
+      video: _controller.file.path,
+      timeMs: _controller.selectedCoverVal?.timeMs ??
+          _controller.startTrim.inMilliseconds,
+      quality: quality,
+    );
+
+    final inputPath = kIsWeb
+        ? webInputPath(FileFormat.fromMimeType(coverFile.mimeType))
+        : coverFile.path;
+    final outputPath = kIsWeb
+        ? webOutputPath(outputFormat)
+        : await ioOutputPath(coverFile.path, outputFormat);
+
+    var config = _controller.createCoverFFmpegConfig();
+    final execute = config.createExportCommand(
+      inputPath: inputPath,
+      outputPath: outputPath,
+      scale: scale,
+      quality: quality,
+      isFiltersEnabled: isFiltersEnabled,
+    );
+
+    debugPrint('VideoEditor - run export cover command : [$execute]');
+
+    if (kIsWeb) {
+      return const FFmpegExport().executeFFmpegWeb(
+        execute: execute,
+        inputData: await coverFile.readAsBytes(),
+        inputPath: inputPath,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+      );
+    } else {
+      return const FFmpegExport().executeFFmpegIO(
+        execute: execute,
+        outputPath: outputPath,
+        outputMimeType: outputFormat.mimeType,
+      );
+    }
+  }
+}
+
+class FFmpegExport {
+  const FFmpegExport();
+
+  Future<XFile> executeFFmpegIO({
+    required String execute,
+    required String outputPath,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onStatistics,
+  }) {
+    final completer = Completer<XFile>();
+
+    FFmpegKit.executeAsync(
+      execute,
+      (session) async {
+        final code = await session.getReturnCode();
+
+        if (ReturnCode.isSuccess(code)) {
+          completer.complete(XFile(outputPath, mimeType: outputMimeType));
+        } else {
+          final state = FFmpegKitConfig.sessionStateToString(
+            await session.getState(),
+          );
+          completer.completeError(
+            Exception(
+              'FFmpeg process exited with state $state and return code $code.'
+              '${await session.getOutput()}',
+            ),
+          );
+        }
+      },
+      null,
+      onStatistics != null
+          ? (s) => onStatistics(FFmpegStatistics.fromIOStatistics(s))
+          : null,
+    );
+
+    return completer.future;
+  }
+
+  Future<XFile> executeFFmpegWeb({
+    required String execute,
+    required Uint8List inputData,
+    required String inputPath,
+    required String outputPath,
+    String? outputMimeType,
+    void Function(FFmpegStatistics)? onStatistics,
+  }) async {
+    FFmpeg? ffmpeg;
+    final logs = <String>[];
+    try {
+      ffmpeg = createFFmpeg(CreateFFmpegParam(log: false));
+      ffmpeg.setLogger((LoggerParam logger) {
+        logs.add('[${logger.type}] ${logger.message}');
+
+        if (onStatistics != null && logger.type == 'fferr') {
+          final statistics = FFmpegStatistics.fromMessage(logger.message);
+          if (statistics != null) {
+            onStatistics(statistics);
+          }
+        }
+      });
+
+      await ffmpeg.load();
+
+      ffmpeg.writeFile(inputPath, inputData);
+      await ffmpeg.runCommand(execute);
+
+      final data = ffmpeg.readFile(outputPath);
+      return XFile.fromData(data, mimeType: outputMimeType);
+    } catch (e, s) {
+      Error.throwWithStackTrace(
+        Exception('Exception:\n$e\n\nLogs:${logs.join('\n')}}'),
+        s,
+      );
+    } finally {
+      ffmpeg?.exit();
+    }
+  }
+}
+
+/// Common class for ffmpeg_kit and ffmpeg_wasm statistics.
+class FFmpegStatistics {
+  final int videoFrameNumber;
+  final double videoFps;
+  final double videoQuality;
+  final int size;
+  final int time;
+  final double bitrate;
+  final double speed;
+
+  static final statisticsRegex = RegExp(
+    r'frame\s*=\s*(\d+)\s+fps\s*=\s*(\d+(?:\.\d+)?)\s+q\s*=\s*([\d.-]+)\s+L?size\s*=\s*(\d+)\w*\s+time\s*=\s*([\d:.]+)\s+bitrate\s*=\s*([\d.]+)\s*(\w+)/s\s+speed\s*=\s*([\d.]+)x',
+  );
+
+  const FFmpegStatistics({
+    required this.videoFrameNumber,
+    required this.videoFps,
+    required this.videoQuality,
+    required this.size,
+    required this.time,
+    required this.bitrate,
+    required this.speed,
+  });
+
+  FFmpegStatistics.fromIOStatistics(Statistics s)
+      : this(
+          videoFrameNumber: s.getVideoFrameNumber(),
+          videoFps: s.getVideoFps(),
+          videoQuality: s.getVideoQuality(),
+          size: s.getSize(),
+          time: s.getTime(),
+          bitrate: s.getBitrate(),
+          speed: s.getSpeed(),
+        );
+
+  static FFmpegStatistics? fromMessage(String message) {
+    final match = statisticsRegex.firstMatch(message);
+    if (match != null) {
+      return FFmpegStatistics(
+        videoFrameNumber: int.parse(match.group(1)!),
+        videoFps: double.parse(match.group(2)!),
+        videoQuality: double.parse(match.group(3)!),
+        size: int.parse(match.group(4)!),
+        time: _timeToMs(match.group(5)!),
+        bitrate: double.parse(match.group(6)!),
+        // final bitrateUnit = match.group(7);
+        speed: double.parse(match.group(8)!),
+      );
+    }
+
+    return null;
+  }
+
+  double getProgress(int videoDurationMs) {
+    return videoDurationMs <= 0.0
+        ? 0.0
+        : (time / videoDurationMs).clamp(0.0, 1.0);
+  }
+
+  static int _timeToMs(String timeString) {
+    final parts = timeString.split(':');
+    final hours = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+    final secondsParts = parts[2].split('.');
+    final seconds = int.parse(secondsParts[0]);
+    final milliseconds = int.parse(secondsParts[1]);
+    return ((hours * 60 * 60 + minutes * 60 + seconds) * 1000 + milliseconds);
   }
 }

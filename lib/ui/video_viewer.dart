@@ -11,13 +11,7 @@ class VideoViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if (controller.video.value.isPlaying) {
-          controller.video.pause();
-        } else {
-          controller.video.play();
-        }
-      },
+      onTap: _onTap,
       child: Center(
         child: Stack(
           children: [
@@ -34,5 +28,13 @@ class VideoViewer extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _onTap() {
+    if (controller.video.value.isPlaying) {
+      controller.video.pause();
+    } else {
+      controller.video.play();
+    }
   }
 }

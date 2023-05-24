@@ -37,15 +37,17 @@ class CropGridPainter extends CustomPainter {
 
     // extract [rect] area from the canvas
     canvas.drawPath(
-      Path.combine(
-        PathOperation.difference,
-        Path()
-          ..addRect(Rect.fromLTWH(-margin, -margin, size.width + margin * 2,
-              size.height + margin * 2)),
-        Path()
-          ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)))
-          ..close(),
-      ),
+      Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(
+          Rect.fromLTWH(
+            -margin,
+            -margin,
+            size.width + margin * 2,
+            size.height + margin * 2,
+          ),
+        )
+        ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius))),
       paint,
     );
   }

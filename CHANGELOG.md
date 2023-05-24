@@ -1,3 +1,21 @@
+## 3.0.0
+
+- [#147](https://github.com/LeGoffMael/video_editor/pull/147) by [@maRci002](https://github.com/maRci002)
+- Removed the dependency on the `ffmpeg_kit` package.
+- Created `FFmpegConfig` to improve video and cover export functionality.
+- Added an example demonstrating how to export video and cover images using either `ffmpeg_kit` or `ffmpeg_wasm`, depending on the platform.
+- Added `defaultCoverThumbnailQuality` to `VideoEditorController.file` constructor.
+- Updated the `video_thumbnail` version to 0.6.0.
+- Updated the project to work on the web.
+- Updated the documentation to reflect these changes.
+
+### Breaking changes
+
+- Replaced `File` with `XFile` in `VideoEditorController.file`.
+- Removed `VideoEditorController.getMetaData`.
+- Removed `VideoEditorController.exportVideo`.
+- Removed `VideoEditorController.extractCover`.
+
 ## 2.4.0
 
 - Fix update TrimSlider trim values from controller [#141](https://github.com/LeGoffMael/video_editor/pull/141)
