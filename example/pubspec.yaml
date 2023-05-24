@@ -31,10 +31,7 @@ dependencies:
       ref: feat-web_implementation
       path: video_thumbnail
   # TODO(maRci002): remove git path when new package is published
-  ffmpeg_wasm:
-    git:
-      url: https://github.com/maRci002/flutter_ffmpeg_wasm.git
-      ref: feature/ffmpeg-api-refactor
+  ffmpeg_wasm: ^1.0.1
 
 flutter:
   uses-material-design: true
