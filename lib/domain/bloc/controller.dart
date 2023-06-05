@@ -80,6 +80,7 @@ class VideoEditorController extends ChangeNotifier {
     this.file, {
     this.maxDuration = Duration.zero,
     this.minDuration = Duration.zero,
+    this.defaultCoverQuality = 10,
     this.coverStyle = const CoverSelectionStyle(),
     this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
@@ -391,6 +392,11 @@ class VideoEditorController extends ChangeNotifier {
   double get trimPosition =>
       videoPosition.inMilliseconds / videoDuration.inMilliseconds;
 
+  /// Get the [defaultCoverQuality] param
+  ///
+  /// if no [defaultCoverQuality] param given in VideoEditorController constructor, defaultCoverQuality is 10
+  int defaultCoverQuality;
+
   //-----------//
   //VIDEO COVER//
   //-----------//
@@ -414,6 +420,7 @@ class VideoEditorController extends ChangeNotifier {
   void generateDefaultCoverThumbnail() async {
     final defaultCover = await generateSingleCoverThumbnail(
       file.path,
+      quality: defaultCoverQuality,
       timeMs: startTrim.inMilliseconds,
     );
     updateSelectedCover(defaultCover);
