@@ -49,7 +49,15 @@ enum VideoExportPreset {
   medium,
   slow,
   slower,
-  veryslow
+  veryslow;
+
+  const VideoExportPreset();
+
+  /// Convert [VideoExportPreset] to ffmpeg preset as a [String], [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
+  ///
+  /// Returns empty [String] for [VideoExportPreset.none]
+  /// Or returns [String] in `-preset xxx` format
+  String get cmd => this == VideoExportPreset.none ? '' : '-preset $name';
 }
 
 /// The default value of this property `Offset(1.0, 1.0)`
@@ -581,7 +589,7 @@ class VideoEditorController extends ChangeNotifier {
     );
     final String execute =
         // ignore: unnecessary_string_escapes
-        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $_trimCmd -y \"$outputPath\"";
+        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${preset.cmd} $_trimCmd -y \"$outputPath\"";
 
     debugPrint('VideoEditor - run export video command : [$execute]');
 
@@ -616,48 +624,6 @@ class VideoEditorController extends ChangeNotifier {
             }
           : null,
     );
-  }
-
-  /// Convert [VideoExportPreset] to ffmpeg preset as a [String], [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
-  ///
-  /// Return [String] in `-preset xxx` format
-  String _getPreset(VideoExportPreset preset) {
-    String? newPreset = "";
-
-    switch (preset) {
-      case VideoExportPreset.ultrafast:
-        newPreset = "ultrafast";
-        break;
-      case VideoExportPreset.superfast:
-        newPreset = "superfast";
-        break;
-      case VideoExportPreset.veryfast:
-        newPreset = "veryfast";
-        break;
-      case VideoExportPreset.faster:
-        newPreset = "faster";
-        break;
-      case VideoExportPreset.fast:
-        newPreset = "fast";
-        break;
-      case VideoExportPreset.medium:
-        newPreset = "medium";
-        break;
-      case VideoExportPreset.slow:
-        newPreset = "slow";
-        break;
-      case VideoExportPreset.slower:
-        newPreset = "slower";
-        break;
-      case VideoExportPreset.veryslow:
-        newPreset = "veryslow";
-        break;
-      case VideoExportPreset.none:
-        newPreset = "";
-        break;
-    }
-
-    return newPreset.isEmpty ? "" : "-preset $newPreset";
   }
 
   /// Generate this selected cover image as a JPEG [File]
