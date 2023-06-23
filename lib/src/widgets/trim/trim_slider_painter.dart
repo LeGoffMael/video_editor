@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:video_editor/domain/entities/trim_style.dart';
+import 'package:video_editor/src/models/trim_style.dart';
 
 class TrimSliderPainter extends CustomPainter {
   const TrimSliderPainter(

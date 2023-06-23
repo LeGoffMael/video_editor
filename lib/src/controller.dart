@@ -6,16 +6,14 @@ import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
-import 'package:video_editor/domain/entities/file_format.dart';
-import 'package:video_editor/domain/helpers.dart';
-import 'package:video_editor/domain/thumbnails.dart';
-import 'package:video_player/video_player.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:video_editor/src/utils/helpers.dart';
+import 'package:video_editor/src/utils/thumbnails.dart';
+import 'package:video_editor/src/models/cover_data.dart';
+import 'package:video_editor/src/models/file_format.dart';
+import 'package:video_editor/video_editor.dart';
 
-import 'package:video_editor/domain/entities/crop_style.dart';
-import 'package:video_editor/domain/entities/trim_style.dart';
-import 'package:video_editor/domain/entities/cover_style.dart';
-import 'package:video_editor/domain/entities/cover_data.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class VideoMinDurationError extends Error {
