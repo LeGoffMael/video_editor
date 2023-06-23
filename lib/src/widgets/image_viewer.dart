@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
-import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/src/controller.dart';
 
 class ImageViewer extends StatelessWidget {
   const ImageViewer({

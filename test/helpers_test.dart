@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:video_editor/domain/helpers.dart';
+import 'package:video_editor/src/utils/helpers.dart';
 
 void main() {
   group('computeSizeWithRatio', () {

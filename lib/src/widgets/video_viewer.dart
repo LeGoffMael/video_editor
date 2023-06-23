@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:video_editor/domain/bloc/controller.dart';
+import 'package:video_editor/src/controller.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatelessWidget {
