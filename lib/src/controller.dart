@@ -1,20 +1,10 @@
 import 'dart:io';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
-import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_editor/src/utils/helpers.dart';
 import 'package:video_editor/src/utils/thumbnails.dart';
 import 'package:video_editor/src/models/cover_data.dart';
-import 'package:video_editor/src/models/file_format.dart';
 import 'package:video_editor/video_editor.dart';
-
-import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 class VideoMinDurationError extends Error {
   final Duration minDuration;
@@ -29,40 +19,11 @@ class VideoMinDurationError extends Error {
 
 enum RotateDirection { left, right }
 
-/// A preset is a collection of options that will provide a certain encoding speed to compression ratio.
-///
-/// A slower preset will provide better compression (compression is quality per filesize).
-///
-/// This means that, for example, if you target a certain file size or constant bit rate,
-/// you will achieve better quality with a slower preset.
-/// Similarly, for constant quality encoding,
-/// you will simply save bitrate by choosing a slower preset.
-enum VideoExportPreset {
-  none,
-  ultrafast,
-  superfast,
-  veryfast,
-  faster,
-  fast,
-  medium,
-  slow,
-  slower,
-  veryslow;
-
-  const VideoExportPreset();
-
-  /// Convert [VideoExportPreset] to ffmpeg preset as a [String], [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
-  ///
-  /// Returns empty [String] for [VideoExportPreset.none]
-  /// Or returns [String] in `-preset xxx` format
-  String get cmd => this == VideoExportPreset.none ? '' : '-preset $name';
-}
-
 /// The default value of this property `Offset(1.0, 1.0)`
-const Offset _max = Offset(1.0, 1.0);
+const Offset maxOffset = Offset(1.0, 1.0);
 
 /// The default value of this property `Offset.zero`
-const Offset _min = Offset.zero;
+const Offset minOffset = Offset.zero;
 
 /// Provides an easy way to change edition parameters to apply in the different widgets of the package and at the exportion
 /// This controller allows to : rotate, crop, trim, cover generation and exportation (video and cover)
@@ -104,14 +65,14 @@ class VideoEditorController extends ChangeNotifier {
 
   double? _preferredCropAspectRatio;
 
-  double _minTrim = _min.dx;
-  double _maxTrim = _max.dx;
+  double _minTrim = minOffset.dx;
+  double _maxTrim = maxOffset.dx;
 
-  Offset _minCrop = _min;
-  Offset _maxCrop = _max;
+  Offset _minCrop = minOffset;
+  Offset _maxCrop = maxOffset;
 
-  Offset cacheMinCrop = _min;
-  Offset cacheMaxCrop = _max;
+  Offset cacheMinCrop = minOffset;
+  Offset cacheMaxCrop = maxOffset;
 
   Duration _trimEnd = Duration.zero;
   Duration _trimStart = Duration.zero;
@@ -268,8 +229,6 @@ class VideoEditorController extends ChangeNotifier {
   Future<void> dispose() async {
     if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
-    final executions = await FFmpegKit.listSessions();
-    if (executions.isNotEmpty) await FFmpegKit.cancel();
     _video.dispose();
     _selectedCover.dispose();
     super.dispose();
@@ -285,21 +244,6 @@ class VideoEditorController extends ChangeNotifier {
   //----------//
   //VIDEO CROP//
   //----------//
-
-  /// Convert the [minCrop] and [maxCrop] param in to a [String]
-  /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#crop))
-  ///
-  /// The result is in the format `crop=w:h:x:y`
-  String _getCrop() {
-    if (minCrop <= _min && maxCrop >= _max) return "";
-
-    final enddx = videoWidth * maxCrop.dx;
-    final enddy = videoHeight * maxCrop.dy;
-    final startdx = videoWidth * minCrop.dx;
-    final startdy = videoHeight * minCrop.dy;
-
-    return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
-  }
 
   /// Update the [minCrop] and [maxCrop] with [cacheMinCrop] and [cacheMaxCrop]
   void applyCacheCrop() => updateCrop(cacheMinCrop, cacheMaxCrop);
@@ -358,10 +302,6 @@ class VideoEditorController extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  /// Returns the ffmpeg command to apply the trim start and end parameters
-  /// [see ffmpeg doc](https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections)
-  String get _trimCmd => "-ss $_trimStart -to $_trimEnd";
 
   /// Get the [isTrimmed]
   ///
@@ -456,268 +396,4 @@ class VideoEditorController extends ChangeNotifier {
   }
 
   bool get isRotated => rotation == 90 || rotation == 270;
-
-  /// Convert the [rotation] value into a [String]
-  /// used to provide crop values to Ffmpeg ([see more](https://ffmpeg.org/ffmpeg-filters.html#transpose-1))
-  ///
-  /// The result is in the format `transpose=2` (repeated for every 90 degrees rotations)
-  String _getRotation() {
-    final count = rotation / 90;
-    if (count <= 0 || count >= 4) return "";
-
-    List<String> transpose = [];
-    for (int i = 0; i < rotation / 90; i++) {
-      transpose.add("transpose=2");
-    }
-    return transpose.isNotEmpty ? transpose.join(',') : "";
-  }
-
-  //--------------//
-  //VIDEO METADATA//
-  //--------------//
-
-  /// Return the metadata of the video [file] using Ffprobe
-  Future<void> getMetaData(
-      {required void Function(Map<dynamic, dynamic>? metadata)
-          onCompleted}) async {
-    await FFprobeKit.getMediaInformationAsync(file.path, (session) async {
-      final information = session.getMediaInformation();
-      onCompleted(information?.getAllProperties());
-    });
-  }
-
-  //--------//
-  // EXPORT //
-  //--------//
-
-  /// Returns the output path of the exported file
-  Future<String> _getOutputPath({
-    required String filePath,
-    String? name,
-    String? outputDirectory,
-    required FileFormat format,
-  }) async {
-    final String tempPath =
-        outputDirectory ?? (await getTemporaryDirectory()).path;
-    name ??= path.basenameWithoutExtension(filePath);
-    final int epoch = DateTime.now().millisecondsSinceEpoch;
-    return "$tempPath/${name}_$epoch.${format.extension}";
-  }
-
-  /// Returns the `-filter:v` command to use in ffmpeg execution
-  String _getExportFilters({
-    VideoExportFormat? videoFormat,
-    double scale = 1.0,
-    bool isFiltersEnabled = true,
-  }) {
-    if (!isFiltersEnabled) return "";
-
-    // CALCULATE FILTERS
-    final bool isGif =
-        videoFormat?.extension == VideoExportFormat.gif.extension;
-    final String scaleInstruction =
-        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
-
-    // VALIDATE FILTERS
-    final List<String> filters = [
-      _getCrop(),
-      scaleInstruction,
-      _getRotation(),
-      isGif
-          ? "fps=${videoFormat is GifExportFormat ? videoFormat.fps : VideoExportFormat.gif.fps}"
-          : "",
-    ];
-    filters.removeWhere((item) => item.isEmpty);
-    return filters.isNotEmpty
-        ? "-vf '${filters.join(",")}'${isGif ? " -loop 0" : ""}"
-        : "";
-  }
-
-  /// Export the video using this edition parameters and return a `File`.
-  ///
-  /// The [onCompleted] param must be set to return the exported [File] video.
-  ///
-  /// The [onError] function provides the [Exception] and [StackTrace] that causes the exportation error.
-  ///
-  /// If the [name] is `null`, then it uses this video filename.
-  ///
-  /// If the [outDir] is `null`, then it uses `TemporaryDirectory`.
-  ///
-  /// The [format] of the video to be exported, by default [VideoExportFormat.mp4].
-  /// You can export as a GIF file by using [VideoExportFormat.gif] or with
-  /// [GifExportFormat()] which allows you to control the frame rate of the exported GIF file.
-  ///
-  /// The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
-  ///
-  /// The [customInstruction] param can be set to add custom commands to the FFmpeg eexecution
-  /// (i.e. `-an` to mute the generated video), some commands require the GPL package
-  ///
-  /// The [onProgress] is called while the video is exporting.
-  /// This argument is usually used to update the export progress percentage.
-  /// This function return [Statistics] from FFmpeg session and the [double] progress value between 0.0 and 1.0.
-  ///
-  /// The [preset] is the `compress quality` **(Only available on GPL package)**.
-  /// A slower preset will provide better compression (compression is quality per filesize).
-  /// [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
-  ///
-  /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
-  Future<void> exportVideo({
-    required void Function(File file) onCompleted,
-    void Function(Object, StackTrace)? onError,
-    String? name,
-    String? outDir,
-    VideoExportFormat format = VideoExportFormat.mp4,
-    double scale = 1.0,
-    String? customInstruction,
-    void Function(Statistics, double)? onProgress,
-    VideoExportPreset preset = VideoExportPreset.none,
-    bool isFiltersEnabled = true,
-  }) async {
-    final String videoPath = file.path;
-    final String outputPath = await _getOutputPath(
-      filePath: videoPath,
-      name: name,
-      outputDirectory: outDir,
-      format: format,
-    );
-    final String filter = _getExportFilters(
-      videoFormat: format,
-      scale: scale,
-      isFiltersEnabled: isFiltersEnabled,
-    );
-    final String execute =
-        // ignore: unnecessary_string_escapes
-        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${preset.cmd} $_trimCmd -y \"$outputPath\"";
-
-    debugPrint('VideoEditor - run export video command : [$execute]');
-
-    // PROGRESS CALLBACKS
-    FFmpegKit.executeAsync(
-      execute,
-      (session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
-        final code = await session.getReturnCode();
-
-        if (ReturnCode.isSuccess(code)) {
-          onCompleted(File(outputPath));
-        } else {
-          if (onError != null) {
-            onError(
-              Exception(
-                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
-              StackTrace.current,
-            );
-          }
-          return;
-        }
-      },
-      null,
-      onProgress != null
-          ? (stats) {
-              // Progress value of encoded video
-              double progressValue =
-                  stats.getTime() / trimmedDuration.inMilliseconds;
-              onProgress(stats, progressValue.clamp(0.0, 1.0));
-            }
-          : null,
-    );
-  }
-
-  /// Generate this selected cover image as a JPEG [File]
-  ///
-  /// If this [selectedCoverVal] is `null`, then it return the first frame of this video.
-  ///
-  /// The [quality] param specifies the quality of the generated cover, from 0 to 100 (([more info](https://pub.dev/packages/video_thumbnail)))
-  Future<String?> _generateCoverFile({int quality = 100}) async {
-    return await VideoThumbnail.thumbnailFile(
-      imageFormat: ImageFormat.JPEG,
-      thumbnailPath: (await getTemporaryDirectory()).path,
-      video: file.path,
-      timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
-      quality: quality,
-    );
-  }
-
-  /// Export this selected cover, or by default the first one, return an image [File].
-  ///
-  /// The [onCompleted] param must be set to return the exported [File] cover
-  ///
-  /// The [onError] function provides the [Exception] and [StackTrace] that causes the exportation error.
-  ///
-  /// If the [name] is `null`, then it uses this video filename.
-  ///
-  /// If the [outDir] is `null`, then it uses `TemporaryDirectory`.
-  ///
-  /// The [format] of the image to be exported, by default [CoverExportFormat.jpg].
-  ///
-  /// The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
-  ///
-  /// The [quality] of the exported image (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
-  ///
-  /// The [onProgress] is called while the video is exporting.
-  /// This argument is usually used to update the export progress percentage.
-  /// This function return [Statistics] from FFmpeg session.
-  ///
-  /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
-  Future<void> extractCover({
-    required void Function(File file) onCompleted,
-    void Function(Object, StackTrace)? onError,
-    String? name,
-    String? outDir,
-    CoverExportFormat format = CoverExportFormat.jpg,
-    double scale = 1.0,
-    int quality = 100,
-    void Function(Statistics)? onProgress,
-    bool isFiltersEnabled = true,
-  }) async {
-    // file generated from the thumbnail library or video source
-    final String? coverPath = await _generateCoverFile(quality: quality);
-    if (coverPath == null) {
-      if (onError != null) {
-        onError(
-          Exception('VideoThumbnail library error while exporting the cover'),
-          StackTrace.current,
-        );
-      }
-      return;
-    }
-    final String outputPath = await _getOutputPath(
-      filePath: coverPath,
-      name: name,
-      outputDirectory: outDir,
-      format: format,
-    );
-    final String filter =
-        _getExportFilters(scale: scale, isFiltersEnabled: isFiltersEnabled);
-    // ignore: unnecessary_string_escapes
-    final String execute = "-i \'$coverPath\' $filter -y $outputPath";
-
-    debugPrint('VideoEditor - run export cover command : [$execute]');
-
-    // PROGRESS CALLBACKS
-    FFmpegKit.executeAsync(
-      execute,
-      (session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
-        final code = await session.getReturnCode();
-
-        if (ReturnCode.isSuccess(code)) {
-          onCompleted(File(outputPath));
-        } else {
-          if (onError != null) {
-            onError(
-              Exception(
-                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
-              StackTrace.current,
-            );
-          }
-          return;
-        }
-      },
-      null,
-      onProgress,
-    );
-  }
 }

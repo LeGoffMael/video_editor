@@ -1,10 +1,10 @@
 PODS:
-  - ffmpeg-kit-ios-min-gpl (5.1)
-  - ffmpeg_kit_flutter_min_gpl (5.1.0):
-    - ffmpeg_kit_flutter_min_gpl/min-gpl (= 5.1.0)
+  - ffmpeg-kit-ios-min (5.1)
+  - ffmpeg_kit_flutter_min (5.1.0):
+    - ffmpeg_kit_flutter_min/min (= 5.1.0)
     - Flutter
-  - ffmpeg_kit_flutter_min_gpl/min-gpl (5.1.0):
-    - ffmpeg-kit-ios-min-gpl (= 5.1)
+  - ffmpeg_kit_flutter_min/min (5.1.0):
+    - ffmpeg-kit-ios-min (= 5.1)
     - Flutter
   - Flutter (1.0.0)
   - image_picker_ios (0.0.1):
@@ -28,7 +28,7 @@ PODS:
     - libwebp
 
 DEPENDENCIES:
-  - ffmpeg_kit_flutter_min_gpl (from `.symlinks/plugins/ffmpeg_kit_flutter_min_gpl/ios`)
+  - ffmpeg_kit_flutter_min (from `.symlinks/plugins/ffmpeg_kit_flutter_min/ios`)
   - Flutter (from `Flutter`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
@@ -37,12 +37,12 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
-    - ffmpeg-kit-ios-min-gpl
+    - ffmpeg-kit-ios-min
     - libwebp
 
 EXTERNAL SOURCES:
-  ffmpeg_kit_flutter_min_gpl:
-    :path: ".symlinks/plugins/ffmpeg_kit_flutter_min_gpl/ios"
+  ffmpeg_kit_flutter_min:
+    :path: ".symlinks/plugins/ffmpeg_kit_flutter_min/ios"
   Flutter:
     :path: Flutter
   image_picker_ios:
@@ -55,13 +55,13 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/video_thumbnail/ios"
 
 SPEC CHECKSUMS:
-  ffmpeg-kit-ios-min-gpl: ac5eb47f98b27e26d14c009de3ce9181007ce688
-  ffmpeg_kit_flutter_min_gpl: f657651b493b7608fad9dda3ad606eb0946c9faa
+  ffmpeg-kit-ios-min: 3748f7726cd539e308090371a9d572d1a9dfaf7e
+  ffmpeg_kit_flutter_min: 03876cb5ff5f7cf493cbcef07fa738ae423e009c
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  image_picker_ios: b786a5dcf033a8336a657191401bfdf12017dabb
+  image_picker_ios: 4a8aadfbb6dc30ad5141a2ce3832af9214a705b5
   libwebp: 60305b2e989864154bd9be3d772730f08fc6a59c
-  path_provider_foundation: 37748e03f12783f9de2cb2c4eadfaa25fe6d4852
-  video_player_avfoundation: e489aac24ef5cf7af82702979ed16f2a5ef84cff
+  path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
+  video_player_avfoundation: 81e49bb3d9fb63dccf9fa0f6d877dc3ddbeac126
   video_thumbnail: c4e2a3c539e247d4de13cd545344fd2d26ffafd1
 
 PODFILE CHECKSUM: ccd901b1465efa56fa30557fdc5ae4eddcc3f504

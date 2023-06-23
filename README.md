@@ -1,14 +1,13 @@
 # Flutter video editor
 
 [![Pub](https://img.shields.io/pub/v/video_editor.svg)](https://pub.dev/packages/video_editor)
-[![ffmpeg_kit_flutter](https://img.shields.io/badge/ffmpeg_kit_flutter-v5.1.0-green)](https://pub.dev/packages/ffmpeg_kit_flutter)
 [![GitHub stars](https://img.shields.io/github/stars/LeGoffMael/video_editor?style=social)](https://github.com/LeGoffMael/video_editor/stargazers)
 
 A video editor that allows to edit (trim, crop, rotate and scale) and choose a cover with a very flexible UI design.
 
-The exportation is made using [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) library.
+The library provides some tools to execute the exportation but does not handle it.
 
-This library is written in Dart only but uses external packages such as [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter) and [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now.
+This library is written in Dart only but uses external packages such as [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now ((web support is currently in progress)[https://github.com/LeGoffMael/video_editor/pull/147]).
 
 ## 📖 Installation
 
@@ -26,25 +25,6 @@ dependencies:
 ```dart
 import 'package:video_editor/video_editor.dart';
 ```
-
-Since [v1.3.0](https://github.com/LeGoffMael/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. (More info on [flutter FFmepeg kit](https://github.com/arthenica/ffmpeg-kit/tree/main/flutter/flutter))
-
-Those Android API level and iOS deployment target are required to uses this package. If you're planing to target older devices, check about the [LTS release](#1-how-to-use-ffmpeg-lts-release).
-
-<table>
-<thead>
-<tr>
-<th align="center">Android<br>API Level</th>
-<th align="center">iOS Minimum<br>Deployment Target</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">24</td>
-<td align="center">12.1</td>
-</tr>
-</tbody>
-</table>
 
 ## 📸 Screenshots
 
@@ -74,17 +54,21 @@ void dispose() {
 }
 
 // Basic export video function
-Future<void> exportVideo() => _controller.exportVideo(
-  onCompleted: (file) {}, // show the exported video
-);
+Future<void> exportVideo() {
+  final config = VideoFFmpegVideoEditorConfig(_controller);
+
+  // ... handle the video exportation on your side, using ffmpeg_kit_flutter, your own video server, ...
+}
 
 // Export a GIF image, with some handlers
-Future<void> exporGif() => _controller.exportVideo(
-  format: VideoExportFormat.gif, // or GifExportFormat(fps: 20), to customize the fps
-  onProgress: (stats, value) {}, // show exportation progress
-  onError: (e, s) {}, // handle the error
-  onCompleted: (file) {}, // show the exported GIF
-);
+Future<void> exportGif() {
+  final config = VideoFFmpegVideoEditorConfig(
+    _controller,
+    format: VideoExportFormat.gif,
+  );
+
+  // ...
+}
 ```
 
 For more details check out the [example](https://github.com/LeGoffMael/video_editor/tree/master/example).
@@ -93,16 +77,13 @@ For more details check out the [example](https://github.com/LeGoffMael/video_edi
 
 | Function                         | Description                       |
 | -------------------------------- | --------------------------------- |
-| initialize(aspectRatio)          | Init the `controller` parameters, the video, the trim and the cover, call `cropAspectRatio` |
+| initialize(double? aspectRatio)  | Init the `controller` parameters, the video, the trim and the cover, call `cropAspectRatio` |
 | rotate90Degrees(RotateDirection) | Rotate the video by 90 degrees in the direction provided            |
-| preferredCropAspectRatio         | Update the aspect ratio of the crop area                            |
 | setPreferredRatioFromCrop        | Update the aspect ratio to the current crop area ratio              |
-| cropAspectRatio                  | Update the aspect ratio + update the crop area to the center of the video size |
-| updateCrop                       | Update the controller crop min and max values                       |
-| updateTrim                       | Update the controller trim min and max values                       |
-| getMetaData(onCompleted)         | Return the metadata of the video file in `onCompleted` function     |
-| exportVideo(onCompleted)         | Return the generated video with the controller parameters in `onCompleted` function |
-| extractCover(onCompleted)        | Return the selected cover with the controller parameters in `onCompleted` function  |
+| cropAspectRatio(double?)         | Update the aspect ratio + update the crop area to the center of the video size |
+| updateCrop(Offset, Offset)       | Update the controller crop min and max values                       |
+| applyCacheCrop                   | Update the controller crop min and max values with cache values     |
+| updateTrim(double, double)       | Update the controller trim min and max values                       |
 
 | Getter                           | Description                       |
 | -------------------------------- | --------------------------------- |
@@ -148,7 +129,7 @@ Display the trimmer containing video thumbnails with rotation and crop parameter
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the trim slider view |
 | double height = 0.0 | The `height` param specifies the height of the generated thumbnails |
-| double quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
+| int quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
 | double horizontalMargin = 0.0 | The `horizontalMargin` param specifies the horizontal space to set around the slider. It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`) |
 | Widget? child | The `child` param can be specify to display a widget below this one (e.g: TrimTimeline) |
 | bool hasHaptic = true | The `hasHaptic` param specifies if haptic feed back can be triggered when the trim touch an edge (left or right) |
@@ -176,7 +157,7 @@ Display a couple of generated covers with rotation and crop parameters to update
 | -------------------------------- | --------------------------------- |
 | required VideoEditorController controller | The `controller` param is mandatory so every change in the controller settings will propagate in the cover selection view |
 | double size = 0.0 | The `size` param specifies the max size of the generated thumbnails |
-| double quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
+| int quality = 10 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
 | double horizontalMargin = 0.0 | The `horizontalMargin` param need to be specify when there is a margin outside the crop view, so in case of a change the new layout can be computed properly. |
 | int quantity = 5 | The `quantity` param specifies the quantity of thumbnails to generate |
 | Wrap? wrap | The `wrap` widget to use to customize the thumbnails wrapper |
@@ -235,7 +216,7 @@ You can create your own TrimStyle class to customize the TrimSlider appareance.
 | IconData? leftIcon = Icons.arrow_left | The `leftIcon` param specifies the icon to show on the left edge of the trimmed area |
 | IconData? rightIcon = Icons.arrow_right | The `rightIcon` param specifies the icon to show on the right edge of the trimmed area |
 
-#### 3. CoverStyle
+### 3. CoverStyle
 
 You can create your own CoverStyle class to customize the CoverSelection appareance.
 
@@ -247,26 +228,45 @@ You can create your own CoverStyle class to customize the CoverSelection apparea
 
 </details>
 
+#### Export
+
+#### 1. FFmpegVideoEditorConfig
+
+| Param                            | Description                       |
+| -------------------------------- | --------------------------------- |
+| String? name | The `name` param specifies the filename of the generated file |
+| String? outputDirectory | The `outputDirectory` param specifies where the file should be generated, default to temporary directory |
+| double scale = 1 | The `scale` param is used to increase or decrease the generated file dimensions |
+| bool isFiltersEnabled = true | The `isFiltersEnabled` param specifies if the editor parameters should be applied |
+
+#### 2. VideoFFmpegVideoEditorConfig
+
+Contains all FFmpegVideoEditorConfig parameters.
+
+| Param                            | Description                       |
+| -------------------------------- | --------------------------------- |
+| VideoExportFormat format = VideoExportFormat.mp4 | The `format` param specifies the extension of the generated video |
+| String? customInstruction | The `customInstruction` param specifies a customized instruction to insert in the command line |
+| VideoExportPreset preset = VideoExportPreset.none | The `preset` param specifies the compress quality of the exported video, be aware that it might not work with all FFmpeg binary |
+
+#### 3. CoverFFmpegVideoEditorConfig
+
+Contains all FFmpegVideoEditorConfig parameters.
+
+| Param                            | Description                       |
+| -------------------------------- | --------------------------------- |
+| CoverExportFormat format = CoverExportFormat.jpg | The `format` param specifies the extension of the generated cover |
+| int quality = 100 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
+
 ## 💭 FAQ
 
-### 1. How to use FFmpeg LTS release
+### 1. Why was FFmpeg removed from this package ?
 
-Since [v1.3.0](https://github.com/LeGoffMael/video_editor/releases/tag/v1.3.0), video_editor uses ffmpeg_kit_flutter main release which supports the latest features. If you want to support a wider range of devices you should use the LTS release. [more info](https://github.com/arthenica/ffmpeg-kit/tree/main/flutter/flutter#24-lts-releases)
+Starting from version 3.0.0, the video_editor package no longer includes [ffmpeg_kit_flutter](https://pub.dev/packages/ffmpeg_kit_flutter).
 
-
-To do this, add this to your `pubspec.yaml`:
-```yaml
-dependency_overrides:
-  ffmpeg_kit_flutter_min_gpl: ^5.1.0-LTS
-```
-
-On Android, if it gives a `minSdkVersion` error, try adding the following in `/android/app/src/main/AndroidManifest.xml`.
-
-```xml
-<manifest xmlns:android=... package=... xmlns:tools="http://schemas.android.com/tools" >
-  <uses-sdk tools:overrideLibrary="com.arthenica.ffmpegkit.flutter"/>
-</manifest>
-```
+ - The inclusion of ffmpeg_kit_flutter binary in this package caused numerous issues for users who intended to utilize a different instance of FFmpeg within the same project (#37, #129, #153).
+ - Additionally, it came to my attention that the video_editor package may have been mis-licensed and subject to the GPL v3.0 license since version 1.2.3, when it began utilizing the ffmpeg_kit_flutter_min_kit binary.
+ - Lastly, the FFmpeg package is quite large and significantly increases the app size, which is not ideal for developers seeking to handle exportation in a different way.
 
 ## ✨ Credit
 
