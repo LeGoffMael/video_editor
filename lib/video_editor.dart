@@ -1,12 +1,13 @@
 library video_editor;
 
-export 'ui/crop/crop_grid.dart';
-export 'ui/trim/trim_slider.dart';
-export 'ui/cover/cover_selection.dart';
-export 'ui/cover/cover_viewer.dart';
-export 'ui/trim/trim_timeline.dart';
-export 'domain/bloc/controller.dart';
-export 'domain/entities/crop_style.dart';
-export 'domain/entities/trim_style.dart';
-export 'domain/entities/cover_style.dart';
-export 'domain/entities/file_format.dart' hide FileFormat;
+export 'src/controller.dart';
+export 'src/export/ffmpeg_export_config.dart';
+export 'src/models/cover_style.dart';
+export 'src/models/crop_style.dart';
+export 'src/models/trim_style.dart';
+export 'src/widgets/cover/cover_selection.dart';
+export 'src/widgets/cover/cover_viewer.dart';
+export 'src/widgets/crop/crop_grid.dart';
+export 'src/models/file_format.dart' hide FileFormat;
+export 'src/widgets/trim/trim_slider.dart';
+export 'src/widgets/trim/trim_timeline.dart';

@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:video_editor_example/crop.dart';
+import 'package:video_editor_example/crop_page.dart';
+import 'package:video_editor_example/export_service.dart';
 import 'package:video_editor_example/widgets/export_result.dart';
 import 'package:flutter/material.dart';
 import 'package:helpers/helpers.dart' show OpacityTransition;
@@ -51,7 +52,7 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Image / Video Picker")),
+      appBar: AppBar(title: const Text("Video Picker")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -104,10 +105,11 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     _exportingProgress.dispose();
     _isExporting.dispose();
     _controller.dispose();
+    await ExportService.dispose();
     super.dispose();
   }
 
@@ -122,12 +124,23 @@ class _VideoEditorState extends State<VideoEditor> {
   void _exportVideo() async {
     _exportingProgress.value = 0;
     _isExporting.value = true;
-    // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
-    await _controller.exportVideo(
+
+    final config = VideoFFmpegVideoEditorConfig(
+      _controller,
       // format: VideoExportFormat.gif,
-      // preset: VideoExportPreset.medium,
-      // customInstruction: "-crf 17",
-      onProgress: (stats, value) => _exportingProgress.value = value,
+      // commandBuilder: (config, videoPath, outputPath) {
+      //   final List<String> filters = config.getExportFilters();
+      //   filters.add('hflip'); // add horizontal flip
+
+      //   return '-i $videoPath ${config.filtersCmd(filters)} -preset ultrafast $outputPath';
+      // },
+    );
+
+    await ExportService.runFFmpegCommand(
+      await config.getExecuteConfig(),
+      onProgress: (stats) {
+        _exportingProgress.value = config.getFFmpegProgress(stats.getTime());
+      },
       onError: (e, s) => _showErrorSnackBar("Error on export video :("),
       onCompleted: (file) {
         _isExporting.value = false;
@@ -142,7 +155,15 @@ class _VideoEditorState extends State<VideoEditor> {
   }
 
   void _exportCover() async {
-    await _controller.extractCover(
+    final config = CoverFFmpegVideoEditorConfig(_controller);
+    final execute = await config.getExecuteConfig();
+    if (execute == null) {
+      _showErrorSnackBar("Error on cover exportation initialization.");
+      return;
+    }
+
+    await ExportService.runFFmpegCommand(
+      execute,
       onError: (e, s) => _showErrorSnackBar("Error on cover exportation :("),
       onCompleted: (cover) {
         if (!mounted) return;
@@ -324,7 +345,7 @@ class _VideoEditorState extends State<VideoEditor> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
-                    builder: (context) => CropScreen(controller: _controller),
+                    builder: (context) => CropPage(controller: _controller),
                   ),
                 ),
                 icon: const Icon(Icons.crop),
