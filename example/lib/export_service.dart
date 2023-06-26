@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:ffmpeg_kit_flutter_min/ffmpeg_kit.dart';
@@ -18,28 +19,30 @@ class ExportService {
     required void Function(File file) onCompleted,
     void Function(Object, StackTrace)? onError,
     void Function(Statistics)? onProgress,
-  }) =>
-      FFmpegKit.executeAsync(
-        execute.command,
-        (session) async {
-          final state =
-              FFmpegKitConfig.sessionStateToString(await session.getState());
-          final code = await session.getReturnCode();
+  }) {
+    log('FFmpeg start process with command = ${execute.command}');
+    return FFmpegKit.executeAsync(
+      execute.command,
+      (session) async {
+        final state =
+            FFmpegKitConfig.sessionStateToString(await session.getState());
+        final code = await session.getReturnCode();
 
-          if (ReturnCode.isSuccess(code)) {
-            onCompleted(File(execute.outputPath));
-          } else {
-            if (onError != null) {
-              onError(
-                Exception(
-                    'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
-                StackTrace.current,
-              );
-            }
-            return;
+        if (ReturnCode.isSuccess(code)) {
+          onCompleted(File(execute.outputPath));
+        } else {
+          if (onError != null) {
+            onError(
+              Exception(
+                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
+              StackTrace.current,
+            );
           }
-        },
-        null,
-        onProgress,
-      );
+          return;
+        }
+      },
+      null,
+      onProgress,
+    );
+  }
 }

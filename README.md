@@ -53,19 +53,41 @@ void dispose() {
   super.dispose();
 }
 
-// Basic export video function
-Future<void> exportVideo() {
+/// Basic export video function
+Future<void> exportVideo() async {
   final config = VideoFFmpegVideoEditorConfig(_controller);
+  // Returns the generated command and the output path
+  final FFmpegVideoEditorExecute execute = await config.getExecuteConfig();
 
-  // ... handle the video exportation on your side, using ffmpeg_kit_flutter, your own video server, ...
+  // ... handle the video exportation yourself, using ffmpeg_kit_flutter, your own video server, ...
 }
 
-// Export a GIF image, with some handlers
-Future<void> exportGif() {
-  final config = VideoFFmpegVideoEditorConfig(
+/// Export the video as a GIF image
+Future<void> exportGif() async {
+  final gifConfig = VideoFFmpegVideoEditorConfig(
     _controller,
     format: VideoExportFormat.gif,
   );
+  // Returns the generated command and the output path
+  final FFmpegVideoEditorExecute gifExecute = await gifConfig.getExecuteConfig();
+
+  // ...
+}
+
+/// Export a video, with custom command (ultrafast preset + horizontal flip)
+Future<void> exportMirroredVideo() async {
+  final mirrorConfig = VideoFFmpegVideoEditorConfig(
+      _controller,
+      name: 'mirror-video'
+      commandBuilder: (VideoFFmpegVideoEditorConfig config, String videoPath, String outputPath) {
+        final List<String> filters = config.getExportFilters();
+        filters.add('hflip'); // add horizontal flip
+
+        return '-i $videoPath ${config.filtersCmd(filters)} -preset ultrafast $outputPath';
+      },
+    );
+  // Returns the generated command and the output path
+  final FFmpegVideoEditorExecute mirrorExecute = await mirrorConfig.getExecuteConfig();
 
   // ...
 }
@@ -246,8 +268,7 @@ Contains all FFmpegVideoEditorConfig parameters.
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | VideoExportFormat format = VideoExportFormat.mp4 | The `format` param specifies the extension of the generated video |
-| String? customInstruction | The `customInstruction` param specifies a customized instruction to insert in the command line |
-| VideoExportPreset preset = VideoExportPreset.none | The `preset` param specifies the compress quality of the exported video, be aware that it might not work with all FFmpeg binary |
+| String Function? commandBuilder | The `commandBuilder` param can be used to generate a command with custom options |
 
 #### 3. CoverFFmpegVideoEditorConfig
 
@@ -257,6 +278,7 @@ Contains all FFmpegVideoEditorConfig parameters.
 | -------------------------------- | --------------------------------- |
 | CoverExportFormat format = CoverExportFormat.jpg | The `format` param specifies the extension of the generated cover |
 | int quality = 100 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
+| String Function? commandBuilder | The `commandBuilder` param can be used to generate a command with custom options |
 
 ## 💭 FAQ
 

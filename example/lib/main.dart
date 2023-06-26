@@ -128,9 +128,12 @@ class _VideoEditorState extends State<VideoEditor> {
     final config = VideoFFmpegVideoEditorConfig(
       _controller,
       // format: VideoExportFormat.gif,
-      // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
-      // preset: VideoExportPreset.medium,
-      // customInstruction: "-crf 17",
+      // commandBuilder: (config, videoPath, outputPath) {
+      //   final List<String> filters = config.getExportFilters();
+      //   filters.add('hflip'); // add horizontal flip
+
+      //   return '-i $videoPath ${config.filtersCmd(filters)} -preset ultrafast $outputPath';
+      // },
     );
 
     await ExportService.runFFmpegCommand(
