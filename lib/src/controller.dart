@@ -276,12 +276,17 @@ class VideoEditorController extends ChangeNotifier {
   void updateTrim(double min, double max) {
     assert(min < max,
         'Minimum trim value ($min) cannot be bigger and maximum trim value ($max)');
-
     // check that the new params does not cause a wrong duration
-    final newDuration = Duration(
-        milliseconds: (videoDuration.inMilliseconds * (max - min)).toInt());
-    assert(newDuration <= maxDuration && newDuration >= minDuration,
-        'Trim duration ($newDuration) cannot be bigger than $maxDuration or smaller than $minDuration');
+    final double newDuration = videoDuration.inMicroseconds * (max - min);
+    // since [Duration] object does not takes integer we must round the
+    // new duration up and down to check if the values are correct or not (#157)
+    final Duration newDurationCeil = Duration(microseconds: newDuration.ceil());
+    final Duration newDurationFloor =
+        Duration(microseconds: newDuration.floor());
+    assert(newDurationFloor <= maxDuration,
+        'Trim duration ($newDurationFloor) cannot be smaller than $minDuration');
+    assert(newDurationCeil >= minDuration,
+        'Trim duration ($newDurationCeil) cannot be bigger than $maxDuration');
 
     _minTrim = min;
     _maxTrim = max;
