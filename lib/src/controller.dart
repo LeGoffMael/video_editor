@@ -327,16 +327,23 @@ class VideoEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Get the [maxDuration] param
+  /// Get the [maxDuration] param. By giving this parameters, you ensure that
+  /// the UI and controller function will avoid to select or generate a video
+  /// bigger than this [Duration].
   ///
-  /// if no [maxDuration] param given in VideoEditorController constructor, maxDuration is equals to the videoDuration
+  /// If the value of [maxDuration] is bigger than [videoDuration],
+  /// then this parameter will be ignored.
+  ///
+  /// Defaults to [videoDuration].
   Duration maxDuration;
 
-  /// Get the [minDuration] param
+  /// Get the [minDuration] param. By giving this parameters, you ensure that
+  /// the UI and controller function will avoid to select or generate a video
+  /// smaller than this [Duration].
   ///
-  /// if no [minDuration] param given in VideoEditorController constructor, minDuration is equals to [Duration.zero]
-  /// throw a [VideoMinDurationError] error at initialization if the [minDuration] is bigger then [videoDuration]
-  Duration minDuration;
+  /// Defaults to [Duration.zero].
+  /// Throw a [VideoMinDurationError] error at initialization if the [minDuration] is bigger then [videoDuration]
+  final Duration minDuration;
 
   /// Get the [trimPosition], which is the videoPosition in the trim slider
   ///
