@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.example">
+
+  <!-- Optional: Enable haptic feeback -->
+  <uses-permission android:name="android.permission.VIBRATE" />
+
    <application
         android:requestLegacyExternalStorage="true"
         android:label="flutter_video_editor"
