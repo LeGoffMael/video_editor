@@ -28,6 +28,7 @@ Future<void> exportVideo() async {
 ```
 
 - New complete control over the command generation using `commandBuilder` in `VideoFFmpegVideoEditorConfig`
+- The exportation is now very fast if there is no filter [#140](https://github.com/LeGoffMael/video_editor/issues/140)
 - Fix assert error while triming [#157](https://github.com/LeGoffMael/video_editor/issues/157)
 - New `coverThumbnailsQuality` and `trimThumbnailsQuality` in controller
   - Removed `quality` in `CoverSelection`
