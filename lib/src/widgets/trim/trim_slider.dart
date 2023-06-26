@@ -17,7 +17,6 @@ class TrimSlider extends StatefulWidget {
     super.key,
     required this.controller,
     this.height = 60,
-    this.quality = 10,
     this.horizontalMargin = 0.0,
     this.child,
     this.hasHaptic = true,
@@ -32,11 +31,6 @@ class TrimSlider extends StatefulWidget {
   ///
   /// Defaults to `60`
   final double height;
-
-  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 (([more info](https://pub.dev/packages/video_thumbnail)))
-  ///
-  /// Defaults to `10`
-  final int quality;
 
   /// The [horizontalMargin] param specifies the horizontal space to set around the slider.
   /// It is important when the trim can be dragged (`controller.maxDuration` < `controller.videoDuration`)
@@ -607,7 +601,6 @@ class _TrimSliderState extends State<TrimSlider>
                           child: ThumbnailSlider(
                             controller: widget.controller,
                             height: widget.height,
-                            quality: widget.quality,
                           ),
                         ),
                       ),

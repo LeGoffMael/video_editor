@@ -17,7 +17,6 @@ class CoverSelection extends StatefulWidget {
     super.key,
     required this.controller,
     this.size = 60,
-    this.quality = 10,
     this.quantity = 5,
     this.wrap,
     this.selectedCoverBuilder,
@@ -30,11 +29,6 @@ class CoverSelection extends StatefulWidget {
   ///
   /// Defaults to `60`
   final double size;
-
-  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail))
-  ///
-  /// Defaults to `10`
-  final int quality;
 
   /// The [quantity] param specifies the quantity of thumbnails to generate
   ///
@@ -105,7 +99,6 @@ class _CoverSelectionState extends State<CoverSelection>
   Stream<List<CoverData>> _generateCoverThumbnails() => generateCoverThumbnails(
         widget.controller,
         quantity: widget.quantity,
-        quality: widget.quality,
       );
 
   /// Returns the max size the layout should take with the rect value

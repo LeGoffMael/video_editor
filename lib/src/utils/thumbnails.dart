@@ -8,7 +8,6 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 Stream<List<Uint8List>> generateTrimThumbnails(
   VideoEditorController controller, {
   required int quantity,
-  int quality = 10,
 }) async* {
   final String path = controller.file.path;
   final double eachPart = controller.videoDuration.inMilliseconds / quantity;
@@ -20,7 +19,7 @@ Stream<List<Uint8List>> generateTrimThumbnails(
         imageFormat: ImageFormat.JPEG,
         video: path,
         timeMs: (eachPart * i).toInt(),
-        quality: quality,
+        quality: controller.trimThumbnailsQuality,
       );
       if (bytes != null) {
         byteList.add(bytes);
@@ -36,7 +35,6 @@ Stream<List<Uint8List>> generateTrimThumbnails(
 Stream<List<CoverData>> generateCoverThumbnails(
   VideoEditorController controller, {
   required int quantity,
-  int quality = 10,
 }) async* {
   final int duration = controller.isTrimmed
       ? controller.trimmedDuration.inMilliseconds
@@ -52,7 +50,7 @@ Stream<List<CoverData>> generateCoverThumbnails(
                 ? (eachPart * i) + controller.startTrim.inMilliseconds
                 : (eachPart * i))
             .toInt(),
-        quality: quality,
+        quality: controller.coverThumbnailsQuality,
       );
 
       if (bytes.thumbData != null) {
@@ -68,7 +66,7 @@ Stream<List<CoverData>> generateCoverThumbnails(
 
 /// Generate a cover at [timeMs] in video
 ///
-/// return [CoverData] depending on [timeMs] milliseconds
+/// Returns a [CoverData] depending on [timeMs] milliseconds
 Future<CoverData> generateSingleCoverThumbnail(
   String filePath, {
   int timeMs = 0,

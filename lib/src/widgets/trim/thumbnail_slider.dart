@@ -14,11 +14,7 @@ class ThumbnailSlider extends StatefulWidget {
     super.key,
     required this.controller,
     this.height = 60,
-    this.quality = 10,
   });
-
-  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
-  final int quality;
 
   /// The [height] param specifies the height of the generated thumbnails
   final double height;
@@ -82,7 +78,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   Stream<List<Uint8List>> _generateThumbnails() => generateTrimThumbnails(
         widget.controller,
         quantity: _thumbnailsCount,
-        quality: widget.quality,
       );
 
   /// Returns the max size the layout should take with the rect value

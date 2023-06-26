@@ -47,7 +47,8 @@ class VideoEditorController extends ChangeNotifier {
     this.file, {
     this.maxDuration = Duration.zero,
     this.minDuration = Duration.zero,
-    this.defaultCoverQuality = 10,
+    this.coverThumbnailsQuality = 10,
+    this.trimThumbnailsQuality = 10,
     this.coverStyle = const CoverSelectionStyle(),
     this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
@@ -347,10 +348,17 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO COVER//
   //-----------//
 
-  /// Get the [defaultCoverQuality] param
+  /// The [coverThumbnailsQuality] param specifies the quality of the generated
+  /// cover selection thumbnails (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
   ///
-  /// if no [defaultCoverQuality] param given in VideoEditorController constructor, defaultCoverQuality is 10
-  int defaultCoverQuality;
+  /// Defaults to `10`.
+  final int coverThumbnailsQuality;
+
+  /// The [trimThumbnailsQuality] param specifies the quality of the generated
+  /// trim slider thumbnails (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
+  ///
+  /// Defaults to `10`.
+  final int trimThumbnailsQuality;
 
   /// Replace selected cover by [selectedCover]
   void updateSelectedCover(CoverData selectedCover) async {
@@ -367,12 +375,12 @@ class VideoEditorController extends ChangeNotifier {
     }
   }
 
-  /// Generate cover at [startTrim] time in milliseconds
+  /// Generate cover thumbnail at [startTrim] time in milliseconds
   void generateDefaultCoverThumbnail() async {
     final defaultCover = await generateSingleCoverThumbnail(
       file.path,
-      quality: defaultCoverQuality,
       timeMs: startTrim.inMilliseconds,
+      quality: coverThumbnailsQuality,
     );
     updateSelectedCover(defaultCover);
   }
