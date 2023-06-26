@@ -28,12 +28,14 @@ Future<void> exportVideo() async {
 ```
 
 - New complete control over the command generation using `commandBuilder` in `VideoFFmpegVideoEditorConfig`
+  - Removed `VideoExportPreset`, you can specifies it using the `commandBuilder`.
+  - Removed `customInstruction`, you can now custom the command using the `commandBuilder`.
 - The exportation is now very fast if there is no filter [#140](https://github.com/LeGoffMael/video_editor/issues/140)
 - Fix assert error while triming [#157](https://github.com/LeGoffMael/video_editor/issues/157)
 - New `coverThumbnailsQuality` and `trimThumbnailsQuality` in controller
-  - Removed `quality` in `CoverSelection`
-  - Removed `quality` in `ThumbnailSlider`
-  - Removed `quality` in `TrimSlider`
+  - Removed `quality` in `CoverSelection`, instead uses `coverThumbnailsQuality`
+  - Removed `quality` in `ThumbnailSlider`, instead uses `trimThumbnailsQuality`
+  - Removed `quality` in `TrimSlider`, instead uses `trimThumbnailsQuality`
 
 ## 2.4.0
 
