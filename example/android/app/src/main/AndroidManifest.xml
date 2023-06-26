@@ -2,7 +2,7 @@
     package="com.example.example">
    <application
         android:requestLegacyExternalStorage="true"
-        android:label="example"
+        android:label="flutter_video_editor"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
