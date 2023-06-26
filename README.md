@@ -7,7 +7,7 @@ A video editor that allows to edit (trim, crop, rotate and scale) and choose a c
 
 The library provides some tools to execute the exportation but does not handle it.
 
-This library is written in Dart only but uses external packages such as [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now ((web support is currently in progress)[https://github.com/LeGoffMael/video_editor/pull/147]).
+This library is written in Dart only but uses external packages such as [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now ([web support is currently in progress](https://github.com/LeGoffMael/video_editor/pull/147)).
 
 > **Note**
 > If you use a version between (1.2.3 and 2.4.0) your project might be subject to a GPL license.
