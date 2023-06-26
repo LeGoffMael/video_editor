@@ -2,7 +2,7 @@ name: video_editor_example
 description: The example project for the video_editor package.
 
 publish_to: "none" 
-version: 2.4.0+1
+version: 3.0.0+1
 
 environment:
   flutter: ">=3.0.0"
