@@ -109,7 +109,7 @@ class _VideoEditorState extends State<VideoEditor> {
     _exportingProgress.dispose();
     _isExporting.dispose();
     _controller.dispose();
-    await ExportService.dispose();
+    ExportService.dispose();
     super.dispose();
   }
 

@@ -149,9 +149,13 @@ class VideoFFmpegVideoEditorConfig extends FFmpegVideoEditorConfig {
     String outputPath,
   )? commandBuilder;
 
-  /// Returns the FFpeg command to apply the controller's trim start and end parameters
+  /// Returns the FFpeg command to apply the controller's trim start parameters
   /// [see FFmpeg doc](https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections)
-  String get trimCmd => "-ss ${controller.startTrim} -to ${controller.endTrim}";
+  String get startTrimCmd => "-ss ${controller.startTrim}";
+
+  /// Returns the FFpeg command to apply the controller's trim end parameters
+  /// [see FFmpeg doc](https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections)
+  String get toTrimCmd => "-t ${controller.trimmedDuration}";
 
   /// Returns the FFmpeg command to make the generated GIF to loop infinitely
   /// [see FFmpeg doc](https://ffmpeg.org/ffmpeg-formats.html#gif-2)
@@ -182,7 +186,9 @@ class VideoFFmpegVideoEditorConfig extends FFmpegVideoEditorConfig {
     return FFmpegVideoEditorExecute(
       command: commandBuilder != null
           ? commandBuilder!(this, "\'$videoPath\'", "\'$outputPath\'")
-          : "-i \'$videoPath\' ${filtersCmd(filters)} $gifCmd $trimCmd -y \'$outputPath\'",
+          // use -y option to overwrite the output
+          // use -c copy if there is not filters to avoid re-encoding the video and speedup the process
+          : "$startTrimCmd -i \'$videoPath\' $toTrimCmd ${filtersCmd(filters)} $gifCmd ${filters.isEmpty ? '-c copy' : ''} -y \'$outputPath\'",
       outputPath: outputPath,
     );
   }
@@ -246,6 +252,7 @@ class CoverFFmpegVideoEditorConfig extends FFmpegVideoEditorConfig {
     return FFmpegVideoEditorExecute(
       command: commandBuilder != null
           ? commandBuilder!(this, "\'$coverPath\'", "\'$outputPath\'")
+          // use -y option to overwrite the output
           : "-i \'$coverPath\' ${filtersCmd(filters)} -y \'$outputPath\'",
       outputPath: outputPath,
     );
