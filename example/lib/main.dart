@@ -4,7 +4,6 @@ import 'package:video_editor_example/crop_page.dart';
 import 'package:video_editor_example/export_service.dart';
 import 'package:video_editor_example/widgets/export_result.dart';
 import 'package:flutter/material.dart';
-import 'package:helpers/helpers.dart' show OpacityTransition;
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 
@@ -206,9 +205,10 @@ class _VideoEditorState extends State<VideoEditor> {
                                               controller: _controller),
                                           AnimatedBuilder(
                                             animation: _controller.video,
-                                            builder: (_, __) =>
-                                                OpacityTransition(
-                                              visible: !_controller.isPlaying,
+                                            builder: (_, __) => AnimatedOpacity(
+                                              opacity:
+                                                  _controller.isPlaying ? 0 : 1,
+                                              duration: kThemeAnimationDuration,
                                               child: GestureDetector(
                                                 onTap: _controller.video.play,
                                                 child: Container(
@@ -282,16 +282,17 @@ class _VideoEditorState extends State<VideoEditor> {
                                 ),
                                 ValueListenableBuilder(
                                   valueListenable: _isExporting,
-                                  builder: (_, bool export, __) =>
-                                      OpacityTransition(
-                                    visible: export,
-                                    child: AlertDialog(
-                                      title: ValueListenableBuilder(
-                                        valueListenable: _exportingProgress,
-                                        builder: (_, double value, __) => Text(
-                                          "Exporting video ${(value * 100).ceil()}%",
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
+                                  builder: (_, bool export, Widget? child) =>
+                                      AnimatedSize(
+                                    duration: kThemeAnimationDuration,
+                                    child: export ? child : null,
+                                  ),
+                                  child: AlertDialog(
+                                    title: ValueListenableBuilder(
+                                      valueListenable: _exportingProgress,
+                                      builder: (_, double value, __) => Text(
+                                        "Exporting video ${(value * 100).ceil()}%",
+                                        style: const TextStyle(fontSize: 12),
                                       ),
                                     ),
                                   ),
@@ -388,16 +389,17 @@ class _VideoEditorState extends State<VideoEditor> {
           _controller.video,
         ]),
         builder: (_, __) {
-          final duration = _controller.videoDuration.inSeconds;
-          final pos = _controller.trimPosition * duration;
+          final int duration = _controller.videoDuration.inSeconds;
+          final double pos = _controller.trimPosition * duration;
 
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: height / 4),
             child: Row(children: [
               Text(formatter(Duration(seconds: pos.toInt()))),
               const Expanded(child: SizedBox()),
-              OpacityTransition(
-                visible: _controller.isTrimming,
+              AnimatedOpacity(
+                opacity: _controller.isTrimming ? 1 : 0,
+                duration: kThemeAnimationDuration,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Text(formatter(_controller.startTrim)),
                   const SizedBox(width: 10),

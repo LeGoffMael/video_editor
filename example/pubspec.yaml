@@ -16,7 +16,6 @@ dependencies:
     path: ../
 
   fraction: ^4.1.4
-  helpers: ^1.1.4
   image_picker: ^0.8.9
   path: ^1.8.2
   video_player: ^2.6.1
