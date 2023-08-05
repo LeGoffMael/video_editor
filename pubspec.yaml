@@ -21,7 +21,7 @@ dependencies:
   video_thumbnail:
     # path: ../video_thumbnail/video_thumbnail
     git:
-      url: git@github.com:maRci002/video_thumbnail.git
+      url: https://github.com/maRci002/video_thumbnail.git
       ref: feat-web_implementation
       path: video_thumbnail
 
