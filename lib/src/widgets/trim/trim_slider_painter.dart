@@ -78,6 +78,16 @@ class TrimSliderPainter extends CustomPainter {
           centerRight: centerRight,
         );
         break;
+      case TrimSliderEdgesType.line:
+        paintLine(
+          canvas,
+          size,
+          rrect: rrect,
+          line: line,
+          edges: edges,
+          centerLeft: centerLeft,
+          centerRight: centerRight,
+        );
     }
   }
 
@@ -251,7 +261,75 @@ class TrimSliderPainter extends CustomPainter {
     paintIcons(canvas, centerLeft: centerLeft, centerRight: centerRight);
   }
 
-  void paintIndicator(Canvas canvas, Size size) {
+  void paintLine(
+    Canvas canvas,
+    Size size, {
+    required RRect rrect,
+    required Paint line,
+    required Paint edges,
+    required Offset centerLeft,
+    required Offset centerRight,
+  }) {
+    // DRAW RECT BORDERS
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: rect.center,
+          width: rect.width + style.edgeWidth,
+          height: rect.height + style.edgeWidth,
+        ),
+        Radius.circular(style.borderRadius),
+      ),
+      line,
+    );
+
+    final indicatorOffset = (rect.height * 0.25) / 2;
+    paintIndicator(canvas, size, offset: indicatorOffset);
+
+    final paint = Paint()
+      ..color = style.positionLineColor
+      ..strokeWidth = style.positionLineWidth;
+
+    final trimLineOffset = rect.height / 4;
+
+    // LEFT LINE
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromPoints(
+          Offset(
+            centerLeft.dx - style.positionLineWidth / 2,
+            trimLineOffset,
+          ),
+          Offset(
+            centerLeft.dx + style.positionLineWidth / 2,
+            size.height - trimLineOffset,
+          ),
+        ),
+        Radius.circular(style.positionLineWidth),
+      ),
+      paint,
+    );
+
+    // RIGHT LINE
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromPoints(
+          Offset(
+            centerRight.dx - style.positionLineWidth / 2,
+            trimLineOffset,
+          ),
+          Offset(
+            centerRight.dx + style.positionLineWidth / 2,
+            size.height - trimLineOffset,
+          ),
+        ),
+        Radius.circular(style.positionLineWidth),
+      ),
+      paint,
+    );
+  }
+
+  void paintIndicator(Canvas canvas, Size size, {double offset = 0}) {
     final progress = Paint()
       ..color = style.positionLineColor
       ..strokeWidth = style.positionLineWidth;
@@ -260,10 +338,13 @@ class TrimSliderPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromPoints(
-          Offset(position - style.positionLineWidth / 2, -style.lineWidth * 2),
+          Offset(
+            position - style.positionLineWidth / 2,
+            -style.lineWidth * 2 - offset,
+          ),
           Offset(
             position + style.positionLineWidth / 2,
-            size.height + style.lineWidth * 2,
+            size.height + style.lineWidth * 2 + offset,
           ),
         ),
         Radius.circular(style.positionLineWidth),
