@@ -5,8 +5,8 @@ publish_to: "none"
 version: 3.0.0+1
 
 environment:
-  flutter: ">=3.0.0"
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: '^3.1.0'
+  flutter: '>=3.13.0'
 
 dependencies:
   flutter:
@@ -15,11 +15,11 @@ dependencies:
   video_editor:
     path: ../
 
-  fraction: ^4.1.4
-  image_picker: ^0.8.9
-  path: ^1.8.2
-  video_player: ^2.6.1
-  ffmpeg_kit_flutter_min: ^5.1.0
+  fraction: ^5.0.2
+  image_picker: ^1.0.4
+  path: ^1.8.3
+  video_player: ^2.7.2
+  ffmpeg_kit_flutter_min: ^6.0.3
 
 flutter:
   uses-material-design: true
@@ -28,4 +28,4 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.1
+  flutter_lints: any

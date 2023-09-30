@@ -7,19 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
 
+const kPrimaryColor = Color(0xffffcc00);
+
 void main() => runApp(
       MaterialApp(
         title: 'Flutter Video Editor Demo',
-        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.grey,
-          brightness: Brightness.dark,
-          tabBarTheme: const TabBarTheme(
-            indicator: UnderlineTabIndicator(
-              borderSide: BorderSide(color: Colors.white),
-            ),
-          ),
-          dividerColor: Colors.white,
+          useMaterial3: true,
+          colorScheme: const ColorScheme.dark(primary: kPrimaryColor),
         ),
         home: const VideoEditorExample(),
       ),
@@ -87,6 +82,12 @@ class _VideoEditorState extends State<VideoEditor> {
 
   late final VideoEditorController _controller = VideoEditorController.file(
     widget.file,
+    coverStyle: const CoverSelectionStyle(selectedBorderColor: kPrimaryColor),
+    cropStyle: const CropGridStyle(selectedBoundariesColor: kPrimaryColor),
+    trimStyle: TrimSliderStyle(
+      onTrimmedColor: kPrimaryColor,
+      onTrimmingColor: kPrimaryColor,
+    ),
     minDuration: const Duration(seconds: 1),
     maxDuration: const Duration(seconds: 10),
   );
@@ -238,26 +239,27 @@ class _VideoEditorState extends State<VideoEditor> {
                                   margin: const EdgeInsets.only(top: 10),
                                   child: Column(
                                     children: [
-                                      TabBar(
+                                      const TabBar(
                                         tabs: [
-                                          Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: const [
-                                                Padding(
-                                                    padding: EdgeInsets.all(5),
-                                                    child: Icon(
-                                                        Icons.content_cut)),
-                                                Text('Trim')
-                                              ]),
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
-                                            children: const [
+                                            children: [
                                               Padding(
-                                                  padding: EdgeInsets.all(5),
-                                                  child:
-                                                      Icon(Icons.video_label)),
+                                                padding: EdgeInsets.all(5),
+                                                child: Icon(Icons.content_cut),
+                                              ),
+                                              Text('Trim')
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsets.all(5),
+                                                child: Icon(Icons.video_label),
+                                              ),
                                               Text('Cover')
                                             ],
                                           ),
