@@ -106,7 +106,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
         stream: _stream,
         builder: (_, snapshot) {
           final data = snapshot.data;
-          return snapshot.hasData
+          return snapshot.hasData && data != null && data.isNotEmpty
               ? ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
