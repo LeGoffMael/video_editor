@@ -53,10 +53,10 @@ abstract class FFmpegVideoEditorConfig {
       return "";
     }
 
-    final enddx = controller.videoWidth * controller.maxCrop.dx;
-    final enddy = controller.videoHeight * controller.maxCrop.dy;
-    final startdx = controller.videoWidth * controller.minCrop.dx;
-    final startdy = controller.videoHeight * controller.minCrop.dy;
+    final enddx = (controller.videoWidth * controller.maxCrop.dx).round();
+    final enddy = (controller.videoHeight * controller.maxCrop.dy).round();
+    final startdx = (controller.videoWidth * controller.minCrop.dx).round();
+    final startdy = (controller.videoHeight * controller.minCrop.dy).round();
 
     return "crop=${enddx - startdx}:${enddy - startdy}:$startdx:$startdy";
   }
@@ -79,7 +79,8 @@ abstract class FFmpegVideoEditorConfig {
   /// [see FFmpeg doc](https://ffmpeg.org/ffmpeg-filters.html#scale)
   ///
   /// The result is in format `scale=width*scale:height*scale`
-  String get scaleCmd => scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+  /// We use the trunc function in order to get an even number, required by some codecs (eg x264)
+  String get scaleCmd => scale == 1.0 ? "" : "scale=2*trunc(iw*$scale/2):2*trunc(ih*$scale/2)";
 
   /// Returns the list of all the active filters
   List<String> getExportFilters() {
