@@ -1,10 +1,10 @@
 PODS:
-  - ffmpeg-kit-ios-min (5.1)
-  - ffmpeg_kit_flutter_min (5.1.0):
-    - ffmpeg_kit_flutter_min/min (= 5.1.0)
+  - ffmpeg-kit-ios-https (5.1)
+  - ffmpeg_kit_flutter_https (5.1.0):
+    - ffmpeg_kit_flutter_https/https (= 5.1.0)
     - Flutter
-  - ffmpeg_kit_flutter_min/min (5.1.0):
-    - ffmpeg-kit-ios-min (= 5.1)
+  - ffmpeg_kit_flutter_https/https (5.1.0):
+    - ffmpeg-kit-ios-https (= 5.1)
     - Flutter
   - Flutter (1.0.0)
   - image_picker_ios (0.0.1):
@@ -23,47 +23,48 @@ PODS:
     - FlutterMacOS
   - video_player_avfoundation (0.0.1):
     - Flutter
+    - FlutterMacOS
   - video_thumbnail (0.0.1):
     - Flutter
     - libwebp
 
 DEPENDENCIES:
-  - ffmpeg_kit_flutter_min (from `.symlinks/plugins/ffmpeg_kit_flutter_min/ios`)
+  - ffmpeg_kit_flutter_https (from `.symlinks/plugins/ffmpeg_kit_flutter_https/ios`)
   - Flutter (from `Flutter`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
-  - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
   - video_thumbnail (from `.symlinks/plugins/video_thumbnail/ios`)
 
 SPEC REPOS:
   trunk:
-    - ffmpeg-kit-ios-min
+    - ffmpeg-kit-ios-https
     - libwebp
 
 EXTERNAL SOURCES:
-  ffmpeg_kit_flutter_min:
-    :path: ".symlinks/plugins/ffmpeg_kit_flutter_min/ios"
+  ffmpeg_kit_flutter_https:
+    :path: ".symlinks/plugins/ffmpeg_kit_flutter_https/ios"
   Flutter:
     :path: Flutter
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
   path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/ios"
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
   video_player_avfoundation:
-    :path: ".symlinks/plugins/video_player_avfoundation/ios"
+    :path: ".symlinks/plugins/video_player_avfoundation/darwin"
   video_thumbnail:
     :path: ".symlinks/plugins/video_thumbnail/ios"
 
 SPEC CHECKSUMS:
-  ffmpeg-kit-ios-min: 3748f7726cd539e308090371a9d572d1a9dfaf7e
-  ffmpeg_kit_flutter_min: 03876cb5ff5f7cf493cbcef07fa738ae423e009c
-  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  image_picker_ios: 4a8aadfbb6dc30ad5141a2ce3832af9214a705b5
+  ffmpeg-kit-ios-https: 8dffbe1623a2f227be98fc314294847a97f818e4
+  ffmpeg_kit_flutter_https: 8783df90a81483113f7d277813309cbf544af765
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   libwebp: 60305b2e989864154bd9be3d772730f08fc6a59c
-  path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
-  video_player_avfoundation: 81e49bb3d9fb63dccf9fa0f6d877dc3ddbeac126
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  video_player_avfoundation: 7c6c11d8470e1675df7397027218274b6d2360b3
   video_thumbnail: c4e2a3c539e247d4de13cd545344fd2d26ffafd1
 
 PODFILE CHECKSUM: ccd901b1465efa56fa30557fdc5ae4eddcc3f504
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.15.2

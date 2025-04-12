@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:video_editor/src/models/cover_data.dart';
 import 'package:video_editor/src/utils/helpers.dart';
 import 'package:video_editor/src/utils/thumbnails.dart';
-import 'package:video_editor/src/models/cover_data.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
 
@@ -37,14 +38,13 @@ class VideoEditorController extends ChangeNotifier {
   /// Style for [CropGridViewer]
   final CropGridStyle cropStyle;
 
-  /// Video from [File].
-  final File file;
+  final String path;
 
   /// Constructs a [VideoEditorController] that edits a video from a file.
   ///
   /// The [file] argument must not be null.
   VideoEditorController.file(
-    this.file, {
+    File file, {
     this.maxDuration = Duration.zero,
     this.minDuration = Duration.zero,
     this.coverThumbnailsQuality = 10,
@@ -52,10 +52,26 @@ class VideoEditorController extends ChangeNotifier {
     this.coverStyle = const CoverSelectionStyle(),
     this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
-  })  : _video = VideoPlayerController.file(File(
+  })  : path = file.path,
+        _video = VideoPlayerController.file(File(
           // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
           Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
         )),
+        trimStyle = trimStyle ?? TrimSliderStyle(),
+        assert(maxDuration > minDuration,
+            'The maximum duration must be bigger than the minimum duration');
+
+  VideoEditorController.url(
+    String url, {
+    this.maxDuration = Duration.zero,
+    this.minDuration = Duration.zero,
+    this.coverThumbnailsQuality = 10,
+    this.trimThumbnailsQuality = 10,
+    this.coverStyle = const CoverSelectionStyle(),
+    this.cropStyle = const CropGridStyle(),
+    TrimSliderStyle? trimStyle,
+  })  : path = url,
+        _video = VideoPlayerController.networkUrl(Uri.parse(url)),
         trimStyle = trimStyle ?? TrimSliderStyle(),
         assert(maxDuration > minDuration,
             'The maximum duration must be bigger than the minimum duration');
@@ -385,7 +401,7 @@ class VideoEditorController extends ChangeNotifier {
   /// Generate cover thumbnail at [startTrim] time in milliseconds
   void generateDefaultCoverThumbnail() async {
     final defaultCover = await generateSingleCoverThumbnail(
-      file.path,
+      path,
       timeMs: startTrim.inMilliseconds,
       quality: coverThumbnailsQuality,
     );

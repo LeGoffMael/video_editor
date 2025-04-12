@@ -1,7 +1,7 @@
 name: video_editor_example
 description: The example project for the video_editor package.
 
-publish_to: "none" 
+publish_to: "none"
 version: 3.0.0+1
 
 environment:
@@ -19,7 +19,7 @@ dependencies:
   image_picker: ^0.8.9
   path: ^1.8.2
   video_player: ^2.6.1
-  ffmpeg_kit_flutter_min: ^5.1.0
+  ffmpeg_kit_flutter_https: ^5.1.0
 
 flutter:
   uses-material-design: true

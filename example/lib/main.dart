@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:video_editor_example/crop_page.dart';
-import 'package:video_editor_example/export_service.dart';
-import 'package:video_editor_example/widgets/export_result.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_editor_example/crop_page.dart';
+import 'package:video_editor_example/export_service.dart';
+import 'package:video_editor_example/widgets/export_result.dart';
 
 void main() => runApp(
       MaterialApp(
@@ -42,10 +42,23 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
       Navigator.push(
         context,
         MaterialPageRoute<void>(
-          builder: (BuildContext context) => VideoEditor(file: File(file.path)),
+          builder: (BuildContext context) =>
+              VideoEditor.fromFile(file: File(file.path)),
         ),
       );
     }
+  }
+
+  void _loadVideoUrl() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const VideoEditor.fromUrl(
+          url:
+              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+        ),
+      ),
+    );
   }
 
   @override
@@ -61,6 +74,10 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
               onPressed: _pickVideo,
               child: const Text("Pick Video From Gallery"),
             ),
+            ElevatedButton(
+              onPressed: _loadVideoUrl,
+              child: const Text("Load Video From Url"),
+            ),
           ],
         ),
       ),
@@ -72,9 +89,12 @@ class _VideoEditorExampleState extends State<VideoEditorExample> {
 //VIDEO EDITOR SCREEN//
 //-------------------//
 class VideoEditor extends StatefulWidget {
-  const VideoEditor({super.key, required this.file});
+  const VideoEditor.fromFile({super.key, required this.file}) : url = null;
+  const VideoEditor.fromUrl({super.key, required this.url}) : file = null;
 
-  final File file;
+  final File? file;
+
+  final String? url;
 
   @override
   State<VideoEditor> createState() => _VideoEditorState();
@@ -85,11 +105,17 @@ class _VideoEditorState extends State<VideoEditor> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  late final VideoEditorController _controller = VideoEditorController.file(
-    widget.file,
-    minDuration: const Duration(seconds: 1),
-    maxDuration: const Duration(seconds: 10),
-  );
+  late final VideoEditorController _controller = widget.file != null
+      ? VideoEditorController.file(
+          widget.file!,
+          minDuration: const Duration(seconds: 1),
+          maxDuration: const Duration(seconds: 10),
+        )
+      : VideoEditorController.url(
+          widget.url!,
+          minDuration: const Duration(seconds: 1),
+          maxDuration: const Duration(seconds: 10),
+        );
 
   @override
   void initState() {
@@ -238,12 +264,12 @@ class _VideoEditorState extends State<VideoEditor> {
                                   margin: const EdgeInsets.only(top: 10),
                                   child: Column(
                                     children: [
-                                      TabBar(
+                                      const TabBar(
                                         tabs: [
                                           Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
-                                              children: const [
+                                              children: [
                                                 Padding(
                                                     padding: EdgeInsets.all(5),
                                                     child: Icon(
@@ -253,7 +279,7 @@ class _VideoEditorState extends State<VideoEditor> {
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
-                                            children: const [
+                                            children: [
                                               Padding(
                                                   padding: EdgeInsets.all(5),
                                                   child:

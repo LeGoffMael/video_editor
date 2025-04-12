@@ -178,7 +178,7 @@ class VideoFFmpegVideoEditorConfig extends FFmpegVideoEditorConfig {
   /// the video applying the editing parameters.
   @override
   Future<FFmpegVideoEditorExecute> getExecuteConfig() async {
-    final String videoPath = controller.file.path;
+    final String videoPath = controller.path;
     final String outputPath =
         await getOutputPath(filePath: videoPath, format: format);
     final List<String> filters = getExportFilters();
@@ -229,7 +229,7 @@ class CoverFFmpegVideoEditorConfig extends FFmpegVideoEditorConfig {
   Future<String?> _generateCoverFile() async => VideoThumbnail.thumbnailFile(
         imageFormat: ImageFormat.JPEG,
         thumbnailPath: (await getTemporaryDirectory()).path,
-        video: controller.file.path,
+        video: controller.path,
         timeMs: controller.selectedCoverVal?.timeMs ??
             controller.startTrim.inMilliseconds,
         quality: quality,
