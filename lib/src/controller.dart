@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:video_editor/src/models/cover_data.dart';
 import 'package:video_editor/src/utils/helpers.dart';
 import 'package:video_editor/src/utils/thumbnails.dart';
-import 'package:video_editor/src/models/cover_data.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
 
@@ -52,10 +53,7 @@ class VideoEditorController extends ChangeNotifier {
     this.coverStyle = const CoverSelectionStyle(),
     this.cropStyle = const CropGridStyle(),
     TrimSliderStyle? trimStyle,
-  })  : _video = VideoPlayerController.file(File(
-          // https://github.com/flutter/flutter/issues/40429#issuecomment-549746165
-          Platform.isIOS ? Uri.encodeFull(file.path) : file.path,
-        )),
+  })  : _video = VideoPlayerController.file(file),
         trimStyle = trimStyle ?? TrimSliderStyle(),
         assert(maxDuration > minDuration,
             'The maximum duration must be bigger than the minimum duration');
