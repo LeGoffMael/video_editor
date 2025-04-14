@@ -36,6 +36,7 @@ class CropPage extends StatelessWidget {
               child: CropGridViewer.edit(
                 controller: controller,
                 rotateCropArea: false,
+                enableGestureResizeCrop: true,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
             ),

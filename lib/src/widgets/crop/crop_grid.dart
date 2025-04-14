@@ -27,6 +27,7 @@ class CropGridViewer extends StatefulWidget {
     required this.controller,
   })  : showGrid = false,
         rotateCropArea = true,
+        enableGestureResizeCrop = false,
         margin = EdgeInsets.zero;
 
   const CropGridViewer.edit({
@@ -34,6 +35,7 @@ class CropGridViewer extends StatefulWidget {
     required this.controller,
     this.margin = const EdgeInsets.symmetric(horizontal: 20),
     this.rotateCropArea = true,
+    this.enableGestureResizeCrop = true,
   }) : showGrid = true;
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the crop view
@@ -53,6 +55,11 @@ class CropGridViewer extends StatefulWidget {
   ///
   /// Defaults to `true` (like iOS Photos app crop)
   final bool rotateCropArea;
+
+  /// The [enableGestureResizeCrop] parameters specifies if the crop area can be resized
+  ///
+  /// Defaults to `true`
+  final bool enableGestureResizeCrop;
 
   @override
   State<CropGridViewer> createState() => _CropGridViewerState();
@@ -163,24 +170,26 @@ class _CropGridViewerState extends State<CropGridViewer> with CropPreviewMixin {
       _boundary = CropBoundaries.inside;
 
       // CORNERS
-      if (_expandedPosition(rect.value.topLeft).contains(pos)) {
-        _boundary = CropBoundaries.topLeft;
-      } else if (_expandedPosition(rect.value.topRight).contains(pos)) {
-        _boundary = CropBoundaries.topRight;
-      } else if (_expandedPosition(rect.value.bottomRight).contains(pos)) {
-        _boundary = CropBoundaries.bottomRight;
-      } else if (_expandedPosition(rect.value.bottomLeft).contains(pos)) {
-        _boundary = CropBoundaries.bottomLeft;
-      } else if (_controller.preferredCropAspectRatio == null) {
-        // CENTERS
-        if (_expandedPosition(rect.value.centerLeft).contains(pos)) {
-          _boundary = CropBoundaries.centerLeft;
-        } else if (_expandedPosition(rect.value.topCenter).contains(pos)) {
-          _boundary = CropBoundaries.topCenter;
-        } else if (_expandedPosition(rect.value.centerRight).contains(pos)) {
-          _boundary = CropBoundaries.centerRight;
-        } else if (_expandedPosition(rect.value.bottomCenter).contains(pos)) {
-          _boundary = CropBoundaries.bottomCenter;
+      if (widget.enableGestureResizeCrop) {
+        if (_expandedPosition(rect.value.topLeft).contains(pos)) {
+          _boundary = CropBoundaries.topLeft;
+        } else if (_expandedPosition(rect.value.topRight).contains(pos)) {
+          _boundary = CropBoundaries.topRight;
+        } else if (_expandedPosition(rect.value.bottomRight).contains(pos)) {
+          _boundary = CropBoundaries.bottomRight;
+        } else if (_expandedPosition(rect.value.bottomLeft).contains(pos)) {
+          _boundary = CropBoundaries.bottomLeft;
+        } else if (_controller.preferredCropAspectRatio == null) {
+          // CENTERS
+          if (_expandedPosition(rect.value.centerLeft).contains(pos)) {
+            _boundary = CropBoundaries.centerLeft;
+          } else if (_expandedPosition(rect.value.topCenter).contains(pos)) {
+            _boundary = CropBoundaries.topCenter;
+          } else if (_expandedPosition(rect.value.centerRight).contains(pos)) {
+            _boundary = CropBoundaries.centerRight;
+          } else if (_expandedPosition(rect.value.bottomCenter).contains(pos)) {
+            _boundary = CropBoundaries.bottomCenter;
+          }
         }
       }
       setState(() {}); // to update selected boundary color
@@ -203,18 +212,26 @@ class _CropGridViewerState extends State<CropGridViewer> with CropPreviewMixin {
         break;
       //CORNERS
       case CropBoundaries.topLeft:
+        if (!widget.enableGestureResizeCrop) break;
+
         final Offset pos = rect.value.topLeft + delta;
         _changeRect(left: pos.dx, top: pos.dy);
         break;
       case CropBoundaries.topRight:
+        if (!widget.enableGestureResizeCrop) break;
+
         final Offset pos = rect.value.topRight + delta;
         _changeRect(right: pos.dx, top: pos.dy);
         break;
       case CropBoundaries.bottomRight:
+        if (!widget.enableGestureResizeCrop) break;
+
         final Offset pos = rect.value.bottomRight + delta;
         _changeRect(right: pos.dx, bottom: pos.dy);
         break;
       case CropBoundaries.bottomLeft:
+        if (!widget.enableGestureResizeCrop) break;
+
         final Offset pos = rect.value.bottomLeft + delta;
         _changeRect(left: pos.dx, bottom: pos.dy);
         break;
