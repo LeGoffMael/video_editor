@@ -15,10 +15,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  path: ^1.9.0
-  path_provider: 2.1.5
+  path: ^1.9.1
+  path_provider: ^2.1.6
   transparent_image: 2.0.1
-  video_player: ^2.9.2
+  video_player: ^2.14.1
   stream_thumbnail: ^0.2.0
 
 dev_dependencies:

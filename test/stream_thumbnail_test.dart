@@ -93,8 +93,9 @@ void main() {
         _thumbnailChannel,
         (message) async {
           requests.add((message! as List<Object?>).single! as ThumbnailRequest);
-          if (requests.length == 1)
+          if (requests.length == 1) {
             return <Object?>['DECODE_ERROR', 'Unsupported frame', null];
+          }
           return <Object?>[bytes];
         },
       );

@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Upgrade library dependency bounds to `path ^1.9.1`, `path_provider ^2.1.6`, and `video_player ^2.14.1`, and refresh compatible transitive packages. The legacy example app is unchanged.
+- Keep the library minimum at Dart 3.12 / Flutter 3.44. The refreshed lockfile selects Dart 3.13 / Flutter 3.47 through `video_player_avfoundation 2.12.3` and `web 1.1.2`; the dependency ranges permit older compatible releases on older SDKs. The latest resolved native players require Android API 24+ and iOS 15+ (macOS 12+). Minimum-SDK execution has not been tested.
 - Replace the video_thumbnail fork with stream_thumbnail 0.2.0. Requires Dart 3.12 and Flutter 3.44 or later.
 - Contain default-cover extraction errors so a missing native plugin or unsupported video does not produce an unhandled asynchronous error.
 
