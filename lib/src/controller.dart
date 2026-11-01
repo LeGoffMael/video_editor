@@ -356,13 +356,13 @@ class VideoEditorController extends ChangeNotifier {
   //-----------//
 
   /// The [coverThumbnailsQuality] param specifies the quality of the generated
-  /// cover selection thumbnails (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
+  /// cover selection thumbnails (from 0 to 100 ([more info](https://pub.dev/packages/stream_thumbnail)))
   ///
   /// Defaults to `10`.
   final int coverThumbnailsQuality;
 
   /// The [trimThumbnailsQuality] param specifies the quality of the generated
-  /// trim slider thumbnails (from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)))
+  /// trim slider thumbnails (from 0 to 100 ([more info](https://pub.dev/packages/stream_thumbnail)))
   ///
   /// Defaults to `10`.
   final int trimThumbnailsQuality;
@@ -383,13 +383,17 @@ class VideoEditorController extends ChangeNotifier {
   }
 
   /// Generate cover thumbnail at [startTrim] time in milliseconds
-  void generateDefaultCoverThumbnail() async {
-    final defaultCover = await generateSingleCoverThumbnail(
-      file.path,
-      timeMs: startTrim.inMilliseconds,
-      quality: coverThumbnailsQuality,
-    );
-    updateSelectedCover(defaultCover);
+  Future<void> generateDefaultCoverThumbnail() async {
+    try {
+      final defaultCover = await generateSingleCoverThumbnail(
+        file.path,
+        timeMs: startTrim.inMilliseconds,
+        quality: coverThumbnailsQuality,
+      );
+      updateSelectedCover(defaultCover);
+    } catch (error) {
+      debugPrint(error.toString());
+    }
   }
 
   /// Get the [selectedCover] notifier

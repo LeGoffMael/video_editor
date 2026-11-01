@@ -1,3 +1,8 @@
+## Unreleased
+
+- Replace the video_thumbnail fork with stream_thumbnail 0.2.0. Requires Dart 3.12 and Flutter 3.44 or later.
+- Contain default-cover extraction errors so a missing native plugin or unsupported video does not produce an unhandled asynchronous error.
+
 ## 3.0.0
 
 > **Note**

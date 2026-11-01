@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:video_editor/src/controller.dart';
 import 'package:video_editor/src/models/cover_data.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:stream_thumbnail/stream_thumbnail.dart';
 
 Uint8List? thumbnailAtOrNull(List<Uint8List> thumbnails, int index) {
   if (index < 0 || index >= thumbnails.length) return null;
@@ -20,15 +20,13 @@ Stream<List<Uint8List>> generateTrimThumbnails(
 
   for (int i = 1; i <= quantity; i++) {
     try {
-      final Uint8List? bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.JPEG,
+      final Uint8List bytes = await StreamThumbnail.thumbnailData(
+        imageFormat: StreamThumbnailFormat.jpeg,
         video: path,
         timeMs: (eachPart * i).toInt(),
         quality: controller.trimThumbnailsQuality,
       );
-      if (bytes != null) {
-        byteList.add(bytes);
-      }
+      byteList.add(bytes);
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -77,8 +75,8 @@ Future<CoverData> generateSingleCoverThumbnail(
   int timeMs = 0,
   int quality = 10,
 }) async {
-  final Uint8List? thumbData = await VideoThumbnail.thumbnailData(
-    imageFormat: ImageFormat.JPEG,
+  final Uint8List thumbData = await StreamThumbnail.thumbnailData(
+    imageFormat: StreamThumbnailFormat.jpeg,
     video: filePath,
     timeMs: timeMs,
     quality: quality,

@@ -8,8 +8,8 @@ repository: https://github.com/LeGoffMael/video_editor
 publish_to: none
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.27.0"
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
@@ -19,10 +19,7 @@ dependencies:
   path_provider: 2.1.5
   transparent_image: 2.0.1
   video_player: ^2.9.2
-  video_thumbnail:
-    git:
-      url: https://github.com/PhantomRay/video_thumbnail.git
-      ref: d1d824950a8780240fc056ca8eacae89f4f15182
+  stream_thumbnail: ^0.2.0
 
 dev_dependencies:
   flutter_test:

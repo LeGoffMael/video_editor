@@ -7,7 +7,7 @@ A video editor that allows to edit (trim, crop, rotate and scale) and choose a c
 
 The library provides some tools to execute the exportation but does not handle it.
 
-This library is written in Dart only but uses external packages such as [video_thumbnail](https://pub.dev/packages/video_thumbnail), which makes it available only on iOS and Android plaforms for now ([web support is currently in progress](https://github.com/LeGoffMael/video_editor/pull/147)).
+This library is written in Dart and uses [stream_thumbnail](https://pub.dev/packages/stream_thumbnail) for thumbnail generation. The editor supports iOS and Android and requires Dart 3.12 and Flutter 3.44 or later.
 
 > **Note**
 > If you use a version between (1.2.3 and 2.4.0) your project might be subject to a GPL license.
@@ -131,8 +131,8 @@ For more details check out the [example](https://github.com/LeGoffMael/video_edi
 | int rotation                     | The rotation angle set `0`, `90`, `180` and `270` |
 | int cacheRotation                | The sum of all the rotation applied in the editor |
 | CoverData? selectedCoverVal      | The selected cover thumbnail that will be used to export the final cover |
-| int coverThumbnailsQuality = 10  | The `coverThumbnailsQuality` param specifies the quality of the generated cover thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
-| int trimThumbnailsQuality = 10   | The `trimThumbnailsQuality` param specifies the quality of the generated trim slider thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
+| int coverThumbnailsQuality = 10  | The `coverThumbnailsQuality` param specifies the quality of the generated cover thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/stream_thumbnail)) |
+| int trimThumbnailsQuality = 10   | The `trimThumbnailsQuality` param specifies the quality of the generated trim slider thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/stream_thumbnail)) |
 
 
 ### Widgets
@@ -285,7 +285,7 @@ Contains all FFmpegVideoEditorConfig parameters.
 | Param                            | Description                       |
 | -------------------------------- | --------------------------------- |
 | CoverExportFormat format = CoverExportFormat.jpg | The `format` param specifies the extension of the generated cover |
-| int quality = 100 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/video_thumbnail)) |
+| int quality = 100 | The `quality` param specifies the quality of the generated thumbnails, from 0 to 100 ([more info](https://pub.dev/packages/stream_thumbnail)) |
 | String Function? commandBuilder | The `commandBuilder` param can be used to generate a command with custom options |
 
 ## 💭 FAQ
